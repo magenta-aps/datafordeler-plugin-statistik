@@ -4,6 +4,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/statistik/status_data/1")
+@RequestMapping("/statistik/status_data")
 public class StatusDataService {
+
+    @RequestMapping("/greeting")
+    public String greeting() {
+        return "All good in here...";
+    }
+
 }
