@@ -7,6 +7,7 @@ package dk.magenta.datafordeler.statistik;
     own birth municipality code (data missing, import handled in another ticket)
     own status code
     own prod date (to be investigated)
+
     mother's pnr
     mother's birth municipality code (data missing, import handled in another ticket)
     mother's status code
@@ -16,6 +17,7 @@ package dk.magenta.datafordeler.statistik;
     mother's house number
     mother's door/apartment no.
     mother's bnr
+
     father's pnr
     father's birth municipality code (data missing, import handled in another ticket)
     father's status code
@@ -92,11 +94,8 @@ public class BirthDataService {
     private CprPlugin cprPlugin;
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
+    private FormatPersonUtils personUtils;
 
-    @RequestMapping("/greeting")
-    public String greeting() {
-        return "All good in here...";
-    }
 
     @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getBirth(HttpServletRequest request, HttpServletResponse response)
@@ -115,12 +114,14 @@ public class BirthDataService {
                     personQuery.setEffectTo(now);
 
                     personQuery.applyFilters(primary_session);
-                    //this.applyAreaRestrictionsToQuery(personQuery, user);
+
+                    personUtils = new FormatPersonUtils();
+
 
                     Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
                         Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                            return formatPerson(personEntity, secondary_session);
+                            return personUtils.formatPerson(personEntity, secondary_session);
                         }).iterator();
 
                         CsvSchema.Builder builder = new CsvSchema.Builder();
@@ -129,9 +130,9 @@ public class BirthDataService {
 
 
                     List<String> keys = Arrays.asList(new String[]{
-                                    "pnr", "birth_year", "effective_pnr", "status",
-                            "mother_pnr","mother_status", "mother_municipality_code", "mother_road code", "mother_house_number", "mother_door_number", "mother_bnr",
-                             "father_pnr","father_status", "father_municipality_code", "father_road code", "father_house_number", "father_door_number", "father_bnr"
+                            "pnr", "birth_year", "effective_pnr", "status_code",
+                            "mother_pnr","mother_status", "mother_municipality_code", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
+                             "father_pnr","father_status", "father_municipality_code", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
                             });
                     System.out.println(keys.toString());
 
@@ -150,8 +151,6 @@ public class BirthDataService {
                     while (dataIter.hasNext()) {
                         writer.write(dataIter.next());
                     }
-
-                    //throw new HttpNotFoundException("No entity with CPR number " + cprNummer + " was found");
                 }finally {
                     primary_session.close();
                     secondary_session.close();
@@ -159,109 +158,8 @@ public class BirthDataService {
     }
 
 
-    private Map<String, Object> formatPerson(PersonEntity person, Session session){
-
-        HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put("pnr", person.getPersonnummer());
-
-        for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects()){
-                for (PersonBaseData data: effect.getDataItems()){
-
-                    PersonBirthData birthData = data.getBirth();
-                    if (birthData != null && birthData.getBirthDatetime() != null) {
-                        item.put("birth_year", birthData.getBirthDatetime().getYear());
-
-                    }
-
-                    PersonCoreData coreData = data.getCoreData();
-                    if(coreData != null) {
-                        item.put("effective_pnr", coreData.getCprNumber());
-                    }
-
-                    //Missing birth_authority code
-
-                    PersonStatusData statusData = data.getStatus();
-                    if(statusData != null){
-                        item.put("status", statusData.getStatus());
-                    }
-
-                    //Missing prod date (not sure about the meaning)
-
-                    PersonParentData personMotherData = data.getMother();
-                    if(personMotherData != null){
-                      item.put("mother_pnr", personMotherData.getCprNumber());
-                            PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
-                            if(mother != null){
-                                item.putAll(this.formatParentPerson(mother, session, "mother_"));
-                            }
-                    }
-
-                    PersonParentData personFatherData = data.getFather();
-                    if(personFatherData != null){
-                        item.put("father_pnr", personFatherData.getCprNumber());
-                        PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
-                        if(father != null){
-                            item.putAll(this.formatParentPerson(father, session, "father_"));
-                        }
-                    }
-
-                }
-
-            }
-        }
-        return item;
-
-    }
-
-    private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix){
-
-        HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put(prefix + "pnr", person.getPersonnummer());
-
-        for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects()){
-                for (PersonBaseData data: effect.getDataItems()){
 
 
 
 
-
-                    PersonStatusData statusData = data.getStatus();
-                    if(statusData != null){
-                        item.put(prefix + "status", statusData.getStatus());
-                    }
-
-                    PersonAddressData addressData = data.getAddress();
-                    if(addressData != null){
-                        item.put(prefix + "municipality_code", addressData.getMunicipalityCode() );
-                        //Locatility need to be here
-                        item.put(prefix + "road code", addressData.getRoadCode());
-                        item.put(prefix + "house_number", addressData.getHouseNumber());
-                        item.put(prefix + "door_number", addressData.getDoor());
-                        item.put(prefix + "bnr", addressData.getBuildingNumber());
-                    }
-
-
-
-
-
-
-                }
-
-            }
-        }
-        return item;
-
-    }
-
-//    @SpringBootApplication
-//    public static class Application {
-//
-//        public static void main(String[] args) {
-//            SpringApplication.run(Application.class, args);
-//
-//            System.out.println("Hi there");
-//        }
-//    }
 }
