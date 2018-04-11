@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik;
 
+import dk.magenta.datafordeler.statistik.services.MovementDataService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;

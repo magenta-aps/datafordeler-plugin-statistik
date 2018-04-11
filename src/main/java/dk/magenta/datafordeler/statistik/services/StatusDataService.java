@@ -1,4 +1,4 @@
-package dk.magenta.datafordeler.statistik;
+package dk.magenta.datafordeler.statistik.services;
 /*Extract the following for a person:
     pnr
     birth year

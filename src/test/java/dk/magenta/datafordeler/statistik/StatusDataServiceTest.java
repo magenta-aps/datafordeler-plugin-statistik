@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik;
 
+import dk.magenta.datafordeler.statistik.services.StatusDataService;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Test;

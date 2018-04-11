@@ -1,4 +1,4 @@
-package dk.magenta.datafordeler.statistik;
+package dk.magenta.datafordeler.statistik.utils;
 
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
@@ -35,7 +35,8 @@ public class FormatPersonUtils {
                     }
 
 
-
+                    //This part of the code is duplicated in the function formatParentPerson.
+                    // Check it out how it can be generalized.
                     PersonAddressData addressData = data.getAddress();
                     if(addressData != null){
                         item.put("municipality_code", addressData.getMunicipalityCode() );

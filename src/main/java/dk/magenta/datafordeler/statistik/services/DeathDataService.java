@@ -1,4 +1,4 @@
-package dk.magenta.datafordeler.statistik;
+package dk.magenta.datafordeler.statistik.services;
 /*Extract the following for a person:
     status code
     death date
@@ -36,6 +36,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

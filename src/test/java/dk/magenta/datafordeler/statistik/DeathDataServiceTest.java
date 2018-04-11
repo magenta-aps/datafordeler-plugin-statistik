@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 
+import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
