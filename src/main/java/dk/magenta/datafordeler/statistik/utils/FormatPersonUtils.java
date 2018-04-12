@@ -18,8 +18,20 @@ public class FormatPersonUtils {
         item.put("pnr", person.getPersonnummer());
 
         for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects()){
-                for (PersonBaseData data: effect.getDataItems()){
+            for (PersonEffect effect: registration.getEffects())
+                for (PersonBaseData data : effect.getDataItems()) {
+
+                    PersonNameData firstNameData = data.getName();
+                    if(firstNameData != null){
+                        item.put("first_name", firstNameData.getFirstNames());
+                    }
+
+                    PersonNameData lastNameData = data.getName();
+                    if(lastNameData != null){
+                        item.put("last_name", lastNameData.getLastName());
+                    }
+
+
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null && birthData.getBirthDatetime() != null) {
@@ -28,66 +40,77 @@ public class FormatPersonUtils {
                     }
 
 
-
-                    PersonCoreData coreData = data.getCoreData();
-                    if(coreData != null) {
+                   /* PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
                         item.put("effective_pnr", coreData.getCprNumber());
-                    }
+                    }*/
+
+
+
+
+
+
 
 
                     //This part of the code is duplicated in the function formatParentPerson.
                     // Check it out how it can be generalized.
-                    PersonAddressData addressData = data.getAddress();
-                    if(addressData != null){
-                        item.put("municipality_code", addressData.getMunicipalityCode() );
+          /*          PersonAddressData addressData = data.getAddress();
+                    if (addressData != null) {
+                        //item.put("post_code", addressData.getPostalCode());
+
+                        //"moving_in_date"?
+
+                        // "church"?
+
+                        item.put("municipality_code", addressData.getMunicipalityCode());
                         //Locatility need to be here
                         item.put("road_code", addressData.getRoadCode());
                         item.put("house_number", addressData.getHouseNumber());
                         item.put("door_number", addressData.getDoor());
                         item.put("bnr", addressData.getBuildingNumber());
                     }
-
-
+*/
 
                     //Missing birth_authority code
 
                     PersonStatusData statusData = data.getStatus();
-                    if(statusData != null){
+                    if (statusData != null) {
                         item.put("status_code", statusData.getStatus());
                     }
 
                     //Missing prod date (not sure about the meaning)
 
                     PersonParentData personMotherData = data.getMother();
-                    if(personMotherData != null){
+                    if (personMotherData != null) {
                         item.put("mother_pnr", personMotherData.getCprNumber());
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
-                        if(mother != null){
+                        if (mother != null) {
                             item.putAll(this.formatParentPerson(mother, session, "mother_"));
                         }
                     }
 
                     PersonParentData personFatherData = data.getFather();
-                    if(personFatherData != null){
+                    if (personFatherData != null) {
                         item.put("father_pnr", personFatherData.getCprNumber());
                         PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
-                        if(father != null){
+                        if (father != null) {
                             item.putAll(this.formatParentPerson(father, session, "father_"));
                         }
                     }
 
-                 PersonCivilStatusData personSpouseData =  data.getCivilStatus();
-                    if(personSpouseData != null){
+                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
+                    if (personSpouseData != null) {
+                        // "civil_status_date"?
+
+
                         item.put("spouse_pnr", personSpouseData.getSpouseCpr());
                         PersonEntity spouse = QueryManager.getEntity(session, PersonEntity.generateUUID(personSpouseData.getSpouseCpr()), PersonEntity.class);
-                        if(spouse != null){
+                        if (spouse != null) {
                             item.putAll(this.formatParentPerson(spouse, session, "spouse_"));
                         }
                     }
 
                 }
-
-            }
         }
         return item;
 

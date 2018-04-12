@@ -6,6 +6,12 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import org.junit.Test;
+import static org.junit.Assert.assertThat;
+//import org.hamcrest.core.Is.is;
+
+
+
+import static org.hamcrest.CoreMatchers.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,6 +49,10 @@ public class DeathDataServiceTest {
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/123", HttpMethod.GET, httpEntity, String.class);
+        assertThat(response.getBody(), is(not("")));
+
+        //assertThat(person, is(not("")));
+
         System.out.println("Body response: "+response.getBody());
     }
 
