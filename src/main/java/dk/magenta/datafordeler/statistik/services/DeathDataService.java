@@ -96,65 +96,6 @@ public class DeathDataService {
                 csvMapper);
 
 
-
-
-        /*try {
-
-            PersonQuery personQuery = new PersonQuery();
-
-            OffsetDateTime now = OffsetDateTime.now();
-            personQuery.setRegistrationFrom(now);
-            personQuery.setRegistrationTo(now);
-            personQuery.setEffectFrom(now);
-            personQuery.setEffectTo(now);
-
-            personQuery.applyFilters(primary_session);
-            personUtils = new FormatPersonUtils();
-
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
-
-            Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                return personUtils.formatPerson(personEntity, secondary_session);
-            }).iterator();
-
-            CsvSchema.Builder builder = new CsvSchema.Builder();
-
-            List<String> keys = Arrays.asList(new String[]{
-                    "status_code", "death_date", "prod_date", "pnr", "birth_year",
-
-                    "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
-
-                    "status_code","birth_municipality", "municipality_code",
-                    "locality_name", "road_code", "house_number", "door_number", "bnr"
-
-
-            });
-
-
-
-            System.out.println("Keys: --->"+keys.toString());
-
-            for (int i = 0; i < keys.size(); i++) {
-                builder.addColumn(new CsvSchema.Column(
-                        i, keys.get(i),
-                        CsvSchema.ColumnType.NUMBER_OR_STRING
-                ));
-            }
-            CsvSchema schema = builder.build().withHeader();
-            response.setContentType("text/csv");
-
-
-            SequenceWriter writer = csvMapper.writer(schema).writeValues(response.getOutputStream());
-
-            while (dataIter.hasNext()) {
-                writer.write(dataIter.next());
-            }
-
-
-        }finally {
-            primary_session.close();
-            secondary_session.close();
-        }*/
     }
 
 

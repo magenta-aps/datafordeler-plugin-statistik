@@ -101,62 +101,7 @@ public class BirthDataService {
                 response,
                 csvMapper);
 
-               /* try{
-                    PersonQuery personQuery = new PersonQuery();
 
-                    OffsetDateTime now = OffsetDateTime.now();
-                    personQuery.setRegistrationFrom(now);
-                    personQuery.setRegistrationTo(now);
-                    personQuery.setEffectFrom(now);
-                    personQuery.setEffectTo(now);
-
-                    personQuery.applyFilters(primary_session);
-
-                    personUtils = new FormatPersonUtils();
-
-
-                    Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
-
-                        Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                            return personUtils.formatPerson(personEntity, secondary_session);
-                        }).iterator();
-
-                        CsvSchema.Builder builder = new CsvSchema.Builder();
-
-
-                   List<String> keys = Arrays.asList(new String[]{
-                            "pnr", "birth_year", "effective_pnr", "status_code",
-
-                           "mother_pnr", "mother_status", "mother_municipality_code", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
-                           "father_pnr", "father_status", "father_municipality_code", "father_road_code", "father_house_number", "father_door_number", "father_bnr",
-                         "locality_name", "road_code", "house_number", "door_number", "bnr","municipality_code",
-
-
-                    });
-
-
-
-                    System.out.println(keys.toString());
-
-                    for (int i = 0; i < keys.size(); i++) {
-                        builder.addColumn(new CsvSchema.Column(
-                                i, keys.get(i),
-                                CsvSchema.ColumnType.NUMBER_OR_STRING
-                        ));
-                    }
-                        CsvSchema schema = builder.build().withHeader();
-                        response.setContentType("text/csv");
-
-
-                    SequenceWriter writer = csvMapper.writer(schema).writeValues(response.getOutputStream());
-
-                    while (dataIter.hasNext()) {
-                        writer.write(dataIter.next());
-                    }
-                }finally {
-                    primary_session.close();
-                    secondary_session.close();
-                }*/
     }
 
 
