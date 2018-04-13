@@ -8,6 +8,9 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
+import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 
 import javax.servlet.http.HttpServletResponse;
@@ -24,12 +27,14 @@ public abstract class StatisticsService {
 
     protected abstract CsvMapper getCsvMapper();
 
+    public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
+    public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
-    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session primary_session, Session secondary_session) {
+    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session primary_session, Session secondary_session, Filter filter) {
         System.out.println("Here");
         try {
             System.out.println("inside Here");
-            return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session)).iterator();
+            return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -37,15 +42,15 @@ public abstract class StatisticsService {
     }
 
 
-    public Map<String, Object> formatPerson(PersonEntity person, Session session){
+    public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
 
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
 
         for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects()) {
+            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
+/*
                     PersonNameData firstNameData = data.getName();
                     if (firstNameData != null) {
                         item.put("first_name", firstNameData.getFirstNames());
@@ -54,13 +59,16 @@ public abstract class StatisticsService {
                     PersonNameData lastNameData = data.getName();
                     if (lastNameData != null) {
                         item.put("last_name", lastNameData.getLastName());
-                    }
-
+                    }*/
 
                     PersonBirthData birthData = data.getBirth();
-                    if (birthData != null && birthData.getBirthDatetime() != null) {
-                        item.put("birth_year", birthData.getBirthDatetime().getYear());
-
+                    if (birthData != null) {
+                        if (birthData.getBirthDatetime() != null) {
+                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                        }
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                        }
                     }
 
 
@@ -76,6 +84,12 @@ public abstract class StatisticsService {
                     if (coreData != null) {
                         item.put("effective_pnr", coreData.getCprNumber());
                     }*/
+
+                    item.put("effective_pnr", person.getPersonnummer());
+                    PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
+                        item.put("effective_pnr", coreData.getCprNumber());
+                    }
 
 
                     //This part of the code is duplicated in the function formatParentPerson.
@@ -127,7 +141,7 @@ public abstract class StatisticsService {
                             item.putAll(this.formatParentPerson(father, session, "father_"));
                         }
                     }
-
+/*
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
                         // "civil_status_date"?
@@ -139,6 +153,7 @@ public abstract class StatisticsService {
                             item.putAll(this.formatParentPerson(spouse, session, "spouse_"));
                         }
                     }
+*/
                 }
             }
         }
@@ -150,6 +165,7 @@ public abstract class StatisticsService {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(prefix + "pnr", person.getPersonnummer());
+        LookupService lookupService = new LookupService(session);
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
@@ -161,18 +177,29 @@ public abstract class StatisticsService {
 
                     PersonAddressData addressData = data.getAddress();
                     if(addressData != null){
-                        //Missing birth_authority code
-                        //"moving_in_date"?
-
-                        // "church"?
+                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
 
                         item.put(prefix + "municipality_code", addressData.getMunicipalityCode() );
-                        //Locatility need to be here
                         item.put(prefix + "road_code", addressData.getRoadCode());
                         item.put(prefix + "house_number", addressData.getHouseNumber());
                         item.put(prefix + "door_number", addressData.getDoor());
                         item.put(prefix + "bnr", addressData.getBuildingNumber());
+
+                        if (lookup.localityName != null) {
+                            item.put(prefix + "locality", lookup.localityName);
+                        }
                     }
+
+
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put(prefix + "birth_authority", birthData.getBirthPlaceCode());
+                        }
+                    }
+
+
+
                 }
             }
         }

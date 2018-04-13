@@ -1,0 +1,43 @@
+{
+  "95fcfa597030a16f89782eefc6a87260f97b1b2ca6874233aaad8e9c88d3d1fe": {
+    "virkninger": [
+      {
+        "data": [
+          {
+            "sumiffiik": "{041a95ee-9d04-458b-ae73-0475d9765db5}",
+            "state": {
+              "uuid": "3a205cdf-f044-4853-a613-a156471e7c72",
+              "domaene": "https://data.gl/gladdreg/state/1/rest/"
+            },
+            "code": 1,
+            "registration_user": null,
+            "cpr_name": null,
+            "location": {
+              "uuid": "4d9cd2a0-89f1-4acc-a259-4fd139006d87",
+              "domaene": "https://data.gl/gladdreg/locality/1/rest/"
+            },
+            "note": null,
+            "municipality": {
+              "uuid": "f792151b-f509-4173-aa5d-2f237cca1784",
+              "domaene": "https://data.gl/gladdreg/municipality/1/rest/"
+            },
+            "shortname": "Aadarujuup Aqq.",
+            "alternate_name": null,
+            "name": "Aadarujuup Aqquserna",
+            "sumiffiik_domain": "https://data.gl/najugaq/road",
+            "active": true
+          }
+        ],
+        "virkningTil": null,
+        "virkningFra": "2017-09-19T10:45:05.591Z"
+      }
+    ],
+    "checksum": "95fcfa597030a16f89782eefc6a87260f97b1b2ca6874233aaad8e9c88d3d1fe",
+    "entity": {
+      "uuid": "e4dc6c09-baae-40b1-8696-57771b2f7a81",
+      "domaene": "https://data.gl/gladdreg/road/1/rest/"
+    },
+    "registreringTil": null,
+    "registreringFra": "2017-09-19T10:45:05.591Z"
+  }
+}

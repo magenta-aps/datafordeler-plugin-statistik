@@ -30,8 +30,10 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -72,23 +73,32 @@ public class StatusDataService extends StatisticsService {
     //This function should have the following inputs:
     //living in Greenland on date
 
+
+    public static int[] glMunicipalityCodes = new int[]{955, 956, 957, 958, 961};
+
     @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getBirth(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
 
+        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
+        OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
+        Filter filter = new Filter(effectDate);
+
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
-        PersonQuery personQuery = new PersonQuery();
-        OffsetDateTime now = OffsetDateTime.now();
-        personQuery.setRegistrationFrom(now);
-        personQuery.setRegistrationTo(now);
-        personQuery.setEffectFrom(now);
-        personQuery.setEffectTo(now);
-        personQuery.applyFilters(primary_session);
-        Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
+        try {
+            PersonQuery personQuery = new PersonQuery();
+            personQuery.setEffectFrom(livingInGreenlandAtDate);
+            personQuery.setEffectTo(livingInGreenlandAtDate);
+            personQuery.applyFilters(primary_session);
+            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-        this.writeItems(this.formatItems(personEntities, primary_session, secondary_session), response);
+            this.writeItems(this.formatItems(personEntities, primary_session, secondary_session, filter), response);
+        } finally {
+            primary_session.close();
+            secondary_session.close();
+        }
     }
 
     @Override

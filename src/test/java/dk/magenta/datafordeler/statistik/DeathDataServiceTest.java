@@ -51,7 +51,7 @@ public class DeathDataServiceTest {
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/123", HttpMethod.GET, httpEntity, String.class);
         assertThat(response.getBody(), is(not("")));
 
-        //assertThat(person, is(not("")));
+        //assertThat(testsUtils, is(not("")));
 
         System.out.println("Body response: "+response.getBody());
     }
