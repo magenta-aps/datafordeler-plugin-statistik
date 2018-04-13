@@ -63,7 +63,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/statistik/movement_data")
-public class MovementDataService {
+public class MovementDataService extends StatisticsService {
 
     @Autowired
     SessionManager sessionManager;
@@ -107,51 +107,12 @@ public class MovementDataService {
             personQuery.setRegistrationTo(now);
             personQuery.setEffectFrom(now);
             personQuery.setEffectTo(now);
-
             personQuery.applyFilters(primary_session);
-            personUtils = new FormatPersonUtils();
-
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                return personUtils.formatPerson(personEntity, secondary_session);
-            }).iterator();
+            personUtils = new FormatPersonUtils();
 
-            CsvSchema.Builder builder = new CsvSchema.Builder();
-
-            List<String> keys = Arrays.asList(new String[]{
-                    "pnr", "birth_year", "effective_pnr", "status_code", "birth_municipality_code",
-
-
-
-                    "mother_pnr", "father_pnr", "spouse_pnr", "prod_date",
-
-                    "origin_municipality_code", "origin_locality_name", "origin_road_code", "origin_house_number", "origin_floor", "origin_door_number", "origin_bnr",
-                    "destination_municipality_code", "destination_locality_name", "destination_road_code", "destination_house_number", "destination_floor", "destination_door_number", "destination_bnr",
-
-
-            });
-
-
-
-                    System.out.println("Keys: --->"+keys.toString());
-
-            for (int i = 0; i < keys.size(); i++) {
-                builder.addColumn(new CsvSchema.Column(
-                        i, keys.get(i),
-                        CsvSchema.ColumnType.NUMBER_OR_STRING
-                ));
-            }
-            CsvSchema schema = builder.build().withHeader();
-            response.setContentType("text/csv");
-
-
-            SequenceWriter writer = csvMapper.writer(schema).writeValues(response.getOutputStream());
-
-            while (dataIter.hasNext()) {
-                writer.write(dataIter.next());
-            }
-
+            this.writeItems(personUtils.formatItems(personEntities, primary_session, secondary_session), response);
 
         }finally {
             primary_session.close();
@@ -159,5 +120,20 @@ public class MovementDataService {
         }
 
 
+    }
+
+    @Override
+    protected List<String> getColumnNames() {
+        return Arrays.asList(new String[]{
+                "pnr", "birth_year", "effective_pnr", "status_code", "birth_municipality_code",
+                "mother_pnr", "father_pnr", "spouse_pnr", "prod_date",
+                "origin_municipality_code", "origin_locality_name", "origin_road_code", "origin_house_number", "origin_floor", "origin_door_number", "origin_bnr",
+                "destination_municipality_code", "destination_locality_name", "destination_road_code", "destination_house_number", "destination_floor", "destination_door_number", "destination_bnr",
+        });
+    }
+
+    @Override
+    protected CsvMapper getCsvMapper() {
+        return this.csvMapper;
     }
 }
