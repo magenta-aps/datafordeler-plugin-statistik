@@ -102,7 +102,9 @@ public class DeathDataService {
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
             Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                return personUtils.formatPerson(personEntity, secondary_session);
+                Map<String, Object> m = personUtils.formatPerson(personEntity, secondary_session, filter);
+                System.out.println(m);
+                return m;
             }).iterator();
 
             CsvSchema.Builder builder = new CsvSchema.Builder();

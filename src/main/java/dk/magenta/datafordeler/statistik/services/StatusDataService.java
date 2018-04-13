@@ -32,10 +32,12 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -80,21 +82,43 @@ public class StatusDataService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
     private FormatPersonUtils personUtils;
 
+    public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
+    public static final String EFFECT_DATE_PARAMETER = "effectDate";
+
+    public static int[] glMunicipalityCodes = new int[]{955, 956, 957, 958, 961};
+
     @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getBirth(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
 
+        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
+        OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
+
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
-        try{
-            PersonQuery personQuery = new PersonQuery();
+        try {
 
-            OffsetDateTime now = OffsetDateTime.now();
-            personQuery.setRegistrationFrom(now);
-            personQuery.setRegistrationTo(now);
-            personQuery.setEffectFrom(now);
-            personQuery.setEffectTo(now);
+            PersonQuery personQuery = new PersonQuery();
+            personQuery.setEffectFrom(livingInGreenlandAtDate);
+            personQuery.setEffectTo(livingInGreenlandAtDate);
+            for (int municipalityCode : glMunicipalityCodes) {
+                personQuery.addKommunekode(municipalityCode);
+            }
+
+            Filter filter = new Filter();
+            filter.effectAt = effectDate;
+
+
+
+            // Get entities with address in GL on 1. april
+
+            // use request parameters
+            // Get person data effective at 1. may
+            /*personQuery.setRegistrationFrom(effectDate);
+            personQuery.setRegistrationTo(effectDate);
+            personQuery.setEffectFrom(effectDate);
+            personQuery.setEffectTo(effectDate);*/
 
             personQuery.applyFilters(primary_session);
 
@@ -104,7 +128,7 @@ public class StatusDataService {
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
             Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                return personUtils.formatPerson(personEntity, secondary_session);
+                return personUtils.formatPerson(personEntity, secondary_session, filter);
             }).iterator();
 
             CsvSchema.Builder builder = new CsvSchema.Builder();

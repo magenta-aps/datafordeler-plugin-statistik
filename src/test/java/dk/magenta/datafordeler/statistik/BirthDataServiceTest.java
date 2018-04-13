@@ -36,10 +36,13 @@ public class BirthDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
+    @Autowired
+    PersonTestsUtils testsUtils;
+
     @Test
     public void testBirthService() throws Exception {
-        PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
-        person.loadPersonData();
+        testsUtils.loadPersonData();
+        testsUtils.loadGladdrregData();
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/123", HttpMethod.GET, httpEntity, String.class);
@@ -50,7 +53,7 @@ public class BirthDataServiceTest {
 
     }
    /* public void loadPerson() throws Exception {
-        InputStream testData = BirthDataServiceTest.class.getResourceAsStream("/person.txt");
+        InputStream testData = BirthDataServiceTest.class.getResourceAsStream("/testsUtils.txt");
         ImportMetadata importMetadata = new ImportMetadata();
         Session session = sessionManager.getSessionFactory().openSession();
         importMetadata.setSession(session);

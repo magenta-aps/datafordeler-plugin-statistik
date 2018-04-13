@@ -12,15 +12,15 @@ import java.util.Map;
 
 public class FormatPersonUtils {
 
-    public Map<String, Object> formatPerson(PersonEntity person, Session session){
+    public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
 
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
 
         for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects())
+            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
+/*
                     PersonNameData firstNameData = data.getName();
                     if(firstNameData != null){
                         item.put("first_name", firstNameData.getFirstNames());
@@ -29,27 +29,25 @@ public class FormatPersonUtils {
                     PersonNameData lastNameData = data.getName();
                     if(lastNameData != null){
                         item.put("last_name", lastNameData.getLastName());
-                    }
-
-
-
-                    PersonBirthData birthData = data.getBirth();
-                    if (birthData != null && birthData.getBirthDatetime() != null) {
-                        item.put("birth_year", birthData.getBirthDatetime().getYear());
-
-                    }
-
-
-                   /* PersonCoreData coreData = data.getCoreData();
-                    if (coreData != null) {
-                        item.put("effective_pnr", coreData.getCprNumber());
                     }*/
 
 
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthDatetime() != null) {
+                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                        }
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                        }
+                    }
 
 
-
-
+                    item.put("effective_pnr", person.getPersonnummer());
+                    PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
+                        item.put("effective_pnr", coreData.getCprNumber());
+                    }
 
 
                     //This part of the code is duplicated in the function formatParentPerson.
@@ -97,7 +95,7 @@ public class FormatPersonUtils {
                             item.putAll(this.formatParentPerson(father, session, "father_"));
                         }
                     }
-
+/*
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
                         // "civil_status_date"?
@@ -109,8 +107,9 @@ public class FormatPersonUtils {
                             item.putAll(this.formatParentPerson(spouse, session, "spouse_"));
                         }
                     }
-
+*/
                 }
+            }
         }
         return item;
 
@@ -121,6 +120,8 @@ public class FormatPersonUtils {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(prefix + "pnr", person.getPersonnummer());
+
+        LookupService lookupService = new LookupService(session);
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffects()){
@@ -133,16 +134,28 @@ public class FormatPersonUtils {
 
                     PersonAddressData addressData = data.getAddress();
                     if(addressData != null){
+
+
+                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
+
                         item.put(prefix + "municipality_code", addressData.getMunicipalityCode() );
-                        //Locatility need to be here
                         item.put(prefix + "road_code", addressData.getRoadCode());
                         item.put(prefix + "house_number", addressData.getHouseNumber());
                         item.put(prefix + "door_number", addressData.getDoor());
                         item.put(prefix + "bnr", addressData.getBuildingNumber());
+
+                        if (lookup.localityName != null) {
+                            item.put(prefix + "locality", lookup.localityName);
+                        }
                     }
 
 
-
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put(prefix + "birth_authority", birthData.getBirthPlaceCode());
+                        }
+                    }
 
 
 

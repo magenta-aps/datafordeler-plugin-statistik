@@ -4,12 +4,12 @@ package dk.magenta.datafordeler.statistik.services;
     own pnr
     own birth year
     own effective pnr
-    own birth municipality code (data missing, import handled in another ticket)
+    own birth authority code (data missing, import handled in another ticket)
     own status code
     own prod date (to be investigated)
 
     mother's pnr
-    mother's birth municipality code (data missing, import handled in another ticket)
+    mother's birth authority code (data missing, import handled in another ticket)
     mother's status code
     mother's municipality code
     mother's locality name
@@ -19,7 +19,7 @@ package dk.magenta.datafordeler.statistik.services;
     mother's bnr
 
     father's pnr
-    father's birth municipality code (data missing, import handled in another ticket)
+    father's birth authority code (data missing, import handled in another ticket)
     father's status code
     father's municipality code
     father's locality name
@@ -111,7 +111,9 @@ public class BirthDataService {
                     Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
                         Iterator<Map<String, Object>> dataIter = personEntities.map(personEntity -> {
-                            return personUtils.formatPerson(personEntity, secondary_session);
+                            Map<String, Object> m = personUtils.formatPerson(personEntity, secondary_session, filter);
+                            System.out.println(m);
+                            return m;
                         }).iterator();
 
                         CsvSchema.Builder builder = new CsvSchema.Builder();
@@ -120,11 +122,10 @@ public class BirthDataService {
 
 
                     List<String> keys = Arrays.asList(new String[]{
-                            "pnr", "birth_year", "effective_pnr", "status_code",
-                            "mother_pnr","mother_status", "mother_municipality_code", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
-                             "father_pnr","father_status", "father_municipality_code", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
+                            "pnr", "birth_year", "effective_pnr", "birth_authority", "status_code",
+                            "mother_pnr","mother_status", "mother_birth_authority", "mother_municipality_code", "mother_locality", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
+                             "father_pnr","father_status", "father_birth_authority", "father_municipality_code", "father_locality", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
                             });
-                    System.out.println(keys.toString());
 
                     for (int i = 0; i < keys.size(); i++) {
                         builder.addColumn(new CsvSchema.Column(
