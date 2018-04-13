@@ -89,7 +89,7 @@ public class DeathDataService extends StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            this.writeItems(this.formatItems(personEntities, primary_session, secondary_session, filter), response);
+            this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
         } finally {
             primary_session.close();
             secondary_session.close();

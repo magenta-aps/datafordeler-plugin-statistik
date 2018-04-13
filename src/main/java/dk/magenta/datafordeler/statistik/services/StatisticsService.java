@@ -30,15 +30,8 @@ public abstract class StatisticsService {
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
-    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session primary_session, Session secondary_session, Filter filter) {
-        System.out.println("Here");
-        try {
-            System.out.println("inside Here");
-            return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
-        } finally {
-            primary_session.close();
-            secondary_session.close();
-        }
+    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
+        return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
     }
 
 
