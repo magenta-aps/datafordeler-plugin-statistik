@@ -46,7 +46,7 @@ public class StatusDataServiceTest {
 
 
     @Test
-    public void testSatusService()throws Exception {
+    public void testSatusDataService()throws Exception {
         PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
         person.loadPersonData();
         //loadPerson();

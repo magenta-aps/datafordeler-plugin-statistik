@@ -26,16 +26,9 @@ Input parameters:
     living in Greenland on date*/
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.cpr.CprPlugin;
-import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -49,12 +42,10 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.Iterator;
+
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+
 
 /*Created by Efrin 06-04-2018*/
 
@@ -69,16 +60,13 @@ public class StatusDataService {
     ObjectMapper objectMapper;
 
     @Autowired
-    private DafoUserManager dafoUserManager;
-
-    @Autowired
     private CsvMapper csvMapper;
 
-    @Autowired
-    private CprPlugin cprPlugin;
-
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
-    private FormatPersonUtils personUtils;
+
+
+    //This function should have the following inputs:
+    //living in Greenland on date
 
     @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getBirth(HttpServletRequest request, HttpServletResponse response)
@@ -87,7 +75,29 @@ public class StatusDataService {
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
-        try{
+
+
+        List<String> keys = Arrays.asList(new String[]{
+                "pnr", "birth_year", "first_name", "last_name", "status_code",
+                "birth_municipality", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
+
+                "municipality_code", "locality_name", "road_code", "house_number", "door_number",
+                "bnr", "moving_in_date", "post_code", "civil_status_date", "church"
+
+        });
+
+
+        FormatPersonUtils personUtils = new FormatPersonUtils();
+
+        personUtils.csvFormatterAndWriter(
+                primary_session,
+                secondary_session,
+                keys,
+                request,
+                response,
+                csvMapper);
+
+       /* try{
             PersonQuery personQuery = new PersonQuery();
 
             OffsetDateTime now = OffsetDateTime.now();
@@ -113,10 +123,11 @@ public class StatusDataService {
 
 
             List<String> keys = Arrays.asList(new String[]{
-                    "pnr", "birth_year", "first_name", "last_name", "status_code", "birth_municipality",
-                    "mother_pnr","father_pnr", "civil_status", "spouse_pnr", "municipality_code", "locality_name",
-                    "road_code", "house_number", "door_number", "bnr",
-                    "moving_in_date", "post_code", "civil_status_date", "church"
+                    "pnr", "birth_year", "first_name", "last_name", "status_code",
+                    "birth_municipality", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
+
+                    "municipality_code", "locality_name", "road_code", "house_number", "door_number",
+                    "bnr", "moving_in_date", "post_code", "civil_status_date", "church"
 
             });
             System.out.println(keys.toString());
@@ -139,7 +150,7 @@ public class StatusDataService {
         }finally {
             primary_session.close();
             secondary_session.close();
-        }
+        }*/
 
     }
 }

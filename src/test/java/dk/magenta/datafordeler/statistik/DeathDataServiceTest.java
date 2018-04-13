@@ -43,7 +43,7 @@ public class DeathDataServiceTest {
 
 
     @Test
-    public void testDeathService()throws Exception {
+    public void testDeathDataService()throws Exception {
         PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
         person.loadPersonData();
         //loadPerson();
