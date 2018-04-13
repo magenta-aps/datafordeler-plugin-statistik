@@ -66,6 +66,11 @@ public class DeathDataService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
+
+    //This function should have the following inputs:
+    // death year
+    //    registration before date
+    //    registration after date
     @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
