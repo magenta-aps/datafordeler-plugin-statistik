@@ -33,7 +33,6 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,18 +85,14 @@ public class DeathDataService extends StatisticsService {
         personQuery.applyFilters(primary_session);
         Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-        FormatPersonUtils personUtils = new FormatPersonUtils();
-        this.writeItems(personUtils.formatItems(personEntities, primary_session, secondary_session), response);
+        this.writeItems(this.formatItems(personEntities, primary_session, secondary_session), response);
     }
-
 
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "status_code", "death_date", "prod_date", "pnr", "birth_year",
-
                 "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
-
                 "status_code","birth_municipality", "municipality_code",
                 "locality_name", "road_code", "house_number", "door_number", "bnr"
         });
