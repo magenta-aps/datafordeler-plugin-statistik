@@ -87,7 +87,6 @@ public class MovementDataService extends StatisticsService {
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
 
-        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
         OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(effectDate);
 
@@ -95,9 +94,7 @@ public class MovementDataService extends StatisticsService {
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
         try {
-            PersonQuery personQuery = new PersonQuery();
-            personQuery.setEffectFrom(livingInGreenlandAtDate);
-            personQuery.setEffectTo(livingInGreenlandAtDate);
+            PersonQuery personQuery = this.getQuery(request);
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 

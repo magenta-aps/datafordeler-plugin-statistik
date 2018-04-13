@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
+import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -13,8 +15,10 @@ import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,9 +34,21 @@ public abstract class StatisticsService {
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
+    // Each service may need their own implementation of this, in which case they are welcome to override it
+    protected PersonQuery getQuery(HttpServletRequest request) {
+        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
+        PersonQuery personQuery = new PersonQuery();
+        if (livingInGreenlandAtDate != null) {
+            personQuery.setEffectFrom(livingInGreenlandAtDate);
+            personQuery.setEffectTo(livingInGreenlandAtDate);
+        }
+        return personQuery;
+    }
+
     public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
         return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
     }
+
 
 
     public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
