@@ -27,8 +27,11 @@ Input parameters:
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -42,16 +45,18 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 
 /*Created by Efrin 06-04-2018*/
 
 @RestController
 @RequestMapping("/statistik/status_data")
-public class StatusDataService {
+public class StatusDataService extends StatisticsService {
 
     @Autowired
     SessionManager sessionManager;
@@ -75,9 +80,23 @@ public class StatusDataService {
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
+        PersonQuery personQuery = new PersonQuery();
+        OffsetDateTime now = OffsetDateTime.now();
+        personQuery.setRegistrationFrom(now);
+        personQuery.setRegistrationTo(now);
+        personQuery.setEffectFrom(now);
+        personQuery.setEffectTo(now);
+        personQuery.applyFilters(primary_session);
+        Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
+        FormatPersonUtils personUtils = new FormatPersonUtils();
 
-        List<String> keys = Arrays.asList(new String[]{
+        this.writeItems(personUtils.formatItems(personEntities, primary_session, secondary_session), response);
+    }
+
+    @Override
+    protected List<String> getColumnNames() {
+        return Arrays.asList(new String[]{
                 "pnr", "birth_year", "first_name", "last_name", "status_code",
                 "birth_municipality", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
 
@@ -85,18 +104,10 @@ public class StatusDataService {
                 "bnr", "moving_in_date", "post_code", "civil_status_date", "church"
 
         });
+    }
 
-
-        FormatPersonUtils personUtils = new FormatPersonUtils();
-
-        personUtils.csvFormatterAndWriter(
-                primary_session,
-                secondary_session,
-                keys,
-                request,
-                response,
-                csvMapper);
-
-
+    @Override
+    protected CsvMapper getCsvMapper() {
+        return this.csvMapper;
     }
 }
