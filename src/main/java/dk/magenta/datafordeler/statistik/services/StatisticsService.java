@@ -51,6 +51,12 @@ public abstract class StatisticsService {
 
 
 
+    /*
+    TODO: Find a way to format a person differently for each service (ie. each service wants different fields set)
+    Populating the map with all fields and then filtering in the service will introduce unnecessary overhead because
+    we're fetching data we don't need.
+    Perhaps use a Set of keys we're interested in, from getColumnNames()?
+     */
     public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
 
         HashMap<String, Object> item = new HashMap<String, Object>();
