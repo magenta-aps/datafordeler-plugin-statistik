@@ -48,10 +48,7 @@ public class DeathDataServiceTest {
         person.loadPersonData();
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/123", HttpMethod.GET, httpEntity, String.class);
-        assertThat(response.getBody(), is(not("")));
-
-        //assertThat(testsUtils, is(not("")));
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=2016-08-01&beforeDate=2016-09-01&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
 
         System.out.println("Body response: "+response.getBody());
     }

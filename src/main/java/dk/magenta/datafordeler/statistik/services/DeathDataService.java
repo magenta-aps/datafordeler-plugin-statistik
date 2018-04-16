@@ -35,6 +35,7 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.statistik.queries.PersonDeathQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -72,7 +73,7 @@ public class DeathDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
-    @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
+    @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
 
@@ -86,7 +87,6 @@ public class DeathDataService extends StatisticsService {
             PersonQuery personQuery = this.getQuery(request);
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
-
             this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
         } finally {
             primary_session.close();
@@ -107,5 +107,22 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected CsvMapper getCsvMapper() {
         return this.csvMapper;
+    }
+
+    @Override
+    protected PersonQuery getQuery(HttpServletRequest request) {
+        PersonDeathQuery personDeathQuery = new PersonDeathQuery();
+
+        OffsetDateTime diedBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
+        if (diedBeforeDate != null) {
+            personDeathQuery.setDeathDateTimeBefore(diedBeforeDate.toLocalDateTime()); // Timezone?
+        }
+
+        OffsetDateTime diedAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
+        if (diedAfterDate != null) {
+            personDeathQuery.setDeathDateTimeAfter(diedAfterDate.toLocalDateTime()); // Timezone?
+        }
+
+        return personDeathQuery;
     }
 }
