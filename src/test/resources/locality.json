@@ -1,0 +1,47 @@
+{
+  "0f3e2547dfc883587190b8e0d9ebd9122e2d170544eeb5641daf41962db6aae7": {
+    "virkninger": [
+      {
+        "data": [
+          {
+            "sumiffiik": "{79631a3b-82f0-4208-b165-0f07aeb6b04d}",
+            "state": {
+              "uuid": "90885d50-731d-47d7-a3bc-efca91b77a9a",
+              "domaene": "https://data.gl/gladdreg/state/1/rest/"
+            },
+            "abbrev": "PAA",
+            "code": 500,
+            "registration_user": null,
+            "type": 1,
+            "note": null,
+            "locality_state": 15,
+            "municipality": {
+              "uuid": "f792151b-f509-4173-aa5d-2f237cca1784",
+              "domaene": "https://data.gl/gladdreg/municipality/1/rest/"
+            },
+            "postal_code": {
+              "uuid": "a0c543c9-5588-42ef-9497-ab765fa3f8c0",
+              "domaene": "https://data.gl/gladdreg/postalcode/1/rest/"
+            },
+            "name": "Paamiut",
+            "district": {
+              "uuid": "3032a3cd-91cb-4fe6-a755-7e224b1b52ec",
+              "domaene": "https://data.gl/gladdreg/district/1/rest/"
+            },
+            "sumiffiik_domain": "https://data.gl/najugaq/locality",
+            "active": true
+          }
+        ],
+        "virkningTil": null,
+        "virkningFra": "2017-09-19T10:45:04.624Z"
+      }
+    ],
+    "checksum": "0f3e2547dfc883587190b8e0d9ebd9122e2d170544eeb5641daf41962db6aae7",
+    "entity": {
+      "uuid": "4d9cd2a0-89f1-4acc-a259-4fd139006d87",
+      "domaene": "https://data.gl/gladdreg/locality/1/rest/"
+    },
+    "registreringTil": null,
+    "registreringFra": "2017-09-19T10:45:04.624Z"
+  }
+}

@@ -28,17 +28,16 @@ package dk.magenta.datafordeler.statistik.services;
 Input parameters:
     movement date*/
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.statistik.utils.FormatPersonUtils;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +52,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /*Created by Efrin 06-04-2018*/
@@ -80,8 +77,6 @@ public class MovementDataService extends StatisticsService {
     @Autowired
     private CprPlugin cprPlugin;
 
-    private FormatPersonUtils personUtils;
-
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
 
@@ -92,34 +87,22 @@ public class MovementDataService extends StatisticsService {
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
 
+        OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
+        Filter filter = new Filter(effectDate);
 
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
 
-
-
         try {
-
-            PersonQuery personQuery = new PersonQuery();
-
-            OffsetDateTime now = OffsetDateTime.now();
-            personQuery.setRegistrationFrom(now);
-            personQuery.setRegistrationTo(now);
-            personQuery.setEffectFrom(now);
-            personQuery.setEffectTo(now);
+            PersonQuery personQuery = this.getQuery(request);
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            personUtils = new FormatPersonUtils();
-
-            this.writeItems(personUtils.formatItems(personEntities, primary_session, secondary_session), response);
-
-        }finally {
+            this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+        } finally {
             primary_session.close();
             secondary_session.close();
         }
-
-
     }
 
     @Override

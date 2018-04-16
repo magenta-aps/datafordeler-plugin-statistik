@@ -1,0 +1,33 @@
+{
+  "03343519e0f63cc6d01c2aa7be5116071053c8e264ca962612b367bbcb4efbb6": {
+    "virkninger": [
+      {
+        "data": [
+          {
+            "sumiffiik": "{4884752c-f591-4c3a-85c2-875086b32ba3}",
+            "state": {
+              "uuid": "3a205cdf-f044-4853-a613-a156471e7c72",
+              "domaene": "https://data.gl/gladdreg/state/1/rest/"
+            },
+            "abbrev": "KU",
+            "code": 955,
+            "registration_user": null,
+            "note": "Nr., navn og forkortelse skal stemme med Gr\\u00f8nlands Statistik, Asiaq og andre: http://www.stat.gl/publ/da/be/201401/pdf/Lokaliteter%20i%20Gr\\u00f8nland.pdf",
+            "name": "Kommune Kujalleq",
+            "sumiffiik_domain": "https://data.gl/najugaq/municipality",
+            "active": true
+          }
+        ],
+        "virkningTil": null,
+        "virkningFra": "2017-09-19T10:45:03.527Z"
+      }
+    ],
+    "checksum": "03343519e0f63cc6d01c2aa7be5116071053c8e264ca962612b367bbcb4efbb6",
+    "entity": {
+      "uuid": "f792151b-f509-4173-aa5d-2f237cca1784",
+      "domaene": "https://data.gl/gladdreg/municipality/1/rest/"
+    },
+    "registreringTil": null,
+    "registreringFra": "2017-09-19T10:45:03.527Z"
+  }
+}

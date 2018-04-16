@@ -63,6 +63,12 @@
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>dk.magenta.datafordeler</groupId>
+            <artifactId>datafordeler-plugin-cvr</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.thymeleaf/thymeleaf-spring5
         It is required when working with web base projects-->
