@@ -44,6 +44,7 @@ import dk.magenta.datafordeler.core.exception.MissingParameterException;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -117,5 +119,23 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected CsvMapper getCsvMapper() {
         return this.csvMapper;
+    }
+
+
+    @Override
+    protected PersonQuery getQuery(HttpServletRequest request) {
+        PersonBirthQuery personBirthQuery = new PersonBirthQuery();
+
+        OffsetDateTime bornBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
+        if (bornBeforeDate != null) {
+            personBirthQuery.setBirthDateTimeBefore(bornBeforeDate.toLocalDateTime()); // Timezone?
+        }
+
+        OffsetDateTime bornAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
+        if (bornAfterDate != null) {
+            personBirthQuery.setBirthDateTimeAfter(bornAfterDate.toLocalDateTime()); // Timezone?
+        }
+
+        return personBirthQuery;
     }
 }
