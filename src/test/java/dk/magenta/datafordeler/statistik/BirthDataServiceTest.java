@@ -33,17 +33,19 @@ public class BirthDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
-    @Autowired
     PersonTestsUtils testsUtils;
 
     @Test
     public void testBirthDataService() throws Exception {
+
+        testsUtils = new PersonTestsUtils(sessionManager, personEntityManager);
+
         testsUtils.loadPersonData();
-        testsUtils.loadPersonData();
-        testsUtils.loadGladdrregData();
+        //testsUtils.loadPersonData();
+       // testsUtils.loadGladdrregData();
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/123", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/123?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         //assertThat(response.getBody(), is(not("")));
 
         System.out.println("Body response: "+response.getBody());

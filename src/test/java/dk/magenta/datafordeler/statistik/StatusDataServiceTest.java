@@ -51,7 +51,7 @@ public class StatusDataServiceTest {
         person.loadPersonData();
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/123", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/123?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         assertThat(response.getBody(), CoreMatchers.is(not("")));
 
 

@@ -49,7 +49,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /*Created by Efrin 06-04-2018*/
@@ -111,5 +113,20 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected CsvMapper getCsvMapper() {
         return this.csvMapper;
+    }
+
+    @Override
+    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
+        return null;
+    }
+
+    @Override
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+        return null;
+    }
+
+    @Override
+    protected Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
+        return null;
     }
 }
