@@ -285,7 +285,6 @@ public class LookupService {
             List<RoadEntity> roadEntities = QueryManager.getAllEntities(session, roadQuery, RoadEntity.class);
             return roadEntities.get(0);
         } catch (IndexOutOfBoundsException | NullPointerException e) {
-            e.printStackTrace();
         }
         return null;
     }

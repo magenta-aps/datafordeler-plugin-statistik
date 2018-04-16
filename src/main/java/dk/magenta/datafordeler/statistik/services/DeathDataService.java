@@ -40,6 +40,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonDeathQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +108,7 @@ public class DeathDataService extends StatisticsService {
                 "status_code", "death_date", "prod_date", "pnr", "birth_year",
                 "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
                 "status_code","birth_municipality", "municipality_code",
-                "locality_name", "road_code", "house_number", "door_number", "bnr"
+                "locality_name", "locality_code", "road_code", "house_number", "door_number", "bnr"
         });
     }
 
@@ -137,6 +139,8 @@ public class DeathDataService extends StatisticsService {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
 
+        LookupService lookupService = new LookupService(session);
+
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
@@ -155,12 +159,16 @@ public class DeathDataService extends StatisticsService {
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        //TODO: Locatility need to be here. Not sure what it means.
                         item.put("road_code", addressData.getRoadCode());
                         item.put("house_number", addressData.getHouseNumber());
                         item.put("door_number", addressData.getDoor());
                         item.put("bnr", addressData.getBuildingNumber());
                         item.put("municipality_code", addressData.getMunicipalityCode());
+                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
+                        if (lookup != null) {
+                            item.put("locality_name", lookup.localityName);
+                            item.put("locality_code", lookup.localityCode);
+                        }
                     }
 
                     PersonParentData personMotherData = data.getMother();

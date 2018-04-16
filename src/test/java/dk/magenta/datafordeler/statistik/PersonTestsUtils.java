@@ -32,6 +32,7 @@ import java.util.List;
 
 @Component
 public class PersonTestsUtils {
+
     @Autowired
     private SessionManager sessionManager;
 
@@ -65,6 +66,9 @@ public class PersonTestsUtils {
     private void loadLocality(Session session) throws DataFordelerException, IOException {
         List<? extends Registration> regs;
         try (InputStream testData = PersonTestsUtils.class.getResourceAsStream("/locality.json")) {
+            System.out.println(gladdrregPlugin);
+            System.out.println(gladdrregPlugin.getRegisterManager());
+            System.out.println(gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema));
             LocalityEntityManager localityEntityManager = (LocalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema);
             regs = localityEntityManager.parseData(testData, new ImportMetadata());
             testData.close();
