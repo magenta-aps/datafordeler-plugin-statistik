@@ -3,6 +3,7 @@ package dk.magenta.datafordeler.statistik.services;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.exception.MissingParameterException;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -31,6 +32,9 @@ public abstract class StatisticsService {
     protected abstract  Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter);
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
+    public static final String BEFORE_DATE_PARAMETER = "beforeDate";
+    public static final String AFTER_DATE_PARAMETER = "afterDate";
+
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
 
@@ -64,7 +68,7 @@ public abstract class StatisticsService {
             writer.write(items.next());
         }
     }
-}
+
 
 
 
@@ -218,4 +222,20 @@ public abstract class StatisticsService {
             }
         }
         return item;
+
     }*/
+
+
+
+
+
+
+
+    protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
+        if (parameterValue == null) {
+            throw new MissingParameterException(parameterName);
+        }
+    }
+}
+
+
