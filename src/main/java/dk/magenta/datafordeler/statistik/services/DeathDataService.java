@@ -33,8 +33,11 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.CprPlugin;
+import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
+import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonDeathQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
@@ -50,8 +53,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /*Created by Efrin 06-04-2018*/
@@ -73,6 +75,10 @@ public class DeathDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
+    //This function should have the following inputs:
+    // death year
+    //    registration before date
+    //    registration after date
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
@@ -125,4 +131,56 @@ public class DeathDataService extends StatisticsService {
 
         return personDeathQuery;
     }
+
+    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
+        System.out.println("Format Person");
+        HashMap<String, Object> item = new HashMap<String, Object>();
+        item.put("pnr", person.getPersonnummer());
+
+        for (PersonRegistration registration: person.getRegistrations()){
+            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
+                for (PersonBaseData data : effect.getDataItems()) {
+
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthDatetime() != null) {
+                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                        }
+                    }
+
+                    PersonStatusData statusData = data.getStatus();
+                    if (statusData != null) {
+                        item.put("status_code", statusData.getStatus());
+                    }
+
+                    PersonAddressData addressData = data.getAddress();
+                    if (addressData != null) {
+                        //TODO: Locatility need to be here. Not sure what it means.
+                        item.put("road_code", addressData.getRoadCode());
+                        item.put("house_number", addressData.getHouseNumber());
+                        item.put("door_number", addressData.getDoor());
+                        item.put("bnr", addressData.getBuildingNumber());
+                        item.put("municipality_code", addressData.getMunicipalityCode());
+                    }
+
+                    PersonParentData personMotherData = data.getMother();
+                    if (personMotherData != null) {
+                        item.put("mother_pnr", personMotherData.getCprNumber());
+                    }
+
+                    PersonParentData personFatherData = data.getFather();
+                    if (personFatherData != null) {
+                        item.put("father_pnr", personFatherData.getCprNumber());
+                    }
+                }
+            }
+        }
+        return item;
+    }
+
+    @Override
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+        return null;
+    }
+
 }

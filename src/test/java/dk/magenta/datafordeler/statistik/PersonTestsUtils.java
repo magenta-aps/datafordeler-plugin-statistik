@@ -49,8 +49,8 @@ public class PersonTestsUtils {
         this.personEntityManager = personEntityManager;
     }
 
-    public void loadPersonData() throws Exception {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/person.txt");
+    public void loadPersonData(String resource) throws Exception {
+        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/" + resource);
         ImportMetadata importMetadata = new ImportMetadata();
         Session session = sessionManager.getSessionFactory().openSession();
         importMetadata.setSession(session);
@@ -63,10 +63,12 @@ public class PersonTestsUtils {
     }
 
     private void loadLocality(Session session) throws DataFordelerException, IOException {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/locality.json");
-        LocalityEntityManager localityEntityManager = (LocalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema);
-        List<? extends Registration> regs = localityEntityManager.parseData(testData, new ImportMetadata());
-        testData.close();
+        List<? extends Registration> regs;
+        try (InputStream testData = PersonTestsUtils.class.getResourceAsStream("/locality.json")) {
+            LocalityEntityManager localityEntityManager = (LocalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema);
+            regs = localityEntityManager.parseData(testData, new ImportMetadata());
+            testData.close();
+        }
         for (Registration registration : regs) {
             LocalityRegistration localityRegistration = (LocalityRegistration) registration;
             QueryManager.saveRegistration(session, localityRegistration.getEntity(), localityRegistration);

@@ -5,6 +5,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.assertThat;
 //import org.hamcrest.core.Is.is;
@@ -29,7 +30,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DeathDataServiceTest {
 
-    private DeathDataService deathDataService;
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -39,16 +39,14 @@ public class DeathDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
-
-
-
     @Test
     public void testDeathDataService()throws Exception {
-        PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
-        person.loadPersonData();
-        //loadPerson();
+        PersonTestsUtils testsUtils = new PersonTestsUtils(sessionManager, personEntityManager);
+        testsUtils.loadPersonData("deadperson.txt");
+
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=2016-08-01&beforeDate=2016-09-01&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=2017-07-01&beforeDate=2017-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertNotEquals("", response.getBody());
 
         System.out.println("Body response: "+response.getBody());
     }

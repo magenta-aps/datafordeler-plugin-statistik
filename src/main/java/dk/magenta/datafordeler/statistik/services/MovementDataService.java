@@ -52,7 +52,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /*Created by Efrin 06-04-2018*/
@@ -98,7 +100,7 @@ public class MovementDataService extends StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            this.writeItems(this.formatItems(personEntities,secondary_session, filter), response);
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -118,5 +120,15 @@ public class MovementDataService extends StatisticsService {
     @Override
     protected CsvMapper getCsvMapper() {
         return this.csvMapper;
+    }
+
+    @Override
+    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
+        return null;
+    }
+
+    @Override
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+        return null;
     }
 }
