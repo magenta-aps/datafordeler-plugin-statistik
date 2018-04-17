@@ -50,11 +50,12 @@ public abstract class StatisticsService {
     protected void writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response) throws IOException {
         System.out.println("items: "+items);
         CsvSchema.Builder builder = new CsvSchema.Builder();
+        builder.setColumnSeparator(';');
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
             builder.addColumn(new CsvSchema.Column(
                     i, keys.get(i),
-                    CsvSchema.ColumnType.NUMBER_OR_STRING
+                    CsvSchema.ColumnType.STRING
             ));
         }
         CsvSchema schema = builder.build().withHeader();
