@@ -1,30 +1,4 @@
 package dk.magenta.datafordeler.statistik.services;
-/*Extract the following for a person:
-    status code
-    death date
-    prod date (to be investigated)
-    pnr
-    birth year
-
-    mother's pnr
-    father's pnr
-    spouse's pnr
-
-    effective pnr
-    status code
-    birth municipality code (data missing, import handled in another ticket)
-    municipality code
-    locality name
-    road code
-    house number
-    door/apartment no.
-    bnr
-
-Input parameters:
-    death year
-    registration before date
-    registration after date
-*/
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -78,10 +52,6 @@ public class DeathDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
-    //This function should have the following inputs:
-    // death year
-    //    registration before date
-    //    registration after date
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
@@ -107,9 +77,9 @@ public class DeathDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "status_code", "death_date", "prod_date", "pnr", "birth_year",
-                "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
-                "birth_authority", "municipality_code",
-                "locality_name", "locality_code", "road_code", "house_number", "door_number", "bnr"
+                "mother_pnr", "father_pnr", "spouse_pnr",
+                "effective_pnr", "birth_authority", "municipality_code",
+                "locality_name", "locality_code","road_code", "house_number", "door_number", "bnr"
         });
     }
 
@@ -138,6 +108,7 @@ public class DeathDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
+        item.put("effective_pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
 
@@ -146,6 +117,12 @@ public class DeathDataService extends StatisticsService {
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
+
+
+                    PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
+                        item.put("effective_pnr", coreData.getCprNumber());
+                    }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
@@ -164,6 +141,7 @@ public class DeathDataService extends StatisticsService {
                             deathTime = registration.getRegistrationFrom();
                         }
                     }
+
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
@@ -193,6 +171,7 @@ public class DeathDataService extends StatisticsService {
                     if (personCivilStatusData != null) {
                         item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
                     }
+                    
                 }
             }
         }
