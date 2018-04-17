@@ -13,6 +13,7 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 
@@ -58,7 +59,8 @@ public abstract class StatisticsService {
 
     protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
 
-    protected abstract Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix);
+    protected abstract Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService);
+
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";

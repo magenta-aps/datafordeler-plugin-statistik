@@ -176,7 +176,7 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
         return null;
     }
 }
