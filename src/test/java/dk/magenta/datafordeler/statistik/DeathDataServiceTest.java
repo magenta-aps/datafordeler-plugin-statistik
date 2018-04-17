@@ -3,16 +3,8 @@ package dk.magenta.datafordeler.statistik;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
-
-import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.junit.Assert.assertThat;
-//import org.hamcrest.core.Is.is;
-
-
-
-import static org.hamcrest.CoreMatchers.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +15,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+//import org.hamcrest.core.Is.is;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
