@@ -1,37 +1,5 @@
 package dk.magenta.datafordeler.statistik.services;
 
-/*Birth data service Extract the following for a person:
-    own pnr
-    own birth year
-    own effective pnr
-    own birth authority code (data missing, import handled in another ticket)
-    own status code
-    own prod date (to be investigated)
-
-    mother's pnr
-    mother's birth authority code (data missing, import handled in another ticket)
-    mother's status code
-    mother's municipality code
-    mother's locality name
-    mother's road code
-    mother's house number
-    mother's door/apartment no.
-    mother's bnr
-
-    father's pnr
-    father's birth authority code (data missing, import handled in another ticket)
-    father's status code
-    father's municipality code
-    father's locality name
-    father's road code
-    father's house number
-    father's door/apartment no.
-    father's bnr
-
-Input parameters:
-    birth year
-    registration before date
-    */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;

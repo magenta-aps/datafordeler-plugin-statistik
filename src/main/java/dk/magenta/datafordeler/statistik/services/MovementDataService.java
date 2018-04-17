@@ -1,32 +1,5 @@
 package dk.magenta.datafordeler.statistik.services;
-/*ract the following for a person:
-    pnr
-    birth year
-    effective pnr
-    status code
-    birth municipality code (data missing, import handled in another ticket)
-    mother's pnr
-    father's pnr
-    spouse's pnr
-    movement date
-    prod date (to be investigated)
-    origin municipality code
-    origin locality name
-    origin road code
-    origin house number
-    origin floor
-    origin door/apartment no.
-    origin bnr
-    destination municipality code
-    destination locality name
-    destination road code
-    destination house number
-    destination floor
-    destination door/apartment no.
-    destination bnr
 
-Input parameters:
-    movement date*/
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;

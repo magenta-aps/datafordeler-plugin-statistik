@@ -1,30 +1,4 @@
 package dk.magenta.datafordeler.statistik.services;
-/*Extract the following for a person:
-    status code
-    death date
-    prod date (to be investigated)
-    pnr
-    birth year
-
-    mother's pnr
-    father's pnr
-    spouse's pnr
-
-    effective pnr
-    status code
-    birth municipality code (data missing, import handled in another ticket)
-    municipality code
-    locality name
-    road code
-    house number
-    door/apartment no.
-    bnr
-
-Input parameters:
-    death year
-    registration before date
-    registration after date
-*/
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -78,10 +52,6 @@ public class DeathDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
-    //This function should have the following inputs:
-    // death year
-    //    registration before date
-    //    registration after date
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
@@ -201,11 +171,7 @@ public class DeathDataService extends StatisticsService {
                     if (personCivilStatusData != null) {
                         item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
                     }
-
-
-
-
-
+                    
                 }
             }
         }
