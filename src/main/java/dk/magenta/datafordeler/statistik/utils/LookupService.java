@@ -100,6 +100,7 @@ public class LookupService {
                                     if (localityData.getCode() > 0) {
                                         lookup.localityCode = localityData.getCode();
                                         lookup.localityName = localityData.getName();
+                                        lookup.localityAbbrev = localityData.getAbbrev();
                                         break;
                                     }
                                 }
@@ -141,6 +142,7 @@ public class LookupService {
 
             }
         }
+        System.out.println(lookup.localityCode);
         return lookup;
     }
 

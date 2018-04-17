@@ -26,10 +26,10 @@ public class MovementDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
-
     @Test
     public void testMovementDataService()throws Exception {
         testsUtils.loadPersonData("movedperson.txt");
+        testsUtils.loadGladdrregData();
         HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/movement_data/?effectDate=2016-09-01&afterDate=2000-08-01&beforeDate=2020-09-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotNull(response.getBody());

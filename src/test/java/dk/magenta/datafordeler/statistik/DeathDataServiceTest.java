@@ -40,11 +40,9 @@ public class DeathDataServiceTest {
     public void testDeathDataService()throws Exception {
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
-
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=2017-07-01&beforeDate=2017-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotEquals("", response.getBody());
-
         System.out.println("Body response: "+response.getBody());
     }
 

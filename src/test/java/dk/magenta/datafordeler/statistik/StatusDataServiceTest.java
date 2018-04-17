@@ -31,11 +31,13 @@ public class StatusDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
+    @Autowired
+    private PersonTestsUtils testsUtils;
+
     @Test
     public void testStatusDataService()throws Exception {
-        PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
-        person.loadPersonData("statusperson.txt");
-        //loadPerson();
+        testsUtils.loadPersonData("statusperson.txt");
+        testsUtils.loadGladdrregData();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
