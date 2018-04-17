@@ -5,8 +5,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
-import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -14,7 +12,6 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,22 +41,15 @@ public class MovementDataService extends StatisticsService {
     ObjectMapper objectMapper;
 
     @Autowired
-    private DafoUserManager dafoUserManager;
-
-    @Autowired
     private CsvMapper csvMapper;
 
-    @Autowired
-    private CprPlugin cprPlugin;
-
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
-
 
     //This function should have the following inputs:
     //movement date
 
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void getDeath(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
@@ -194,11 +184,6 @@ public class MovementDataService extends StatisticsService {
                         item.put("effective_pnr", coreData.getCprNumber());
                     }
 
-
-
-                    //Missing prod date (not sure about the meaning)
-
-
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
                         item.put("mother_pnr", personMotherData.getCprNumber());
@@ -217,10 +202,5 @@ public class MovementDataService extends StatisticsService {
             }
         }
         return item;
-    }
-
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-        return null;
     }
 }

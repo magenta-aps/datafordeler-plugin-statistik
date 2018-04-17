@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
-import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -48,13 +47,10 @@ public class DeathDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
-    @Autowired
-    private CprPlugin cprPlugin;
-
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void getDeath(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
@@ -178,11 +174,6 @@ public class DeathDataService extends StatisticsService {
             item.put("prod_date", earliestProdDate.format(dmyFormatter));
         }
         return item;
-    }
-
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-        return null;
     }
 
 }

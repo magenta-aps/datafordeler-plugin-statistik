@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
-import dk.magenta.datafordeler.core.exception.AccessDeniedException;
-import dk.magenta.datafordeler.core.exception.AccessRequiredException;
-import dk.magenta.datafordeler.core.exception.InvalidTokenException;
-import dk.magenta.datafordeler.core.exception.MissingParameterException;
+import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -52,8 +49,6 @@ public class BirthDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
-
-
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
 
@@ -62,8 +57,8 @@ public class BirthDataService extends StatisticsService {
     // registration before date
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void getBirth(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException {
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         super.get(request, response);
     }
 
@@ -138,8 +133,6 @@ public class BirthDataService extends StatisticsService {
                         item.put("status_code", statusData.getStatus());
                     }
 
-                    //TODO: own prod date (to be investigated)
-
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
                         item.put("mother_pnr", personMotherData.getCprNumber());
@@ -166,13 +159,9 @@ public class BirthDataService extends StatisticsService {
         return item;
     }
 
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
+    private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
-
-        //LookupService lookupService = new LookupService(session);
-        System.out.println("Lookup Object reference"+ lookupService.toString());
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {

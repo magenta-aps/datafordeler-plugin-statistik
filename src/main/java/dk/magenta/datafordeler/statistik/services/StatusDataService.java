@@ -50,7 +50,7 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void getStatus(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
@@ -119,7 +119,6 @@ public class StatusDataService extends StatisticsService {
                         item.put("status_code", statusData.getStatus());
                     }
 
-
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
                         item.put("post_code", addressData.getPostalCode());
@@ -136,7 +135,6 @@ public class StatusDataService extends StatisticsService {
                         }
 
                     }
-
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
@@ -165,7 +163,6 @@ public class StatusDataService extends StatisticsService {
                     if (personChurchData != null) {
                         item.put("church", personChurchData.getChurchRelation().toString());
                     }
-
                 }
             }
         }
@@ -173,10 +170,5 @@ public class StatusDataService extends StatisticsService {
             item.put("civil_status_date", latestCivilStatusDate.format(dmyFormatter));
         }
         return item;
-    }
-
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-        return null;
     }
 }

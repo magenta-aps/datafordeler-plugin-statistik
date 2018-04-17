@@ -5,15 +5,11 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
-import dk.magenta.datafordeler.core.exception.AccessDeniedException;
-import dk.magenta.datafordeler.core.exception.AccessRequiredException;
-import dk.magenta.datafordeler.core.exception.InvalidTokenException;
-import dk.magenta.datafordeler.core.exception.MissingParameterException;
+import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 
@@ -29,7 +25,7 @@ import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
-    protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException {
+    protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
@@ -59,13 +55,9 @@ public abstract class StatisticsService {
 
     protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
 
-    protected abstract Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService);
-
-
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
-
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
 
@@ -99,11 +91,9 @@ public abstract class StatisticsService {
         return written;
     }
 
-
     public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
         return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
     }
-
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
         if (parameterValue == null) {
