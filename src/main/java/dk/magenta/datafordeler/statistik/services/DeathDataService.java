@@ -107,9 +107,9 @@ public class DeathDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "status_code", "death_date", "prod_date", "pnr", "birth_year",
-                "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
-                "birth_authority", "municipality_code",
-                "locality_name", "locality_code", "road_code", "house_number", "door_number", "bnr"
+                "mother_pnr", "father_pnr", "spouse_pnr",
+                "effective_pnr", "birth_authority", "municipality_code",
+                "locality_name", "locality_code","road_code", "house_number", "door_number", "bnr"
         });
     }
 
@@ -138,6 +138,7 @@ public class DeathDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
+        item.put("effective_pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
 
@@ -146,6 +147,12 @@ public class DeathDataService extends StatisticsService {
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
+
+
+                    PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
+                        item.put("effective_pnr", coreData.getCprNumber());
+                    }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
@@ -164,6 +171,7 @@ public class DeathDataService extends StatisticsService {
                             deathTime = registration.getRegistrationFrom();
                         }
                     }
+
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
@@ -193,6 +201,11 @@ public class DeathDataService extends StatisticsService {
                     if (personCivilStatusData != null) {
                         item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
                     }
+
+
+
+
+
                 }
             }
         }

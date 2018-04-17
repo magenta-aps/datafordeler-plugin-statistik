@@ -117,10 +117,9 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                "pnr", "birth_year", "effective_pnr", "status_code",
-                "mother_pnr", "mother_status", "mother_municipality_code", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
-                "father_pnr", "father_status", "father_municipality_code", "father_road_code", "father_house_number", "father_door_number", "father_bnr",
-                "locality_name", "road_code", "house_number", "door_number", "bnr","municipality_code"
+                "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
+                "mother_pnr", "mother_birth_authority", "mother_status", "mother_municipality_code", "mother_locality_name", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
+                "father_pnr", "father_birth_authority", "father_status", "father_municipality_code", "father_locality_name", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
         });
 
     }
@@ -148,15 +147,27 @@ public class BirthDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
+        item.put("effective_pnr", person.getPersonnummer());
+
+        LookupService lookupService = new LookupService(session);
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
+
+                    PersonCoreData coreData = data.getCoreData();
+                    if (coreData != null) {
+                        item.put("effective_pnr", coreData.getCprNumber());
+                    }
+
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
                             item.put("birth_year", birthData.getBirthDatetime().getYear());
+                        }
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put("birth_authority", birthData.getBirthPlaceCode());
                         }
                     }
 
@@ -165,21 +176,14 @@ public class BirthDataService extends StatisticsService {
                         item.put("status_code", statusData.getStatus());
                     }
 
-                    item.put("effective_pnr", person.getPersonnummer());
-
-                    PersonAddressData addressData = data.getAddress();
-                    if (addressData != null) {
-                        //TODO: Locatility need to be here. Not sure what it means.
-                        item.put("road_code", addressData.getRoadCode());
-                        item.put("house_number", addressData.getHouseNumber());
-                        item.put("door_number", addressData.getDoor());
-                        item.put("bnr", addressData.getBuildingNumber());
-                        item.put("municipality_code", addressData.getMunicipalityCode());
-                    }
+                    //TODO: own prod date (to be investigated)
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
+
+
                         item.put("mother_pnr", personMotherData.getCprNumber());
+
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
                             item.putAll(this.formatParentPerson(mother, session, "mother_"));
@@ -204,7 +208,7 @@ public class BirthDataService extends StatisticsService {
     protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put(prefix + "pnr", person.getPersonnummer());
+
         LookupService lookupService = new LookupService(session);
 
         for (PersonRegistration registration: person.getRegistrations()) {
@@ -226,7 +230,7 @@ public class BirthDataService extends StatisticsService {
                         item.put(prefix + "bnr", addressData.getBuildingNumber());
 
                         if (lookup.localityName != null) {
-                            item.put(prefix + "locality", lookup.localityName);
+                            item.put(prefix + "locality_name", lookup.localityName);
                         }
                     }
 
