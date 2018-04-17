@@ -3,12 +3,18 @@ package dk.magenta.datafordeler.statistik.services;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.database.QueryManager;
+import dk.magenta.datafordeler.core.database.SessionManager;
+import dk.magenta.datafordeler.core.exception.AccessDeniedException;
+import dk.magenta.datafordeler.core.exception.AccessRequiredException;
+import dk.magenta.datafordeler.core.exception.InvalidTokenException;
 import dk.magenta.datafordeler.core.exception.MissingParameterException;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
+import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +28,31 @@ import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
+    protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException {
+        this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
+        Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
+
+        final Session primary_session = this.getSessionManager().getSessionFactory().openSession();
+        final Session secondary_session = this.getSessionManager().getSessionFactory().openSession();
+
+        try {
+            PersonQuery personQuery = this.getQuery(request);
+            personQuery.applyFilters(primary_session);
+            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
+
+            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            if (written == 0) {
+                response.sendError(HttpStatus.NO_CONTENT.value());
+            }
+        } finally {
+            primary_session.close();
+            secondary_session.close();
+        }
+    }
+
     protected abstract List<String> getColumnNames();
+
+    protected abstract SessionManager getSessionManager();
 
     protected abstract CsvMapper getCsvMapper();
 

@@ -23,7 +23,6 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,7 +35,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 
 /*Created by Efrin 06-04-2018*/
@@ -66,26 +64,7 @@ public class BirthDataService extends StatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getBirth(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException {
-        this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
-        Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
-
-        final Session primary_session = sessionManager.getSessionFactory().openSession();
-        final Session secondary_session = sessionManager.getSessionFactory().openSession();
-
-
-        try {
-            PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primary_session);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
-
-            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
-            if (written == 0) {
-                response.sendError(HttpStatus.NO_CONTENT.value());
-            }
-        } finally {
-            primary_session.close();
-            secondary_session.close();
-        }
+        super.get(request, response);
     }
 
 
@@ -97,6 +76,11 @@ public class BirthDataService extends StatisticsService {
                 "father_pnr", "father_birth_authority", "father_status", "father_municipality_code", "father_locality_name", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
         });
 
+    }
+
+    @Override
+    protected SessionManager getSessionManager() {
+        return this.sessionManager;
     }
 
     @Override
