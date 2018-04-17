@@ -11,6 +11,7 @@ import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,7 @@ public class MovementDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
         return null;
     }
 }

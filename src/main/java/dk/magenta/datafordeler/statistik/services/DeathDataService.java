@@ -171,7 +171,7 @@ public class DeathDataService extends StatisticsService {
                     if (personCivilStatusData != null) {
                         item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
                     }
-                    
+
                 }
             }
         }
@@ -182,7 +182,7 @@ public class DeathDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
         return null;
     }
 

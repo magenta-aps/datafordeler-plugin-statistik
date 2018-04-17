@@ -154,7 +154,7 @@ public class BirthDataService extends StatisticsService {
 
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
-                            item.putAll(this.formatParentPerson(mother, session, "mother_"));
+                            item.putAll(this.formatParentPerson(mother, session, "mother_", lookupService));
                         }
                     }
 
@@ -163,7 +163,7 @@ public class BirthDataService extends StatisticsService {
                         item.put("father_pnr", personFatherData.getCprNumber());
                         PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
                         if (father != null) {
-                            item.putAll(this.formatParentPerson(father, session, "father_"));
+                            item.putAll(this.formatParentPerson(father, session, "father_", lookupService));
                         }
                     }
                 }
@@ -173,11 +173,12 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix) {
+    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
 
-        LookupService lookupService = new LookupService(session);
+        //LookupService lookupService = new LookupService(session);
+        System.out.println("Lookup Object reference"+ lookupService.toString());
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
