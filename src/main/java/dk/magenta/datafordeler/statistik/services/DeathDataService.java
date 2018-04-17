@@ -55,6 +55,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -107,7 +108,7 @@ public class DeathDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 "status_code", "death_date", "prod_date", "pnr", "birth_year",
                 "mother_pnr", "father_pnr", "spouse_pnr", "effective_pnr",
-                "status_code","birth_municipality", "municipality_code",
+                "birth_authority", "municipality_code",
                 "locality_name", "locality_code", "road_code", "house_number", "door_number", "bnr"
         });
     }
@@ -135,11 +136,12 @@ public class DeathDataService extends StatisticsService {
     }
 
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
-        System.out.println("Format Person");
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put("pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
+
+        OffsetDateTime deathTime = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
@@ -150,11 +152,17 @@ public class DeathDataService extends StatisticsService {
                         if (birthData.getBirthDatetime() != null) {
                             item.put("birth_year", birthData.getBirthDatetime().getYear());
                         }
+                        if (birthData.getBirthAuthorityText() != null) {
+                            item.put("birth_authority", birthData.getBirthAuthorityText());
+                        }
                     }
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
                         item.put("status_code", statusData.getStatus());
+                        if (statusData.getStatus() == 90 && (deathTime == null || registration.getRegistrationFrom().isBefore(deathTime))) {
+                            deathTime = registration.getRegistrationFrom();
+                        }
                     }
 
                     PersonAddressData addressData = data.getAddress();
@@ -180,8 +188,16 @@ public class DeathDataService extends StatisticsService {
                     if (personFatherData != null) {
                         item.put("father_pnr", personFatherData.getCprNumber());
                     }
+
+                    PersonCivilStatusData personCivilStatusData = data.getCivilStatus();
+                    if (personCivilStatusData != null) {
+                        item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
+                    }
                 }
             }
+        }
+        if (deathTime != null) {
+            item.put("death_date", deathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
         }
         return item;
     }

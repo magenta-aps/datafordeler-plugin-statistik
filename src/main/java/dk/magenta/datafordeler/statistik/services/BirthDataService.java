@@ -99,12 +99,7 @@ public class BirthDataService extends StatisticsService {
 
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
-
-
-
-
-
-
+        
 
         try {
             PersonQuery personQuery = this.getQuery(request);
@@ -138,17 +133,14 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
         PersonBirthQuery personBirthQuery = new PersonBirthQuery();
-
         OffsetDateTime bornBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
         if (bornBeforeDate != null) {
             personBirthQuery.setBirthDateTimeBefore(bornBeforeDate.toLocalDateTime()); // Timezone?
         }
-
         OffsetDateTime bornAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
         if (bornAfterDate != null) {
             personBirthQuery.setBirthDateTimeAfter(bornAfterDate.toLocalDateTime()); // Timezone?
         }
-
         return personBirthQuery;
     }
 
@@ -206,7 +198,6 @@ public class BirthDataService extends StatisticsService {
             }
         }
         return item;
-
     }
 
     @Override
