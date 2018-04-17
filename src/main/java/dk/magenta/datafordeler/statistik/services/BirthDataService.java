@@ -71,7 +71,7 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
+                "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority", "prod_date",
                 "mother_pnr", "mother_birth_authority", "mother_status", "mother_municipality_code", "mother_locality_name", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
                 "father_pnr", "father_birth_authority", "father_status", "father_municipality_code", "father_locality_name", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
         });
@@ -109,11 +109,11 @@ public class BirthDataService extends StatisticsService {
         item.put("effective_pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
+        OffsetDateTime earliestProdDate = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
@@ -128,6 +128,9 @@ public class BirthDataService extends StatisticsService {
                         if (birthData.getBirthPlaceCode() != null) {
                             item.put("birth_authority", birthData.getBirthPlaceCode());
                         }
+                        if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
+                            earliestProdDate = registration.getRegistrationFrom();
+                        }
                     }
 
                     PersonStatusData statusData = data.getStatus();
@@ -139,10 +142,7 @@ public class BirthDataService extends StatisticsService {
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-
-
                         item.put("mother_pnr", personMotherData.getCprNumber());
-
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
                             item.putAll(this.formatParentPerson(mother, session, "mother_"));
@@ -159,6 +159,9 @@ public class BirthDataService extends StatisticsService {
                     }
                 }
             }
+        }
+        if (earliestProdDate != null) {
+            item.put("prod_date", earliestProdDate.format(dmyFormatter));
         }
         return item;
     }

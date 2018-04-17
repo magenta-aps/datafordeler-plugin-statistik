@@ -103,13 +103,23 @@ public class MovementDataService extends StatisticsService {
         item.put("pnr", person.getPersonnummer());
 
         HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
+                OffsetDateTime effectTime = effect.getEffectFrom();
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        addresses.put(effect.getEffectFrom(), addressData);
+                        addresses.put(effectTime, addressData);
+
+                        if (!registrations.containsKey(effectTime)) {
+                            OffsetDateTime oldTime = registrations.get(effectTime);
+                            OffsetDateTime newTime = registration.getRegistrationFrom();
+                            if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
+                                registrations.put(effectTime, newTime);
+                            }
+                        }
                     }
                 }
             }
@@ -144,16 +154,17 @@ public class MovementDataService extends StatisticsService {
                     item.put("destination_door_number", currentAddress.getDoor());
                     item.put("destination_bnr", currentAddress.getBuildingNumber());
                     item.put("move_date", current.format(dmyFormatter));
+                    if (registrations.containsKey(current)) {
+                        item.put("prod_date", registrations.get(current).format(dmyFormatter));
+                    }
                 }
             }
         }
-
 
         for (PersonRegistration registration: person.getRegistrations()){
 
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
 
                     //Check the type of service here and define with constructor to use for that service.
                     //There most be an integer or any other kind of flag for the service.

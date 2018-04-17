@@ -102,13 +102,13 @@ public class DeathDataService extends StatisticsService {
         item.put("effective_pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
+        OffsetDateTime earliestProdDate = null;
 
-        OffsetDateTime deathTime = null;
+        OffsetDateTime earliestDeathTime = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
@@ -128,8 +128,13 @@ public class DeathDataService extends StatisticsService {
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
                         item.put("status_code", statusData.getStatus());
-                        if (statusData.getStatus() == 90 && (deathTime == null || registration.getRegistrationFrom().isBefore(deathTime))) {
-                            deathTime = registration.getRegistrationFrom();
+                        if (statusData.getStatus() == 90) {
+                            if (effect.getEffectFrom() != null && (earliestDeathTime == null || effect.getEffectFrom().isBefore(earliestDeathTime))) {
+                                earliestDeathTime = effect.getEffectFrom();
+                            }
+                            if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
+                                earliestProdDate = registration.getRegistrationFrom();
+                            }
                         }
                     }
 
@@ -166,8 +171,11 @@ public class DeathDataService extends StatisticsService {
                 }
             }
         }
-        if (deathTime != null) {
-            item.put("death_date", deathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
+        if (earliestDeathTime != null) {
+            item.put("death_date", earliestDeathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
+        }
+        if (earliestProdDate != null) {
+            item.put("prod_date", earliestProdDate.format(dmyFormatter));
         }
         return item;
     }
