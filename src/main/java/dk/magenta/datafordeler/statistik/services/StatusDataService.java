@@ -31,8 +31,13 @@ import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
+import dk.magenta.datafordeler.cpr.data.person.data.*;
+import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
+import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -47,10 +52,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 
@@ -78,12 +80,12 @@ public class StatusDataService extends StatisticsService {
 
     public static int[] glMunicipalityCodes = new int[]{955, 956, 957, 958, 961};
 
-    @RequestMapping(method = RequestMethod.GET, path = "/{cprNummer}", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void getBirth(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void getStatus(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
 
-        OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
-        Filter filter = new Filter(effectDate);
+        this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
+        Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
@@ -94,6 +96,8 @@ public class StatusDataService extends StatisticsService {
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
             this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -104,7 +108,7 @@ public class StatusDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "pnr", "birth_year", "first_name", "last_name", "status_code",
-                "birth_municipality", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
+                "birth_authority", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
                 "municipality_code", "locality_name", "road_code", "house_number", "door_number",
                 "bnr", "moving_in_date", "post_code", "civil_status_date", "church"
 
@@ -117,8 +121,106 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
+    protected PersonQuery getQuery(HttpServletRequest request) {
+        PersonStatusQuery personStatusQuery = new PersonStatusQuery();
+        OffsetDateTime livingInGreenlandOnDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
+        if (livingInGreenlandOnDate != null) {
+            personStatusQuery.setLivingInGreenlandOn(livingInGreenlandOnDate);
+        }
+
+        return personStatusQuery;
+    }
+
+    @Override
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
-        return null;
+System.out.println("Format person");
+        HashMap<String, Object> item = new HashMap<String, Object>();
+        item.put("pnr", person.getPersonnummer());
+
+        for (PersonRegistration registration: person.getRegistrations()){
+            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
+                for (PersonBaseData data : effect.getDataItems()) {
+
+                    //Check the type of service here and define with constructor to use for that service.
+                    //There most be an integer or any other kind of flag for the service.
+                    //   it can be a simple if checking of an integer
+
+
+                    PersonNameData nameData = data.getName();
+                    if (nameData != null) {
+                        item.put("first_name", nameData.getFirstNames());
+                        item.put("last_name", nameData.getLastName());
+                    }
+
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                        }
+                    }
+
+                    PersonStatusData statusData = data.getStatus();
+                    if (statusData != null) {
+                        item.put("status_code", statusData.getStatus());
+                    }
+
+
+
+                    //This part of the code is duplicated in the function formatParentPerson.
+                    // Check it out how it can be generalized.
+                    PersonAddressData addressData = data.getAddress();
+                    if (addressData != null) {
+                        //item.put("post_code", addressData.getPostalCode());
+
+                        item.put("municipality_code", addressData.getMunicipalityCode());
+                        //Locatility need to be here
+                        item.put("road_code", addressData.getRoadCode());
+                        item.put("house_number", addressData.getHouseNumber());
+                        item.put("door_number", addressData.getDoor());
+                        item.put("bnr", addressData.getBuildingNumber());
+
+
+                    }
+
+
+                    //Missing prod date (not sure about the meaning)
+
+
+                    //Intended to full fill the own information in contrary to parents
+                    PersonCoreData personData = data.getCoreData();
+                    if (personData != null) {
+                        PersonEntity own = QueryManager.getEntity(session, PersonEntity.generateUUID(personData.getCprNumber()), PersonEntity.class);
+                        if (own != null) {
+                            item.putAll(this.formatParentPerson(own, session, ""));
+                        }
+                    }
+
+                    PersonParentData personMotherData = data.getMother();
+                    if (personMotherData != null) {
+                        item.put("mother_pnr", personMotherData.getCprNumber());
+                    }
+
+                    PersonParentData personFatherData = data.getFather();
+                    if (personFatherData != null) {
+                        item.put("father_pnr", personFatherData.getCprNumber());
+                    }
+
+                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
+                    if (personSpouseData != null) {
+                        // "civil_status_date"?
+
+                        item.put("spouse_pnr", personSpouseData.getSpouseCpr());
+                    }
+
+                    PersonChurchData personChurchData = data.getChurch();
+                    if (personChurchData != null) {
+                        item.put("church", personChurchData.getChurchRelation().toString());
+                    }
+
+                }
+            }
+        }
+        return item;
     }
 
     @Override

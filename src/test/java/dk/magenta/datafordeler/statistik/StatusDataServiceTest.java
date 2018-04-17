@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatusDataService;
 import org.hamcrest.CoreMatchers;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +31,6 @@ import static org.junit.Assert.assertThat;
 
 public class StatusDataServiceTest {
 
-    private StatusDataService statusDataService;
-
-    private DeathDataService deathDataService;
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -42,19 +40,15 @@ public class StatusDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
-
-
-
     @Test
-    public void testSatusDataService()throws Exception {
+    public void testStatusDataService()throws Exception {
         PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
-        person.loadPersonData("person.txt");
+        person.loadPersonData("statusperson.txt");
         //loadPerson();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/123?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
-        assertThat(response.getBody(), CoreMatchers.is(not("")));
-
-
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
+        Assert.assertNotNull(response.getBody());
+        Assert.assertFalse(response.getBody().isEmpty());
     }
 }

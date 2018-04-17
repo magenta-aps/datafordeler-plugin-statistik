@@ -99,7 +99,7 @@ public class BirthDataService extends StatisticsService {
 
         final Session primary_session = sessionManager.getSessionFactory().openSession();
         final Session secondary_session = sessionManager.getSessionFactory().openSession();
-        
+
 
         try {
             PersonQuery personQuery = this.getQuery(request);
