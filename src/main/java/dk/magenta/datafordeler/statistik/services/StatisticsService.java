@@ -47,8 +47,7 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected void writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response) throws IOException {
-        System.out.println("items: "+items);
+    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
         List<String> keys = this.getColumnNames();
@@ -60,11 +59,12 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
-        System.out.println("Response in class: " + response.toString());
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
-        while (items.hasNext()) {
+        int written;
+        for (written = 0; items.hasNext(); written++) {
             writer.write(items.next());
         }
+        return written;
     }
 
 

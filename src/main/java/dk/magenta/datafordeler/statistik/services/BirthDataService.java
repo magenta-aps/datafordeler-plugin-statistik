@@ -23,6 +23,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,7 +78,10 @@ public class BirthDataService extends StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            if (written == 0) {
+                response.sendError(HttpStatus.NO_CONTENT.value());
+            }
         } finally {
             primary_session.close();
             secondary_session.close();

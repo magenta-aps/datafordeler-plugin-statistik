@@ -19,6 +19,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -76,7 +77,10 @@ public class MovementDataService extends StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            this.writeItems(this.formatItems(personEntities,secondary_session, filter), response);
+            int written = this.writeItems(this.formatItems(personEntities,secondary_session, filter), response);
+            if (written == 0) {
+                response.sendError(HttpStatus.NO_CONTENT.value());
+            }
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -151,14 +155,13 @@ public class MovementDataService extends StatisticsService {
                     item.put("origin_bnr", previousAddress.getBuildingNumber());
                 }
                 if (currentAddress != null) {
-                    item.put("destination_municipality_code", previousAddress.getMunicipalityCode());
+                    item.put("destination_municipality_code", currentAddress.getMunicipalityCode());
                     //item.put("destination_locality_name", null);
-                    item.put("destination_road_code", previousAddress.getRoadCode());
-                    item.put("destination_house_number", previousAddress.getHouseNumber());
-                    item.put("destination_floor", previousAddress.getFloor());
-                    item.put("destination_door_number", previousAddress.getDoor());
-                    item.put("destination_bnr", previousAddress.getBuildingNumber());
-
+                    item.put("destination_road_code", currentAddress.getRoadCode());
+                    item.put("destination_house_number", currentAddress.getHouseNumber());
+                    item.put("destination_floor", currentAddress.getFloor());
+                    item.put("destination_door_number", currentAddress.getDoor());
+                    item.put("destination_bnr", currentAddress.getBuildingNumber());
                     item.put("move_date", current.format(dmyFormatter));
                 }
             }
