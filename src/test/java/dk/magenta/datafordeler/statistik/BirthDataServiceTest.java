@@ -34,12 +34,11 @@ public class BirthDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
-    PersonTestsUtils testsUtils;
+    @Autowired
+    private PersonTestsUtils testsUtils;
 
     @Test
     public void testBirthDataService() throws Exception {
-
-        testsUtils = new PersonTestsUtils(sessionManager, personEntityManager);
 
         testsUtils.loadPersonData("person.txt");
 

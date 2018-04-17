@@ -47,8 +47,7 @@ public class PersonStatusQuery extends PersonQuery {
             effectFromDef.or(
                     LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
                     null,
-                    OffsetDateTime.class,
-                    LookupDefinition.Operator.GTE
+                    OffsetDateTime.class
             );
 
             LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(

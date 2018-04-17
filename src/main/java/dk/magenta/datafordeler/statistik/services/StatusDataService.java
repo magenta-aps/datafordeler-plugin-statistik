@@ -127,7 +127,6 @@ public class StatusDataService extends StatisticsService {
         if (livingInGreenlandOnDate != null) {
             personStatusQuery.setLivingInGreenlandOn(livingInGreenlandOnDate);
         }
-
         return personStatusQuery;
     }
 

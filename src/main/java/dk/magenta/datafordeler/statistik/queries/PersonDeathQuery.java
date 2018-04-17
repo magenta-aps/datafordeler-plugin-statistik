@@ -34,14 +34,28 @@ public class PersonDeathQuery extends PersonQuery {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
 
         if (this.deathDateTimeAfter != null || this.deathDateTimeBefore != null) {
-            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusData.DB_FIELD_STATUS, 90, Integer.class);
+            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(
+                    PersonBaseData.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusData.DB_FIELD_STATUS,
+                    90,
+                    Integer.class
+            );
 
             if (this.deathDateTimeAfter != null) {
-                fieldDefinition.and(LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM, this.deathDateTimeAfter, OffsetDateTime.class, LookupDefinition.Operator.GTE);
+                fieldDefinition.and(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        this.deathDateTimeAfter,
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.GTE
+                );
             }
 
             if (this.deathDateTimeBefore != null) {
-                fieldDefinition.and(LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM, this.deathDateTimeBefore, OffsetDateTime.class, LookupDefinition.Operator.LTE);
+                fieldDefinition.and(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        this.deathDateTimeBefore,
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.LTE
+                );
             }
         }
 
