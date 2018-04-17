@@ -2,7 +2,6 @@ package dk.magenta.datafordeler.statistik.queries;
 
 import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
-import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
@@ -47,8 +46,7 @@ public class PersonStatusQuery extends PersonQuery {
             effectFromDef.or(
                     LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
                     null,
-                    OffsetDateTime.class,
-                    LookupDefinition.Operator.GTE
+                    OffsetDateTime.class
             );
 
             LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(

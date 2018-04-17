@@ -3,7 +3,6 @@ package dk.magenta.datafordeler.statistik;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,12 +33,11 @@ public class BirthDataServiceTest {
     @Autowired
     private PersonEntityManager personEntityManager;
 
-    PersonTestsUtils testsUtils;
+    @Autowired
+    private PersonTestsUtils testsUtils;
 
     @Test
     public void testBirthDataService() throws Exception {
-
-        testsUtils = new PersonTestsUtils(sessionManager, personEntityManager);
 
         testsUtils.loadPersonData("person.txt");
 

@@ -2,7 +2,6 @@ package dk.magenta.datafordeler.statistik.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
@@ -30,8 +29,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /*Created by Efrin 06-04-2018*/
 
@@ -54,23 +55,8 @@ public class DeathDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException {
-
-        OffsetDateTime effectDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
-        Filter filter = new Filter(effectDate);
-
-        final Session primary_session = sessionManager.getSessionFactory().openSession();
-        final Session secondary_session = sessionManager.getSessionFactory().openSession();
-
-        try {
-            PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primary_session);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
-            this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
-        } finally {
-            primary_session.close();
-            secondary_session.close();
-        }
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
+        super.get(request, response);
     }
 
     @Override
@@ -81,6 +67,11 @@ public class DeathDataService extends StatisticsService {
                 "effective_pnr", "birth_authority", "municipality_code",
                 "locality_name", "locality_code","road_code", "house_number", "door_number", "bnr"
         });
+    }
+
+    @Override
+    protected SessionManager getSessionManager() {
+        return this.sessionManager;
     }
 
     @Override
