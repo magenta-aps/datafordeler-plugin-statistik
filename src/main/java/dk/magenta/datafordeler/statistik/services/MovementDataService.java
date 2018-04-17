@@ -87,7 +87,7 @@ public class MovementDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
-                "mother_pnr", "father_pnr", "spouse_pnr", "prod_date",
+                "mother_pnr", "father_pnr", "spouse_pnr", "prod_date", "move_date",
                 "origin_municipality_code", "origin_locality_name", "origin_road_code", "origin_house_number", "origin_floor", "origin_door_number", "origin_bnr",
                 "destination_municipality_code", "destination_locality_name", "destination_road_code", "destination_house_number", "destination_floor", "destination_door_number", "destination_bnr",
         });
@@ -132,10 +132,11 @@ public class MovementDataService extends StatisticsService {
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
-        for (int i=0; i<addressTimes.size(); i++) {
+        int last = addressTimes.size() - 1;
+        for (int i=0; i<=last; i++) {
             OffsetDateTime previous = i > 0 ? addressTimes.get(i-1) : null;
             OffsetDateTime current = addressTimes.get(i);
-            OffsetDateTime next = (i < addressTimes.size() - 1) ? addressTimes.get(i+1) : null;
+            OffsetDateTime next = i < last ? addressTimes.get(i+1) : null;
 
             if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
                 PersonAddressData currentAddress = addresses.get(current);
@@ -157,6 +158,8 @@ public class MovementDataService extends StatisticsService {
                     item.put("destination_floor", previousAddress.getFloor());
                     item.put("destination_door_number", previousAddress.getDoor());
                     item.put("destination_bnr", previousAddress.getBuildingNumber());
+
+                    item.put("move_date", current.format(dmyFormatter));
                 }
             }
         }
