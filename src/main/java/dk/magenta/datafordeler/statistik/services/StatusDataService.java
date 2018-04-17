@@ -92,6 +92,8 @@ public class StatusDataService extends StatisticsService {
         item.put("pnr", person.getPersonnummer());
         LookupService lookupService = new LookupService(session);
 
+        OffsetDateTime latestCivilStatusDate = null;
+
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
@@ -146,16 +148,16 @@ public class StatusDataService extends StatisticsService {
                         item.put("father_pnr", personFatherData.getCprNumber());
                     }
 
-                    //TODO: "civil_status_date"
-
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
-                    if(personCivilStatus != null ){
+                    if (personCivilStatus != null ){
                         item.put("civil_status", personCivilStatus.getCivilStatus());
+                        if (effect.getEffectFrom() != null && (latestCivilStatusDate == null || effect.getEffectFrom().isAfter(latestCivilStatusDate))) {
+                            latestCivilStatusDate = effect.getEffectFrom();
+                        }
                     }
 
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
-
                         item.put("spouse_pnr", personSpouseData.getSpouseCpr());
                     }
 
@@ -166,6 +168,9 @@ public class StatusDataService extends StatisticsService {
 
                 }
             }
+        }
+        if (latestCivilStatusDate != null) {
+            item.put("civil_status_date", latestCivilStatusDate.format(dmyFormatter));
         }
         return item;
     }
