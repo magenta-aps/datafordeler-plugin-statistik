@@ -103,11 +103,12 @@ public class DeathDataService extends StatisticsService {
         OffsetDateTime earliestDeathTime = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
+            //for (PersonEffect effect: registration.getEffects()) {
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
                     PersonCoreData coreData = data.getCoreData();
-                    if (coreData != null) {
+                    if (coreData != null && coreData.getCprNumber() != null && !coreData.getCprNumber().isEmpty()) {
                         item.put("effective_pnr", coreData.getCprNumber());
                     }
 
@@ -116,8 +117,11 @@ public class DeathDataService extends StatisticsService {
                         if (birthData.getBirthDatetime() != null) {
                             item.put("birth_year", birthData.getBirthDatetime().getYear());
                         }
-                        if (birthData.getBirthAuthorityText() != null) {
+                        /*if (birthData.getBirthAuthorityText() != null) {
                             item.put("birth_authority", birthData.getBirthAuthorityText());
+                        }*/
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put("birth_authority", birthData.getBirthPlaceCode());
                         }
                     }
 
@@ -173,6 +177,7 @@ public class DeathDataService extends StatisticsService {
         if (earliestProdDate != null) {
             item.put("prod_date", earliestProdDate.format(dmyFormatter));
         }
+        System.out.println(item);
         return item;
     }
 
