@@ -50,7 +50,7 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void getStatus(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
@@ -92,6 +92,8 @@ public class StatusDataService extends StatisticsService {
         item.put("pnr", person.getPersonnummer());
         LookupService lookupService = new LookupService(session);
 
+        OffsetDateTime latestCivilStatusDate = null;
+
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
@@ -117,7 +119,6 @@ public class StatusDataService extends StatisticsService {
                         item.put("status_code", statusData.getStatus());
                     }
 
-
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
                         item.put("post_code", addressData.getPostalCode());
@@ -135,7 +136,6 @@ public class StatusDataService extends StatisticsService {
 
                     }
 
-
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
                         item.put("mother_pnr", personMotherData.getCprNumber());
@@ -146,16 +146,16 @@ public class StatusDataService extends StatisticsService {
                         item.put("father_pnr", personFatherData.getCprNumber());
                     }
 
-                    //TODO: "civil_status_date"
-
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
-                    if(personCivilStatus != null ){
+                    if (personCivilStatus != null ){
                         item.put("civil_status", personCivilStatus.getCivilStatus());
+                        if (effect.getEffectFrom() != null && (latestCivilStatusDate == null || effect.getEffectFrom().isAfter(latestCivilStatusDate))) {
+                            latestCivilStatusDate = effect.getEffectFrom();
+                        }
                     }
 
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
-
                         item.put("spouse_pnr", personSpouseData.getSpouseCpr());
                     }
 
@@ -163,15 +163,12 @@ public class StatusDataService extends StatisticsService {
                     if (personChurchData != null) {
                         item.put("church", personChurchData.getChurchRelation().toString());
                     }
-
                 }
             }
         }
+        if (latestCivilStatusDate != null) {
+            item.put("civil_status_date", latestCivilStatusDate.format(dmyFormatter));
+        }
         return item;
-    }
-
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-        return null;
     }
 }

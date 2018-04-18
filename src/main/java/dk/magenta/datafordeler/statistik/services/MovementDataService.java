@@ -5,8 +5,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
-import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -14,12 +12,10 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,36 +40,19 @@ public class MovementDataService extends StatisticsService {
     ObjectMapper objectMapper;
 
     @Autowired
-    private DafoUserManager dafoUserManager;
-
-    @Autowired
     private CsvMapper csvMapper;
 
-    @Autowired
-    private CprPlugin cprPlugin;
-
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
-
 
     //This function should have the following inputs:
     //movement date
 
-   // @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
+
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
-
-    /*@Override
-    protected List<String> getColumnNames() {
-        return Arrays.asList(new String[]{
-                "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
-                "mother_pnr", "father_pnr", "spouse_pnr", "prod_date", "move_date",
-                "origin_municipality_code", "origin_locality_name", "origin_road_code", "origin_house_number", "origin_floor", "origin_door_number", "origin_bnr",
-                "destination_municipality_code", "destination_locality_name", "destination_road_code", "destination_house_number", "destination_floor", "destination_door_number", "destination_bnr",
-        });
-    }*/
 
     @Override
     protected List<String> getColumnNames() {
@@ -115,13 +94,23 @@ public class MovementDataService extends StatisticsService {
         item.put("pnr", person.getPersonnummer());
 
         HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
+                OffsetDateTime effectTime = effect.getEffectFrom();
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        addresses.put(effect.getEffectFrom(), addressData);
+                        addresses.put(effectTime, addressData);
+
+                        if (!registrations.containsKey(effectTime)) {
+                            OffsetDateTime oldTime = registrations.get(effectTime);
+                            OffsetDateTime newTime = registration.getRegistrationFrom();
+                            if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
+                                registrations.put(effectTime, newTime);
+                            }
+                        }
                     }
                 }
             }
@@ -156,16 +145,17 @@ public class MovementDataService extends StatisticsService {
                     item.put("destination_door_number", currentAddress.getDoor());
                     item.put("destination_bnr", currentAddress.getBuildingNumber());
                     item.put("move_date", current.format(dmyFormatter));
+                    if (registrations.containsKey(current)) {
+                        item.put("prod_date", registrations.get(current).format(dmyFormatter));
+                    }
                 }
             }
         }
-
 
         for (PersonRegistration registration: person.getRegistrations()){
 
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
 
                     //Check the type of service here and define with constructor to use for that service.
                     //There most be an integer or any other kind of flag for the service.
@@ -194,11 +184,6 @@ public class MovementDataService extends StatisticsService {
                         item.put("effective_pnr", coreData.getCprNumber());
                     }
 
-
-
-                    //Missing prod date (not sure about the meaning)
-
-
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
                         item.put("mother_pnr", personMotherData.getCprNumber());
@@ -217,10 +202,5 @@ public class MovementDataService extends StatisticsService {
             }
         }
         return item;
-    }
-
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-        return null;
     }
 }

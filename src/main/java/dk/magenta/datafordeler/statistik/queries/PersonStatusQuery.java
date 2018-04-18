@@ -22,8 +22,6 @@ public class PersonStatusQuery extends PersonQuery {
         this.livingInGreenlandOn = livingInGreenlandOn;
     }
 
-
-
     @Override
     public LookupDefinition getLookupDefinition() {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
@@ -59,7 +57,6 @@ public class PersonStatusQuery extends PersonQuery {
                     null,
                     OffsetDateTime.class
             );
-
         }
         return lookupDefinition;
     }

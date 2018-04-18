@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
-import dk.magenta.datafordeler.core.exception.AccessDeniedException;
-import dk.magenta.datafordeler.core.exception.AccessRequiredException;
-import dk.magenta.datafordeler.core.exception.InvalidTokenException;
-import dk.magenta.datafordeler.core.exception.MissingParameterException;
+import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -52,8 +49,6 @@ public class BirthDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
-
-
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
 
@@ -62,8 +57,8 @@ public class BirthDataService extends StatisticsService {
     // registration before date
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void getBirth(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException {
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         super.get(request, response);
     }
 
@@ -71,9 +66,10 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY,
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, PROD_DATE,
                 MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
                 FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+
         });
 
     }
@@ -109,11 +105,11 @@ public class BirthDataService extends StatisticsService {
         item.put("effective_pnr", person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
+        OffsetDateTime earliestProdDate = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
-
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
@@ -128,6 +124,9 @@ public class BirthDataService extends StatisticsService {
                         if (birthData.getBirthPlaceCode() != null) {
                             item.put("birth_authority", birthData.getBirthPlaceCode());
                         }
+                        if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
+                            earliestProdDate = registration.getRegistrationFrom();
+                        }
                     }
 
                     PersonStatusData statusData = data.getStatus();
@@ -135,14 +134,9 @@ public class BirthDataService extends StatisticsService {
                         item.put("status_code", statusData.getStatus());
                     }
 
-                    //TODO: own prod date (to be investigated)
-
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-
-
                         item.put("mother_pnr", personMotherData.getCprNumber());
-
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
                             item.putAll(this.formatParentPerson(mother, session, "mother_", lookupService));
@@ -160,15 +154,19 @@ public class BirthDataService extends StatisticsService {
                 }
             }
         }
+        if (earliestProdDate != null) {
+            item.put("prod_date", earliestProdDate.format(dmyFormatter));
+        }
         return item;
     }
 
-    @Override
-    protected Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
+    private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
 
+
         System.out.println("Lookup Object reference"+ lookupService.toString());
+
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
