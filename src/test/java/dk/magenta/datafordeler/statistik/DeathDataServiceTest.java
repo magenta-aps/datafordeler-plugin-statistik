@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,8 +35,19 @@ public class DeathDataServiceTest {
     public void testDeathDataService()throws Exception {
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
+        TestUserDetails testUserDetails = new TestUserDetails();
+
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertEquals(403, response.getStatusCodeValue());
+
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertEquals(400, response.getStatusCodeValue());
+
+        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotEquals("", response.getBody());
         System.out.println("Body response: "+response.getBody());
     }

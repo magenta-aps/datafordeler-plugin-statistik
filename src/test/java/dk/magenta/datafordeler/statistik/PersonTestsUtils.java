@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.DataFordelerException;
 import dk.magenta.datafordeler.core.io.ImportMetadata;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 import dk.magenta.datafordeler.gladdrreg.GladdrregPlugin;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntity;
@@ -23,12 +24,15 @@ import dk.magenta.datafordeler.gladdrreg.data.road.RoadRegistration;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
+
+import static org.mockito.Mockito.when;
 
 @Component
 public class PersonTestsUtils {
@@ -41,6 +45,9 @@ public class PersonTestsUtils {
 
     @Autowired
     private GladdrregPlugin gladdrregPlugin;
+
+    @SpyBean
+    private DafoUserManager dafoUserManager;
 
     HashSet<Entity> createdEntities = new HashSet<>();
 
@@ -112,7 +119,7 @@ public class PersonTestsUtils {
         }
     }
 
-    public void loadGladdrregData() throws IOException, DataFordelerException {
+    public void loadGladdrregData() {
         Session session = sessionManager.getSessionFactory().openSession();
         try {
             Transaction transaction = session.beginTransaction();
@@ -126,5 +133,9 @@ public class PersonTestsUtils {
         } finally {
             session.close();
         }
+    }
+
+    public void applyAccess(TestUserDetails testUserDetails) {
+        when(dafoUserManager.getFallbackUser()).thenReturn(testUserDetails);
     }
 }

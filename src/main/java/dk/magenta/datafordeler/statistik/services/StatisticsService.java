@@ -7,11 +7,16 @@ import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.user.DafoUserDetails;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,6 +31,14 @@ import java.util.stream.Stream;
 public abstract class StatisticsService {
 
     protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+
+        // Check that the user has access to CPR data
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
+        loggerHelper.info("Incoming request for "+this.getClass().getSimpleName()+" with parameters " + request.getParameterMap());
+        this.checkAndLogAccess(loggerHelper);
+
+
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
@@ -52,6 +65,10 @@ public abstract class StatisticsService {
     protected abstract SessionManager getSessionManager();
 
     protected abstract CsvMapper getCsvMapper();
+
+    protected abstract DafoUserManager getDafoUserManager();
+
+    protected abstract Logger getLogger();
 
     protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
 
@@ -174,6 +191,16 @@ public abstract class StatisticsService {
     }
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
+        try {
+            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
+        }
+        catch (AccessDeniedException e) {
+            loggerHelper.info("Access denied: " + e.getMessage());
+            throw(e);
+        }
+    }
 }
 
 

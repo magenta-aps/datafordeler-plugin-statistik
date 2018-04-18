@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -42,6 +43,9 @@ public class MovementDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
+    @Autowired
+    private DafoUserManager dafoUserManager;
+
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
     //This function should have the following inputs:
@@ -72,6 +76,17 @@ public class MovementDataService extends StatisticsService {
     @Override
     protected CsvMapper getCsvMapper() {
         return this.csvMapper;
+    }
+
+
+    @Override
+    protected DafoUserManager getDafoUserManager() {
+        return this.dafoUserManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return this.log;
     }
 
     @Override
