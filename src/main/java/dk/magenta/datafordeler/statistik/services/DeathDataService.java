@@ -176,7 +176,6 @@ public class DeathDataService extends StatisticsService {
         if (earliestProdDate != null) {
             item.put("prod_date", earliestProdDate.format(dmyFormatter));
         }
-        System.out.println(item);
         return item;
     }
 

@@ -22,16 +22,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BirthDataServiceTest {
 
-    //private BirthDataService birthDataService;
-
     @Autowired
     private TestRestTemplate restTemplate;
-
-    @Autowired
-    private SessionManager sessionManager;
-
-    @Autowired
-    private PersonEntityManager personEntityManager;
 
     @Autowired
     private PersonTestsUtils testsUtils;

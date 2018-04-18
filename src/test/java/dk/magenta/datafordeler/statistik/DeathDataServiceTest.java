@@ -28,12 +28,6 @@ public class DeathDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private SessionManager sessionManager;
-
-    @Autowired
-    private PersonEntityManager personEntityManager;
-
-    @Autowired
     private PersonTestsUtils testsUtils;
 
     @Test

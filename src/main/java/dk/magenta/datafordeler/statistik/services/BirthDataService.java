@@ -160,13 +160,7 @@ public class BirthDataService extends StatisticsService {
     }
 
     private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-
         HashMap<String, Object> item = new HashMap<String, Object>();
-
-
-        System.out.println("Lookup Object reference"+ lookupService.toString());
-
-
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
                 for (PersonBaseData data: effect.getDataItems()) {
