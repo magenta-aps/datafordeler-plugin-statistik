@@ -91,7 +91,7 @@ public class MovementDataService extends StatisticsService {
     @Override
     public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
         HashMap<String, Object> item = new HashMap<>();
-        item.put("pnr", person.getPersonnummer());
+        item.put(PNR, person.getPersonnummer());
 
         HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
@@ -128,25 +128,25 @@ public class MovementDataService extends StatisticsService {
                 PersonAddressData currentAddress = addresses.get(current);
                 PersonAddressData previousAddress = addresses.get(previous);
                 if (previousAddress != null) {
-                    item.put("origin_municipality_code", previousAddress.getMunicipalityCode());
+                    item.put(ORIGIN_MUNICIPALITY_CODE, previousAddress.getMunicipalityCode());
                     //item.put("origin_locality_name", null);
-                    item.put("origin_road_code", previousAddress.getRoadCode());
-                    item.put("origin_house_number", previousAddress.getHouseNumber());
-                    item.put("origin_floor", previousAddress.getFloor());
-                    item.put("origin_door_number", previousAddress.getDoor());
-                    item.put("origin_bnr", previousAddress.getBuildingNumber());
+                    item.put(ORIGIN_ROAD_CODE, previousAddress.getRoadCode());
+                    item.put(ORIGIN_HOUSE_NUMBER, previousAddress.getHouseNumber());
+                    item.put(ORIGIN_FLOOR, previousAddress.getFloor());
+                    item.put(ORIGIN_DOOR_NUMBER, previousAddress.getDoor());
+                    item.put(ORIGIN_BNR, previousAddress.getBuildingNumber());
                 }
                 if (currentAddress != null) {
-                    item.put("destination_municipality_code", currentAddress.getMunicipalityCode());
+                    item.put(DESTINATION_MUNICIPALITY_CODE, currentAddress.getMunicipalityCode());
                     //item.put("destination_locality_name", null);
-                    item.put("destination_road_code", currentAddress.getRoadCode());
-                    item.put("destination_house_number", currentAddress.getHouseNumber());
-                    item.put("destination_floor", currentAddress.getFloor());
-                    item.put("destination_door_number", currentAddress.getDoor());
-                    item.put("destination_bnr", currentAddress.getBuildingNumber());
-                    item.put("move_date", current.format(dmyFormatter));
+                    item.put(DESTINATION_ROAD_CODE, currentAddress.getRoadCode());
+                    item.put(DESTINATION_HOUSE_NUMBER, currentAddress.getHouseNumber());
+                    item.put(DESTINATION_FLOOR, currentAddress.getFloor());
+                    item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
+                    item.put(DESTINATION_BNR, currentAddress.getBuildingNumber());
+                    item.put(MOVE_DATE, current.format(dmyFormatter));
                     if (registrations.containsKey(current)) {
-                        item.put("prod_date", registrations.get(current).format(dmyFormatter));
+                        item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                     }
                 }
             }
@@ -164,39 +164,39 @@ public class MovementDataService extends StatisticsService {
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
                         }
                     }
 
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put("status_code", statusData.getStatus());
+                        item.put(STATUS_CODE, statusData.getStatus());
                     }
 
 
-                    item.put("effective_pnr", person.getPersonnummer());
+                    item.put(EFFECTIVE_PNR, person.getPersonnummer());
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
-                        item.put("effective_pnr", coreData.getCprNumber());
+                        item.put(EFFECTIVE_PNR, coreData.getCprNumber());
                     }
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-                        item.put("mother_pnr", personMotherData.getCprNumber());
+                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
                     }
 
                     PersonParentData personFatherData = data.getFather();
                     if (personFatherData != null) {
-                        item.put("father_pnr", personFatherData.getCprNumber());
+                        item.put(FATHER_PNR, personFatherData.getCprNumber());
                     }
 
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
-                        item.put("spouse_pnr", personSpouseData.getSpouseCpr());
+                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
                     }
                 }
             }

@@ -89,7 +89,7 @@ public class StatusDataService extends StatisticsService {
     @Override
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put("pnr", person.getPersonnummer());
+        item.put(PNR, person.getPersonnummer());
         LookupService lookupService = new LookupService(session);
 
         OffsetDateTime latestCivilStatusDate = null;
@@ -100,55 +100,55 @@ public class StatusDataService extends StatisticsService {
 
                     PersonNameData nameData = data.getName();
                     if (nameData != null) {
-                        item.put("first_name", nameData.getFirstNames());
-                        item.put("last_name", nameData.getLastName());
+                        item.put(FIRST_NAME, nameData.getFirstNames());
+                        item.put(LAST_NAME, nameData.getLastName());
                     }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
                         }
                     }
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put("status_code", statusData.getStatus());
+                        item.put(STATUS_CODE, statusData.getStatus());
                     }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        item.put("post_code", addressData.getPostalCode());
-                        item.put("municipality_code", addressData.getMunicipalityCode());
-                        item.put("road_code", addressData.getRoadCode());
-                        item.put("house_number", addressData.getHouseNumber());
-                        item.put("door_number", addressData.getDoor());
-                        item.put("bnr", addressData.getBuildingNumber());
-                        item.put("floor_number",addressData.getFloor());
+                        item.put(POST_CODE, addressData.getPostalCode());
+                        item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
+                        item.put(ROAD_CODE, addressData.getRoadCode());
+                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
+                        item.put(DOOR_NUMBER, addressData.getDoor());
+                        item.put(BNR, addressData.getBuildingNumber());
+                        item.put(FLOOR_NUMBER,addressData.getFloor());
                         Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
                         if (lookup != null) {
-                            item.put("locality_name", lookup.localityName);
-                            item.put("locality_code", lookup.localityCode);
+                            item.put(LOCALITY_NAME, lookup.localityName);
+                            item.put(LOCALITY_CODE, lookup.localityCode);
                         }
 
                     }
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-                        item.put("mother_pnr", personMotherData.getCprNumber());
+                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
                     }
 
                     PersonParentData personFatherData = data.getFather();
                     if (personFatherData != null) {
-                        item.put("father_pnr", personFatherData.getCprNumber());
+                        item.put(FATHER_PNR, personFatherData.getCprNumber());
                     }
 
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
                     if (personCivilStatus != null ){
-                        item.put("civil_status", personCivilStatus.getCivilStatus());
+                        item.put(CIVIL_STATUS, personCivilStatus.getCivilStatus());
                         if (effect.getEffectFrom() != null && (latestCivilStatusDate == null || effect.getEffectFrom().isAfter(latestCivilStatusDate))) {
                             latestCivilStatusDate = effect.getEffectFrom();
                         }
@@ -156,18 +156,18 @@ public class StatusDataService extends StatisticsService {
 
                     PersonCivilStatusData personSpouseData = data.getCivilStatus();
                     if (personSpouseData != null) {
-                        item.put("spouse_pnr", personSpouseData.getSpouseCpr());
+                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
                     }
 
                     PersonChurchData personChurchData = data.getChurch();
                     if (personChurchData != null) {
-                        item.put("church", personChurchData.getChurchRelation().toString());
+                        item.put(CHURCH, personChurchData.getChurchRelation().toString());
                     }
                 }
             }
         }
         if (latestCivilStatusDate != null) {
-            item.put("civil_status_date", latestCivilStatusDate.format(dmyFormatter));
+            item.put(CIVIL_STATUS_DATE, latestCivilStatusDate.format(dmyFormatter));
         }
         return item;
     }

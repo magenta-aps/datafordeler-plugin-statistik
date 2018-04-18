@@ -67,8 +67,8 @@ public class BirthDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, PROD_DATE,
-                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
-                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
+                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
 
         });
 
@@ -101,8 +101,8 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put("pnr", person.getPersonnummer());
-        item.put("effective_pnr", person.getPersonnummer());
+        item.put(PNR, person.getPersonnummer());
+        item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
@@ -113,16 +113,16 @@ public class BirthDataService extends StatisticsService {
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
-                        item.put("effective_pnr", coreData.getCprNumber());
+                        item.put(EFFECTIVE_PNR, coreData.getCprNumber());
                     }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put("birth_authority", birthData.getBirthPlaceCode());
+                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
                         }
                         if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
                             earliestProdDate = registration.getRegistrationFrom();
@@ -131,31 +131,31 @@ public class BirthDataService extends StatisticsService {
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put("status_code", statusData.getStatus());
+                        item.put(STATUS_CODE, statusData.getStatus());
                     }
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-                        item.put("mother_pnr", personMotherData.getCprNumber());
+                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
-                            item.putAll(this.formatParentPerson(mother, session, "mother_", lookupService));
+                            item.putAll(this.formatParentPerson(mother, session, MOTHER_PREFIX, lookupService));
                         }
                     }
 
                     PersonParentData personFatherData = data.getFather();
                     if (personFatherData != null) {
-                        item.put("father_pnr", personFatherData.getCprNumber());
+                        item.put(FATHER_PNR, personFatherData.getCprNumber());
                         PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
                         if (father != null) {
-                            item.putAll(this.formatParentPerson(father, session, "father_", lookupService));
+                            item.putAll(this.formatParentPerson(father, session, FATHER_PREFIX, lookupService));
                         }
                     }
                 }
             }
         }
         if (earliestProdDate != null) {
-            item.put("prod_date", earliestProdDate.format(dmyFormatter));
+            item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
         return item;
     }
@@ -173,28 +173,28 @@ public class BirthDataService extends StatisticsService {
                 for (PersonBaseData data: effect.getDataItems()) {
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null){
-                        item.put(prefix + "status", statusData.getStatus());
+                        item.put(prefix + "status_code", statusData.getStatus());
                     }
 
                     PersonAddressData addressData = data.getAddress();
                     if(addressData != null){
                         Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
 
-                        item.put(prefix + "municipality_code", addressData.getMunicipalityCode() );
-                        item.put(prefix + "road_code", addressData.getRoadCode());
-                        item.put(prefix + "house_number", addressData.getHouseNumber());
-                        item.put(prefix + "door_number", addressData.getDoor());
-                        item.put(prefix + "bnr", addressData.getBuildingNumber());
+                        item.put(prefix + MUNICIPALITY_CODE, addressData.getMunicipalityCode() );
+                        item.put(prefix + ROAD_CODE, addressData.getRoadCode());
+                        item.put(prefix + HOUSE_NUMBER, addressData.getHouseNumber());
+                        item.put(prefix + DOOR_NUMBER, addressData.getDoor());
+                        item.put(prefix + BNR, addressData.getBuildingNumber());
 
                         if (lookup.localityName != null) {
-                            item.put(prefix + "locality_name", lookup.localityName);
+                            item.put(prefix + LOCALITY_NAME, lookup.localityName);
                         }
                     }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put(prefix + "birth_authority", birthData.getBirthPlaceCode());
+                            item.put(prefix + BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
                         }
                     }
                 }

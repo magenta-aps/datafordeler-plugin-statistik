@@ -93,8 +93,8 @@ public class DeathDataService extends StatisticsService {
 
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put("pnr", person.getPersonnummer());
-        item.put("effective_pnr", person.getPersonnummer());
+        item.put(PNR, person.getPersonnummer());
+        item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
@@ -107,22 +107,22 @@ public class DeathDataService extends StatisticsService {
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
-                        item.put("effective_pnr", coreData.getCprNumber());
+                        item.put(EFFECTIVE_PNR, coreData.getCprNumber());
                     }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put("birth_year", birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
                         if (birthData.getBirthAuthorityText() != null) {
-                            item.put("birth_authority", birthData.getBirthAuthorityText());
+                            item.put(BIRTH_AUTHORITY, birthData.getBirthAuthorityText());
                         }
                     }
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put("status_code", statusData.getStatus());
+                        item.put(STATUS_CODE, statusData.getStatus());
                         if (statusData.getStatus() == 90) {
                             if (effect.getEffectFrom() != null && (earliestDeathTime == null || effect.getEffectFrom().isBefore(earliestDeathTime))) {
                                 earliestDeathTime = effect.getEffectFrom();
@@ -136,41 +136,41 @@ public class DeathDataService extends StatisticsService {
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        item.put("road_code", addressData.getRoadCode());
-                        item.put("house_number", addressData.getHouseNumber());
-                        item.put("door_number", addressData.getDoor());
-                        item.put("bnr", addressData.getBuildingNumber());
-                        item.put("municipality_code", addressData.getMunicipalityCode());
+                        item.put(ROAD_CODE, addressData.getRoadCode());
+                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
+                        item.put(DOOR_NUMBER, addressData.getDoor());
+                        item.put(BNR, addressData.getBuildingNumber());
+                        item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
                         Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
                         if (lookup != null) {
-                            item.put("locality_name", lookup.localityName);
-                            item.put("locality_code", lookup.localityCode);
+                            item.put(LOCALITY_NAME, lookup.localityName);
+                            item.put(LOCALITY_CODE, lookup.localityCode);
                         }
                     }
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-                        item.put("mother_pnr", personMotherData.getCprNumber());
+                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
                     }
 
                     PersonParentData personFatherData = data.getFather();
                     if (personFatherData != null) {
-                        item.put("father_pnr", personFatherData.getCprNumber());
+                        item.put(FATHER_PNR, personFatherData.getCprNumber());
                     }
 
                     PersonCivilStatusData personCivilStatusData = data.getCivilStatus();
                     if (personCivilStatusData != null) {
-                        item.put("spouse_pnr", personCivilStatusData.getSpouseCpr());
+                        item.put(SPOUSE_PNR, personCivilStatusData.getSpouseCpr());
                     }
 
                 }
             }
         }
         if (earliestDeathTime != null) {
-            item.put("death_date", earliestDeathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
+            item.put(DEATH_DATE, earliestDeathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
         }
         if (earliestProdDate != null) {
-            item.put("prod_date", earliestProdDate.format(dmyFormatter));
+            item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
         return item;
     }
