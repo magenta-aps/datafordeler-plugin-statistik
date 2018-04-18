@@ -52,8 +52,6 @@ public class LookupService {
 
     public Lookup doLookup(int municipalityCode, int roadCode, String houseNumber) {
 
-        System.out.println("Lookupservice is running for "+municipalityCode+" "+roadCode);
-
         Lookup lookup = this.cache.get(municipalityCode, roadCode);
         if (lookup == null) {
             lookup = new Lookup();
@@ -65,7 +63,6 @@ public class LookupService {
 
                 MunicipalityEntity municipalityEntity = this.getMunicipalityGR(session, municipalityCode);
                 if (municipalityEntity != null) {
-                    System.out.println("Found municipality entity");
                     for (MunicipalityEffect municipalityEffect : municipalityEntity.getRegistrationAt(now).getEffectsAt(now)) {
                         for (MunicipalityData municipalityData : municipalityEffect.getDataItems()) {
                             if (municipalityData.getName() != null) {
@@ -77,11 +74,9 @@ public class LookupService {
                     }
 
                     RoadEntity roadEntity = this.getRoadGR(session, municipalityEntity, roadCode);
-                    System.out.println("getRoadGR("+municipalityEntity+","+roadCode+") returned "+roadEntity);
                     if (roadEntity == null) {
                         this.populateRoadDK(lookup, session, municipalityCode, roadCode, houseNumber);
                     } else {
-                        System.out.println("Found road entity");
                         for (RoadEffect roadEffect : roadEntity.getRegistrationAt(now).getEffectsAt(now)) {
                             for (RoadData roadData : roadEffect.getDataItems()) {
                                 if (roadData.getName() != null) {
@@ -94,12 +89,12 @@ public class LookupService {
 
                         LocalityEntity localityEntity = this.getLocalityGR(session, roadEntity);
                         if (localityEntity != null) {
-                            System.out.println("Found locality entity");
                             for (LocalityEffect localityEffect : localityEntity.getRegistrationAt(now).getEffectsAt(now)) {
                                 for (LocalityData localityData : localityEffect.getDataItems()) {
                                     if (localityData.getCode() > 0) {
                                         lookup.localityCode = localityData.getCode();
                                         lookup.localityName = localityData.getName();
+                                        lookup.localityAbbrev = localityData.getAbbrev();
                                         break;
                                     }
                                 }
@@ -112,7 +107,6 @@ public class LookupService {
                             } else {
                                 PostalCodeEntity postalCodeEntity = this.getPostalCodeGR(session, localityEntity);
                                 if (postalCodeEntity != null) {
-                                    System.out.println("Found postalCode entity");
                                     for (PostalCodeEffect postalCodeEffect : postalCodeEntity.getRegistrationAt(now).getEffectsAt(now)) {
                                         for (PostalCodeData postalCodeData : postalCodeEffect.getDataItems()) {
                                             if (postalCodeData.getCode() > 0) {

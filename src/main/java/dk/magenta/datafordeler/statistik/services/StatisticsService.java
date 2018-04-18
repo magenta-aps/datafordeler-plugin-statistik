@@ -107,6 +107,7 @@ public abstract class StatisticsService {
     public static final String MOTHER_BIRTH_AUTHORIRTY = "mother_birth_authority";
     public static final String MOTHER_STATUS_CODE = "mother_status_code";
     public static final String MOTHER_MUNICIPALITY_CODE = "mother_municipality_code";
+    public static final String MOTHER_LOCALITY_CODE = "mother_locality_code";
     public static final String MOTHER_LOCALITY_NAME = "mother_locality_name";
     public static final String MOTHER_ROAD_CODE = "mother_road_code";
     public static final String MOTHER_HOUSE_NUMBER = "mother_house_number";
@@ -119,6 +120,7 @@ public abstract class StatisticsService {
     public static final String FATHER_BIRTH_AUTHORIRTY = "father_birth_authority";
     public static final String FATHER_STATUS_CODE = "father_status_code";
     public static final String FATHER_MUNICIPALITY_CODE = "father_municipality_code";
+    public static final String FATHER_LOCALITY_CODE = "father_locality_code";
     public static final String FATHER_LOCALITY_NAME = "father_locality_name";
     public static final String FATHER_ROAD_CODE = "father_road_code";
     public static final String FATHER_HOUSE_NUMBER = "father_house_number";

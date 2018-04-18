@@ -102,19 +102,23 @@ public class DeathDataService extends StatisticsService {
         OffsetDateTime earliestDeathTime = null;
 
         for (PersonRegistration registration: person.getRegistrations()){
+            //for (PersonEffect effect: registration.getEffects()) {
             for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
                     PersonCoreData coreData = data.getCoreData();
+
                     if (coreData != null) {
                         item.put(EFFECTIVE_PNR, coreData.getCprNumber());
                     }
+
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
                             item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
+
                         if (birthData.getBirthAuthorityText() != null) {
                             item.put(BIRTH_AUTHORITY, birthData.getBirthAuthorityText());
                         }

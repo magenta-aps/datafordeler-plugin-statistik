@@ -22,32 +22,19 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BirthDataServiceTest {
 
-    //private BirthDataService birthDataService;
-
     @Autowired
     private TestRestTemplate restTemplate;
-
-    @Autowired
-    private SessionManager sessionManager;
-
-    @Autowired
-    private PersonEntityManager personEntityManager;
 
     @Autowired
     private PersonTestsUtils testsUtils;
 
     @Test
     public void testBirthDataService() throws Exception {
-
         testsUtils.loadPersonData("person.txt");
-
-  //      testsUtils.loadGladdrregData();
-
+        testsUtils.loadGladdrregData();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
-
         response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
     }

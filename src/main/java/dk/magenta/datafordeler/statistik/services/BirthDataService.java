@@ -67,8 +67,10 @@ public class BirthDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, PROD_DATE,
+
                 MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
                 FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+
 
         });
 
@@ -161,13 +163,7 @@ public class BirthDataService extends StatisticsService {
     }
 
     private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
-
         HashMap<String, Object> item = new HashMap<String, Object>();
-
-
-        System.out.println("Lookup Object reference"+ lookupService.toString());
-
-
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
                 for (PersonBaseData data: effect.getDataItems()) {
@@ -177,8 +173,9 @@ public class BirthDataService extends StatisticsService {
                     }
 
                     PersonAddressData addressData = data.getAddress();
-                    if(addressData != null){
+                    if (addressData != null) {
                         Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
+
 
                         item.put(prefix + MUNICIPALITY_CODE, addressData.getMunicipalityCode() );
                         item.put(prefix + ROAD_CODE, addressData.getRoadCode());
@@ -186,8 +183,12 @@ public class BirthDataService extends StatisticsService {
                         item.put(prefix + DOOR_NUMBER, addressData.getDoor());
                         item.put(prefix + BNR, addressData.getBuildingNumber());
 
+
                         if (lookup.localityName != null) {
                             item.put(prefix + LOCALITY_NAME, lookup.localityName);
+                        }
+                        if (lookup.localityAbbrev != null) {
+                            item.put(prefix + "locality_code", lookup.localityAbbrev);
                         }
                     }
 

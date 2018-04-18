@@ -19,23 +19,18 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-
 public class StatusDataServiceTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private SessionManager sessionManager;
-
-    @Autowired
-    private PersonEntityManager personEntityManager;
+    private PersonTestsUtils testsUtils;
 
     @Test
     public void testStatusDataService()throws Exception {
-        PersonTestsUtils person = new PersonTestsUtils(sessionManager, personEntityManager);
-        person.loadPersonData("statusperson.txt");
-        //loadPerson();
+        testsUtils.loadPersonData("statusperson.txt");
+        testsUtils.loadGladdrregData();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
