@@ -65,11 +65,80 @@ public abstract class StatisticsService {
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
-
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
+    //Column names for person
+    public static final String PNR = "pnr";
+    public static final String BIRTHDAY_YEAR ="birth_year";
+    public static final String BIRTH_AUTHORITY = "birth_authority";
+    public static final String FIRST_NAME = "first_name";
+    public static final String LAST_NAME = "last_name";
+    public static final String EFFECTIVE_PNR = "effective_pnr";
+    public static final String STATUS_CODE = "status_code";
+    public static final String CIVIL_STATUS = "civil_status";
+    public static final String CIVIL_STATUS_DATE = "civil_status_date";
+    public static final String DEATH_DATE = "death_date";
+    public static final String PROD_DATE = "prod_date";
+    public static final String MUNICIPALITY_CODE = "municipality_code";
+    public static final String LOCALITY_NAME = "locality_name";
+    public static final String LOCALITY_CODE = "locality_code";
+    public static final String ROAD_CODE = "road_code";
+    public static final String HOUSE_NUMBER = "house_number";
+    public static final String DOOR_NUMBER = "door_number";
+    public static final String FLOOR_NUMBER = "floor_number";
+    public static final String BNR = "bnr";
+    public static final String MOVING_IN_DATE = "moving_in_date";
+    public static final String MOVE_DATE = "move_date";
+    public static final String POST_CODE =  "post_code";
+    public static final String CHURCH = "church";
 
-     protected PersonQuery getQuery(HttpServletRequest request) {
+    public static final String ORIGIN_MUNICIPALITY_CODE = "origin_municipality_code";
+    public static final String ORIGIN_LOCALITY_NAME = "origin_locality_name";
+    public static final String ORIGIN_ROAD_CODE = "origin_road_code";
+    public static final String ORIGIN_HOUSE_NUMBER = "origin_house_number";
+    public static final String ORIGIN_FLOOR = "origin_floor";
+    public static final String ORIGIN_DOOR_NUMBER = "origin_door_number";
+    public static final String ORIGIN_BNR = "origin_bnr";
+
+    public static final String DESTINATION_MUNICIPALITY_CODE = "destination_municipality_code";
+    public static final String DESTINATION_LOCALITY_NAME = "destination_locality_name";
+    public static final String DESTINATION_ROAD_CODE = "destination_road_code";
+    public static final String DESTINATION_HOUSE_NUMBER = "destination_house_number";
+    public static final String DESTINATION_FLOOR = "destination_floor";
+    public static final String DESTINATION_DOOR_NUMBER = "destination_door_number";
+    public static final String DESTINATION_BNR = "destination_bnr";
+
+    //Column names for parent mother person
+    public static final String MOTHER_PNR = "mother_pnr";
+    public static final String MOTHER_BIRTH_AUTHORIRTY = "mother_birth_authority";
+    public static final String MOTHER_STATUS = "mother_status";
+    public static final String MOTHER_MUNICIPALITY_CODE = "mother_municipality_code";
+    public static final String MOTHER_LOCALITY_NAME = "mother_locality_name";
+    public static final String MOTHER_ROAD_CODE = "mother_road_code";
+    public static final String MOTHER_HOUSE_NUMBER = "mother_house_number";
+    public static final String MOTHER_DOOR_NUMBER = "mother_door_number";
+    public static final String MOTHER_BNR = "mother_bnr";
+
+    //Column names for parent father person
+    public static final String FATHER_PNR = "father_pnr";
+    public static final String FATHER_BIRTH_AUTHORIRTY = "father_birth_authority";
+    public static final String FATHER_STATUS = "father_status";
+    public static final String FATHER_MUNICIPALITY_CODE = "father_municipality_code";
+    public static final String FATHER_LOCALITY_NAME = "father_locality_name";
+    public static final String FATHER_ROAD_CODE = "father_road_code";
+    public static final String FATHER_HOUSE_NUMBER = "father_house_number";
+    public static final String FATHER_DOOR_NUMBER = "father_door_number";
+    public static final String FATHER_BNR = "father_bnr";
+
+    //Column names for  spouse person
+    public static final String SPOUSE_PNR = "spouse_pnr";
+
+
+
+
+
+
+    protected PersonQuery getQuery(HttpServletRequest request) {
         OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
         PersonQuery personQuery = new PersonQuery();
         if (livingInGreenlandAtDate != null) {

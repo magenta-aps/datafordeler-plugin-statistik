@@ -58,10 +58,10 @@ public class StatusDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                "pnr", "birth_year", "first_name", "last_name", "status_code",
-                "birth_authority", "mother_pnr","father_pnr", "spouse_pnr", "civil_status",
-                "municipality_code", "locality_name", "locality_code", "road_code", "house_number", "door_number", "floor_number",
-                "bnr", "moving_in_date", "post_code", "civil_status_date", "church"
+                PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
+                BIRTH_AUTHORITY, MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, CIVIL_STATUS,
+                MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, FLOOR_NUMBER,
+                BNR, MOVING_IN_DATE, POST_CODE, CIVIL_STATUS_DATE, CHURCH
 
         });
     }

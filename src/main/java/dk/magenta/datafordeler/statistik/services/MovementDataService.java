@@ -58,19 +58,30 @@ public class MovementDataService extends StatisticsService {
     //This function should have the following inputs:
     //movement date
 
-    @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
+   // @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
+    @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response);
     }
 
-    @Override
+    /*@Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
                 "mother_pnr", "father_pnr", "spouse_pnr", "prod_date", "move_date",
                 "origin_municipality_code", "origin_locality_name", "origin_road_code", "origin_house_number", "origin_floor", "origin_door_number", "origin_bnr",
                 "destination_municipality_code", "destination_locality_name", "destination_road_code", "destination_house_number", "destination_floor", "destination_door_number", "destination_bnr",
+        });
+    }*/
+
+    @Override
+    protected List<String> getColumnNames() {
+        return Arrays.asList(new String[]{
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY,
+                MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, PROD_DATE, MOVE_DATE,
+                ORIGIN_MUNICIPALITY_CODE, ORIGIN_LOCALITY_NAME, ORIGIN_ROAD_CODE, ORIGIN_HOUSE_NUMBER, ORIGIN_FLOOR, ORIGIN_DOOR_NUMBER, ORIGIN_BNR,
+                DESTINATION_MUNICIPALITY_CODE, DESTINATION_LOCALITY_NAME, DESTINATION_ROAD_CODE, DESTINATION_HOUSE_NUMBER, DESTINATION_FLOOR, DESTINATION_DOOR_NUMBER, DESTINATION_BNR
         });
     }
 

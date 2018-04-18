@@ -71,9 +71,9 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                "pnr", "birth_year", "effective_pnr", "status_code", "birth_authority",
-                "mother_pnr", "mother_birth_authority", "mother_status", "mother_municipality_code", "mother_locality_name", "mother_road_code", "mother_house_number", "mother_door_number", "mother_bnr",
-                "father_pnr", "father_birth_authority", "father_status", "father_municipality_code", "father_locality_name", "father_road_code", "father_house_number", "father_door_number", "father_bnr"
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY,
+                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
+                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
         });
 
     }
@@ -168,7 +168,6 @@ public class BirthDataService extends StatisticsService {
 
         HashMap<String, Object> item = new HashMap<String, Object>();
 
-        //LookupService lookupService = new LookupService(session);
         System.out.println("Lookup Object reference"+ lookupService.toString());
 
         for (PersonRegistration registration: person.getRegistrations()) {
