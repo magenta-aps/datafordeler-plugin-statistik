@@ -58,13 +58,12 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                "status_code", "death_date", "prod_date", "pnr", "birth_year",
-                "mother_pnr", "father_pnr", "spouse_pnr",
-                "effective_pnr", "birth_authority", "municipality_code",
-                "locality_name", "locality_code","road_code", "house_number", "door_number", "bnr"
+                STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
+                MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
+                EFFECTIVE_PNR, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
+                LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
-
     @Override
     protected SessionManager getSessionManager() {
         return this.sessionManager;
