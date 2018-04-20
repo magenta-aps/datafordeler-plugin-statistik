@@ -168,7 +168,7 @@ public class StatusDataService extends StatisticsService {
                         item.put(POST_CODE, addressData.getPostalCode());
                         item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
                         item.put(ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
-                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
+                        item.put(HOUSE_NUMBER, formatHouseNnr(addressData.getHouseNumber()));
                         item.put(DOOR_NUMBER, addressData.getDoor());
                         item.put(BNR, formatBnr(addressData.getBuildingNumber()));
                         item.put(FLOOR_NUMBER,addressData.getFloor());

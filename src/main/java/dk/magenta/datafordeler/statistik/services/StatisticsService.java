@@ -205,7 +205,11 @@ public abstract class StatisticsService {
     }
 
     protected static String formatBnr(String bnr) {
-        return StringUtils.leftPad(bnr, 4, '0');
+        return (bnr != null && !bnr.isEmpty()) ? StringUtils.leftPad(bnr, 4, '0') : "";
+    }
+
+    protected static String formatHouseNnr(String houseNr) {
+        return StringUtils.leftPad(houseNr, 3, '0');
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
