@@ -50,7 +50,7 @@ public abstract class StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            int written = 0;//this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
