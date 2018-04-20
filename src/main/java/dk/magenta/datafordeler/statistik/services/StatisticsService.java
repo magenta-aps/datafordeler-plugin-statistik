@@ -13,13 +13,17 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.collections.IteratorUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
+import javax.validation.constraints.Null;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -63,6 +67,8 @@ public abstract class StatisticsService {
         MOVEMENT,
         STATUS;
     }
+
+    public static final boolean isFileOn = true;
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -168,29 +174,48 @@ public abstract class StatisticsService {
         response.setContentType("text/csv");
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
 
+
+        //This line couses the response to be null. (nota: making a copy of some the objects can be a solution and pass the to the calling function)
+       boolean file= this.fileWriting(keys, items, writer, serviceName, response);
+
+
+
+
         int written;
 
         for (written = 0; items.hasNext(); written++) {
             writer.write(items.next());
+
         }
 
-
-        //Call to function to write files depending on the service name.
-        this.fileWriting(keys, items, serviceName);
 
 
 
         return written;
     }
+    private boolean fileWriting(List<String> keys, Iterator<Map<String, Object>> items, SequenceWriter writerContent,ServiceName serviceName , HttpServletResponse response){
+        try {
 
-    private void fileWriting(List<String> keys, Iterator<Map<String, Object>> items,ServiceName serviceName ){
 
-        String file_name = null;
-        //move to fileWriting
+   System.out.println("Are there items: "+items);
+System.out.println("Are there keys: "+keys.isEmpty());
+    System.out.println("Anything in writerContent: "+writerContent.toString().getBytes());
+
+
+
+
+}catch (Exception e ){
+    System.out.println(e.toString());}
+
+
+
+            String file_name = null;
+
         switch (serviceName){
             case BIRTH :
                 System.out.println("Birth service ran...");
                 file_name = "birth";
+
                 break;
             case DEATH :
                 System.out.println("Death service ran...");
@@ -208,15 +233,11 @@ public abstract class StatisticsService {
                 System.out.println("IT DOES NOT WORK!!!!!");
         }
 
-        List<String> list = new ArrayList<>();
-        list.add("He");
-        list.add("Hoo");
-        list.add("ii");
         CsvSchema schema =  CsvSchema.builder().addColumn("parentCategoryCode").addColumn("code").addColumn("name").addColumn("description").build();
 
-        /*for (String column : keys) {
+        for (String column : keys) {
             schema = CsvSchema.builder().addColumn(column).build();
-        }*/
+        }
 
         //Iteratate over the items values and write them to files.
 
@@ -224,13 +245,53 @@ public abstract class StatisticsService {
         mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
         ObjectWriter writer;
         writer = mapper.writerFor(String.class).with(schema);
-        File tempFile = new File("c:\\temp\\"+file_name+".csv");
+
 
         try {
-            writer.writeValues(tempFile).writeAll(list);
+            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), keys);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+        try {
+            //writer.writeValues(tempFile).writeAll((Iterable<?>) writerContent);
+
+          /*  FileOutputStream fop = new FileOutputStream("c:\\temp\\"+file_name+".csv");
+            fop.write(list.toString().getBytes());
+            fop.write(writerContent.toString().getBytes());
+
+            fop.flush();
+            fop.close();*/
+
+
+//source: https://stackoverflow.com/questions/10117026/convert-iterator-to-arraylist
+
+            Iterator<?>  iter = items;
+            List<Map<String, Object>> list = IteratorUtils.toList(iter);
+                list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
+
+            ArrayList<String> listValues = new ArrayList<>();
+
+
+            for (Map<String, Object> element : list) {
+
+            listValues.add(element.values().toString());
+
+            }
+
+
+            listValues.forEach(s -> System.out.println("Values: "+s));
+
+
+
+
+            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), listValues, StandardOpenOption.APPEND);
+            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), listValues, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
 
     }
 
