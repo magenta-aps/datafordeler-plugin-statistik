@@ -205,7 +205,7 @@ public abstract class StatisticsService {
     }
 
     protected static String formatBnr(String bnr) {
-        return StringUtils.leftPad(bnr, 4);
+        return StringUtils.leftPad(bnr, 4, '0');
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
