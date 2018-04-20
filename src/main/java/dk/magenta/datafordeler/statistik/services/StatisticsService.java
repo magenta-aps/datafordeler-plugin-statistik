@@ -119,9 +119,10 @@ public abstract class StatisticsService {
     public static final String DESTINATION_BNR = "destination_bnr";
 
     //Column names for parent mother person
+    public static final String MOTHER_PREFIX = "mother_";
     public static final String MOTHER_PNR = "mother_pnr";
     public static final String MOTHER_BIRTH_AUTHORIRTY = "mother_birth_authority";
-    public static final String MOTHER_STATUS = "mother_status";
+    public static final String MOTHER_STATUS_CODE = "mother_status_code";
     public static final String MOTHER_MUNICIPALITY_CODE = "mother_municipality_code";
     public static final String MOTHER_LOCALITY_CODE = "mother_locality_code";
     public static final String MOTHER_LOCALITY_NAME = "mother_locality_name";
@@ -131,9 +132,10 @@ public abstract class StatisticsService {
     public static final String MOTHER_BNR = "mother_bnr";
 
     //Column names for parent father person
+    public static final String FATHER_PREFIX = "father_";
     public static final String FATHER_PNR = "father_pnr";
     public static final String FATHER_BIRTH_AUTHORIRTY = "father_birth_authority";
-    public static final String FATHER_STATUS = "father_status";
+    public static final String FATHER_STATUS_CODE = "father_status_code";
     public static final String FATHER_MUNICIPALITY_CODE = "father_municipality_code";
     public static final String FATHER_LOCALITY_CODE = "father_locality_code";
     public static final String FATHER_LOCALITY_NAME = "father_locality_name";
