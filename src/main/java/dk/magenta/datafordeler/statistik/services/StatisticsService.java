@@ -209,7 +209,7 @@ public abstract class StatisticsService {
     }
 
     protected static String formatHouseNnr(String houseNr) {
-        return StringUtils.leftPad(houseNr, 3, '0');
+        return StringUtils.leftPad(houseNr, 4, '0');
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
