@@ -72,8 +72,8 @@ public class BirthDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, PROD_DATE,
 
-                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
-                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_LOCALITY_CODE, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
+                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_LOCALITY_CODE, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
 
 
         });
@@ -211,7 +211,7 @@ public class BirthDataService extends StatisticsService {
                             item.put(prefix + LOCALITY_NAME, lookup.localityName);
                         }
                         if (lookup.localityAbbrev != null) {
-                            item.put(prefix + "locality_code", lookup.localityAbbrev);
+                            item.put(prefix + LOCALITY_CODE, lookup.localityAbbrev);
                         }
                     }
 
