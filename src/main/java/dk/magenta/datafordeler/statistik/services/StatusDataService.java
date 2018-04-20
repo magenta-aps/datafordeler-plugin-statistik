@@ -170,7 +170,7 @@ public class StatusDataService extends StatisticsService {
                         item.put(ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
                         item.put(HOUSE_NUMBER, addressData.getHouseNumber());
                         item.put(DOOR_NUMBER, addressData.getDoor());
-                        item.put(BNR, addressData.getBuildingNumber());
+                        item.put(BNR, formatBnr(addressData.getBuildingNumber()));
                         item.put(FLOOR_NUMBER,addressData.getFloor());
                         Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
                         if (lookup != null) {
