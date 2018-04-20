@@ -193,7 +193,11 @@ public class BirthDataService extends StatisticsService {
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
+                        Lookup lookup = lookupService.doLookup(
+                                addressData.getMunicipalityCode(),
+                                addressData.getRoadCode(),
+                                addressData.getHouseNumber()
+                        );
 
 
                         item.put(prefix + MUNICIPALITY_CODE, addressData.getMunicipalityCode() );
