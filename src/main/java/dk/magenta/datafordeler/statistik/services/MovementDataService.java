@@ -164,7 +164,7 @@ public class MovementDataService extends StatisticsService {
                     item.put(DESTINATION_HOUSE_NUMBER, currentAddress.getHouseNumber());
                     item.put(DESTINATION_FLOOR, currentAddress.getFloor());
                     item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
-                    item.put(DESTINATION_BNR, currentAddress.getBuildingNumber());
+                    item.put(DESTINATION_BNR, formatBnr(currentAddress.getBuildingNumber()));
                     item.put(MOVE_DATE, current.format(dmyFormatter));
                     if (registrations.containsKey(current)) {
                         item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));

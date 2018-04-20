@@ -14,6 +14,7 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
@@ -201,6 +202,10 @@ public abstract class StatisticsService {
 
     protected static String formatStatusCode(int statusCode) {
         return String.format("%02d", statusCode);
+    }
+
+    protected static String formatBnr(String bnr) {
+        return StringUtils.leftPad(bnr, 4);
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {

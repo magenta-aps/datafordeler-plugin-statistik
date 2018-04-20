@@ -200,7 +200,7 @@ public class BirthDataService extends StatisticsService {
                         item.put(prefix + ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
                         item.put(prefix + HOUSE_NUMBER, addressData.getHouseNumber());
                         item.put(prefix + DOOR_NUMBER, addressData.getDoor());
-                        item.put(prefix + BNR, addressData.getBuildingNumber());
+                        item.put(prefix + BNR, formatBnr(addressData.getBuildingNumber()));
 
 
                         if (lookup.localityName != null) {
