@@ -50,9 +50,9 @@ public class DeathDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void get(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response);
+        super.get(request, response, ServiceName.DEATH);
     }
 
     @Override
@@ -176,6 +176,9 @@ public class DeathDataService extends StatisticsService {
         if (earliestProdDate != null) {
             item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
+
+
+
         return item;
     }
 

@@ -50,9 +50,9 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response);
+        super.get(request, response, ServiceName.STATUS);
     }
 
     @Override

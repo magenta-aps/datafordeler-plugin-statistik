@@ -51,7 +51,7 @@ public class MovementDataService extends StatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getDeath(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response);
+        super.get(request, response, ServiceName.MOVEMENT);
     }
 
     @Override

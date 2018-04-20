@@ -16,6 +16,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -37,6 +43,9 @@ public class BirthDataServiceTest {
         Assert.assertEquals(400, response.getStatusCodeValue());
         response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
+
+
+
     }
 
 }
