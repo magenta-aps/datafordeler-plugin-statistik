@@ -92,6 +92,7 @@ public abstract class StatisticsService {
     public static final String MUNICIPALITY_CODE = "municipality_code";
     public static final String LOCALITY_NAME = "locality_name";
     public static final String LOCALITY_CODE = "locality_code";
+    public static final String LOCALITY_ABBREVIATION = "locality_abbrev";
     public static final String ROAD_CODE = "road_code";
     public static final String HOUSE_NUMBER = "house_number";
     public static final String DOOR_NUMBER = "door_number";

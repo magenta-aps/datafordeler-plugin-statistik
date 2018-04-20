@@ -60,8 +60,8 @@ public class StatusDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
-                BIRTH_AUTHORITY, MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, CIVIL_STATUS,
-                MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, FLOOR_NUMBER,
+                BIRTH_AUTHORITY, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
+                MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
                 BNR, MOVING_IN_DATE, POST_CODE, CIVIL_STATUS_DATE, CHURCH
 
         });
@@ -176,6 +176,7 @@ public class StatusDataService extends StatisticsService {
                         if (lookup != null) {
                             item.put(LOCALITY_NAME, lookup.localityName);
                             item.put(LOCALITY_CODE, lookup.localityCode);
+                            item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                             item.put(POST_CODE, lookup.postalCode);
                         }
                         for (OffsetDateTime addressTime : addressTimes) {
