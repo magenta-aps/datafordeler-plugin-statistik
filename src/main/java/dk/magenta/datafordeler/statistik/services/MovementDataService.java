@@ -152,16 +152,16 @@ public class MovementDataService extends StatisticsService {
                     item.put(ORIGIN_MUNICIPALITY_CODE, previousAddress.getMunicipalityCode());
                     //item.put("origin_locality_name", null);
                     item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousAddress.getRoadCode()));
-                    item.put(ORIGIN_HOUSE_NUMBER, previousAddress.getHouseNumber());
+                    item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousAddress.getHouseNumber()));
                     item.put(ORIGIN_FLOOR, previousAddress.getFloor());
                     item.put(ORIGIN_DOOR_NUMBER, previousAddress.getDoor());
-                    item.put(ORIGIN_BNR, previousAddress.getBuildingNumber());
+                    item.put(ORIGIN_BNR, formatBnr(previousAddress.getBuildingNumber()));
                 }
                 if (currentAddress != null) {
                     item.put(DESTINATION_MUNICIPALITY_CODE, currentAddress.getMunicipalityCode());
                     //item.put("destination_locality_name", null);
                     item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentAddress.getRoadCode()));
-                    item.put(DESTINATION_HOUSE_NUMBER, currentAddress.getHouseNumber());
+                    item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentAddress.getHouseNumber()));
                     item.put(DESTINATION_FLOOR, currentAddress.getFloor());
                     item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
                     item.put(DESTINATION_BNR, formatBnr(currentAddress.getBuildingNumber()));
