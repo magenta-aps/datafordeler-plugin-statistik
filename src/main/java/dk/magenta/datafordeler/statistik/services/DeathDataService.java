@@ -158,7 +158,7 @@ public class DeathDataService extends StatisticsService {
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        item.put(ROAD_CODE, addressData.getRoadCode());
+                        item.put(ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
                         item.put(HOUSE_NUMBER, addressData.getHouseNumber());
                         item.put(DOOR_NUMBER, addressData.getDoor());
                         item.put(BNR, addressData.getBuildingNumber());

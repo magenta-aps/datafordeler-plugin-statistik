@@ -151,7 +151,7 @@ public class MovementDataService extends StatisticsService {
                 if (previousAddress != null) {
                     item.put(ORIGIN_MUNICIPALITY_CODE, previousAddress.getMunicipalityCode());
                     //item.put("origin_locality_name", null);
-                    item.put(ORIGIN_ROAD_CODE, previousAddress.getRoadCode());
+                    item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousAddress.getRoadCode()));
                     item.put(ORIGIN_HOUSE_NUMBER, previousAddress.getHouseNumber());
                     item.put(ORIGIN_FLOOR, previousAddress.getFloor());
                     item.put(ORIGIN_DOOR_NUMBER, previousAddress.getDoor());
@@ -160,7 +160,7 @@ public class MovementDataService extends StatisticsService {
                 if (currentAddress != null) {
                     item.put(DESTINATION_MUNICIPALITY_CODE, currentAddress.getMunicipalityCode());
                     //item.put("destination_locality_name", null);
-                    item.put(DESTINATION_ROAD_CODE, currentAddress.getRoadCode());
+                    item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentAddress.getRoadCode()));
                     item.put(DESTINATION_HOUSE_NUMBER, currentAddress.getHouseNumber());
                     item.put(DESTINATION_FLOOR, currentAddress.getFloor());
                     item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
@@ -195,7 +195,7 @@ public class MovementDataService extends StatisticsService {
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put(STATUS_CODE, statusData.getStatus());
+                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
 

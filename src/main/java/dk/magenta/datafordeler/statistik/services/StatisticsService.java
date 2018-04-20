@@ -195,6 +195,14 @@ public abstract class StatisticsService {
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
+    protected static String formatRoadCode(Integer roadCode) {
+        return roadCode != null ? String.format("%04d", roadCode) : null;
+    }
+
+    protected static String formatStatusCode(int statusCode) {
+        return String.format("%02d", statusCode);
+    }
+
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);

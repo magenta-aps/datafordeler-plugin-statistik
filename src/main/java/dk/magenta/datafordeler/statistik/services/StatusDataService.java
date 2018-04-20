@@ -160,14 +160,14 @@ public class StatusDataService extends StatisticsService {
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put(STATUS_CODE, statusData.getStatus());
+                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
                         item.put(POST_CODE, addressData.getPostalCode());
                         item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
-                        item.put(ROAD_CODE, addressData.getRoadCode());
+                        item.put(ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
                         item.put(HOUSE_NUMBER, addressData.getHouseNumber());
                         item.put(DOOR_NUMBER, addressData.getDoor());
                         item.put(BNR, addressData.getBuildingNumber());
