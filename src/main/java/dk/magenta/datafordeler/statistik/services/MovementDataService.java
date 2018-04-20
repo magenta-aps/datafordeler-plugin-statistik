@@ -198,8 +198,6 @@ public class MovementDataService extends StatisticsService {
                         item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
-
-                    item.put(EFFECTIVE_PNR, person.getPersonnummer());
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
                         item.put(EFFECTIVE_PNR, coreData.getCprNumber());

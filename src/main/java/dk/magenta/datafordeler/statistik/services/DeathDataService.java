@@ -112,7 +112,7 @@ public class DeathDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(PNR, person.getPersonnummer());
-        item.put(EFFECTIVE_PNR, person.getPersonnummer());
+        //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
@@ -193,7 +193,7 @@ public class DeathDataService extends StatisticsService {
             }
         }
         if (earliestDeathTime != null) {
-            item.put(DEATH_DATE, earliestDeathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
+            item.put(DEATH_DATE, earliestDeathTime.format(dmyFormatter)); // Timezone?
         }
         if (earliestProdDate != null) {
             item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));

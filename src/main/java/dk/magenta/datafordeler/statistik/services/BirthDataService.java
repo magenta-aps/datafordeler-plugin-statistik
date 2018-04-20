@@ -120,7 +120,7 @@ public class BirthDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(PNR, person.getPersonnummer());
-        item.put(EFFECTIVE_PNR, person.getPersonnummer());
+        //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
