@@ -112,6 +112,10 @@ public class BirthDataService extends StatisticsService {
         if (bornAfterDate != null) {
             personBirthQuery.setBirthDateTimeAfter(bornAfterDate.toLocalDateTime()); // Timezone?
         }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personBirthQuery.setPersonnummer(pnr);
+        }
         return personBirthQuery;
     }
 

@@ -101,6 +101,10 @@ public class DeathDataService extends StatisticsService {
         if (diedAfterDate != null) {
             personDeathQuery.setDeathDateTimeAfter(diedAfterDate.toLocalDateTime()); // Timezone?
         }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personDeathQuery.setPersonnummer(pnr);
+        }
 
         return personDeathQuery;
     }

@@ -100,6 +100,10 @@ public class MovementDataService extends StatisticsService {
         if (moveBeforeDate != null) {
             personMoveQuery.setMoveDateTimeBefore(moveBeforeDate);
         }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personMoveQuery.setPersonnummer(pnr);
+        }
         return personMoveQuery;
     }
 
@@ -108,7 +112,9 @@ public class MovementDataService extends StatisticsService {
         HashMap<String, Object> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
+        // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
         for (PersonRegistration registration: person.getRegistrations()) {

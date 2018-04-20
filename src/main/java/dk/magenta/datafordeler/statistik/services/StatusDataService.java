@@ -27,10 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /*Created by Efrin 06-04-2018*/
@@ -98,6 +95,10 @@ public class StatusDataService extends StatisticsService {
         if (livingInGreenlandOnDate != null) {
             personStatusQuery.setLivingInGreenlandOn(livingInGreenlandOnDate);
         }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personStatusQuery.setPersonnummer(pnr);
+        }
         return personStatusQuery;
     }
 
@@ -106,6 +107,34 @@ public class StatusDataService extends StatisticsService {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(PNR, person.getPersonnummer());
         LookupService lookupService = new LookupService(session);
+
+        // Map of effectTime to addresses (when address was moved into)
+        HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        // Map of effectTime to registrationTime (when this move was first registered)
+        HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
+
+        for (PersonRegistration registration: person.getRegistrations()) {
+            for (PersonEffect effect : registration.getEffects()) {
+                OffsetDateTime effectTime = effect.getEffectFrom();
+                for (PersonBaseData data : effect.getDataItems()) {
+                    PersonAddressData addressData = data.getAddress();
+                    if (addressData != null) {
+                        addresses.put(effectTime, addressData);
+
+                        if (!registrations.containsKey(effectTime)) {
+                            OffsetDateTime oldTime = registrations.get(effectTime);
+                            OffsetDateTime newTime = registration.getRegistrationFrom();
+                            if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
+                                registrations.put(effectTime, newTime);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
+        addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
+
 
         OffsetDateTime latestCivilStatusDate = null;
 
@@ -147,8 +176,14 @@ public class StatusDataService extends StatisticsService {
                         if (lookup != null) {
                             item.put(LOCALITY_NAME, lookup.localityName);
                             item.put(LOCALITY_CODE, lookup.localityCode);
+                            item.put(POST_CODE, lookup.postalCode);
                         }
-
+                        for (OffsetDateTime addressTime : addressTimes) {
+                            if (addresses.get(addressTime) == addressData) {
+                                item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
+                                break;
+                            }
+                        }
                     }
 
                     PersonParentData personMotherData = data.getMother();
