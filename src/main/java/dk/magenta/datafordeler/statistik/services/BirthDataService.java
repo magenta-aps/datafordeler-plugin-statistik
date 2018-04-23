@@ -70,7 +70,7 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, BIRTH_AUTHORITY, STATUS_CODE, PROD_DATE,
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, BIRTH_AUTHORITY, CITIZENSHIP_CODE, STATUS_CODE, PROD_DATE,
                 MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_LOCALITY_CODE, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
                 FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_LOCALITY_CODE, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
         });
@@ -152,6 +152,11 @@ public class BirthDataService extends StatisticsService {
                         item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    }
+
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
                         item.put(MOTHER_PNR, personMotherData.getCprNumber());
@@ -210,6 +215,11 @@ public class BirthDataService extends StatisticsService {
                         if (lookup.localityAbbrev != null) {
                             item.put(prefix + LOCALITY_CODE, lookup.localityAbbrev);
                         }
+                    }
+
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(prefix + CITIZENSHIP_CODE, citizenshipData.getCountryCode());
                     }
 
                     PersonBirthData birthData = data.getBirth();
