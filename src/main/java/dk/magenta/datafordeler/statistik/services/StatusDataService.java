@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.ListHashMap;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -59,8 +60,8 @@ public class StatusDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE, CITIZENSHIP_CODE,
-                BIRTH_AUTHORITY, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
+                PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
+                BIRTH_AUTHORITY, CITIZENSHIP_CODE, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
                 MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
                 BNR, MOVING_IN_DATE, POST_CODE, CIVIL_STATUS_DATE, CHURCH
 
@@ -109,7 +110,7 @@ public class StatusDataService extends StatisticsService {
         LookupService lookupService = new LookupService(session);
 
         // Map of effectTime to addresses (when address was moved into)
-        HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
@@ -119,7 +120,7 @@ public class StatusDataService extends StatisticsService {
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        addresses.put(effectTime, addressData);
+                        addresses.add(effectTime, addressData);
 
                         if (!registrations.containsKey(effectTime)) {
                             OffsetDateTime oldTime = registrations.get(effectTime);
@@ -189,7 +190,7 @@ public class StatusDataService extends StatisticsService {
                             item.put(POST_CODE, lookup.postalCode);
                         }
                         for (OffsetDateTime addressTime : addressTimes) {
-                            if (addresses.get(addressTime) == addressData) {
+                            if (addresses.get(addressTime).contains(addressData)) {
                                 item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
                                 break;
                             }
