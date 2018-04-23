@@ -86,6 +86,7 @@ public abstract class StatisticsService {
     public static final String LAST_NAME = "last_name";
     public static final String EFFECTIVE_PNR = "effective_pnr";
     public static final String STATUS_CODE = "status_code";
+    public static final String CITIZENSHIP_CODE = "citizenship_code";
     public static final String CIVIL_STATUS = "civil_status";
     public static final String CIVIL_STATUS_DATE = "civil_status_date";
     public static final String DEATH_DATE = "death_date";
@@ -125,6 +126,7 @@ public abstract class StatisticsService {
     public static final String MOTHER_PNR = "mother_pnr";
     public static final String MOTHER_BIRTH_AUTHORIRTY = "mother_birth_authority";
     public static final String MOTHER_STATUS_CODE = "mother_status_code";
+    public static final String MOTHER_CITIZENSHIP_CODE = "mother_citizenship_code";
     public static final String MOTHER_MUNICIPALITY_CODE = "mother_municipality_code";
     public static final String MOTHER_LOCALITY_CODE = "mother_locality_code";
     public static final String MOTHER_LOCALITY_NAME = "mother_locality_name";
@@ -138,6 +140,7 @@ public abstract class StatisticsService {
     public static final String FATHER_PNR = "father_pnr";
     public static final String FATHER_BIRTH_AUTHORIRTY = "father_birth_authority";
     public static final String FATHER_STATUS_CODE = "father_status_code";
+    public static final String FATHER_CITIZENSHIP_CODE = "father_citizenship_code";
     public static final String FATHER_MUNICIPALITY_CODE = "father_municipality_code";
     public static final String FATHER_LOCALITY_CODE = "father_locality_code";
     public static final String FATHER_LOCALITY_NAME = "father_locality_name";

@@ -198,6 +198,11 @@ public class MovementDataService extends StatisticsService {
                         item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    }
+
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
                         item.put(EFFECTIVE_PNR, coreData.getCprNumber());

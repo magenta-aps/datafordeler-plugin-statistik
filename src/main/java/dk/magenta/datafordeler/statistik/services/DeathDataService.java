@@ -155,6 +155,10 @@ public class DeathDataService extends StatisticsService {
                         }
                     }
 
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
