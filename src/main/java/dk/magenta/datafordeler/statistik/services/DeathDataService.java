@@ -64,7 +64,7 @@ public class DeathDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
-                EFFECTIVE_PNR, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
+                EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
                 LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
