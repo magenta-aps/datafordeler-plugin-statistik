@@ -187,65 +187,15 @@ public abstract class StatisticsService {
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
 
 
-                                //Routine to write the content to the file
-                               /*if(!isFileOn) {
-                                String file_name = null;
-                                switch (serviceName) {
-                                    case BIRTH:
-                                        System.out.println("Birth service ran...");
-                                        file_name = "birth";
-                                        break;
-                                    case DEATH:
-                                        System.out.println("Death service ran...");
-                                        file_name = "death";
-                                        break;
-                                    case STATUS:
-                                        System.out.println("Status service ran...");
-                                        file_name = "status";
-                                        break;
-                                    case MOVEMENT:
-                                        System.out.println("Movement service ran...");
-                                        file_name = "movement";
-                                        break;
-                                    default:
-                                        System.out.println("No file name assigned!!!");
-                                }
 
-                                try {
-                                    Iterator<?> iterator = items;
-                                    List<String> listValues = new ArrayList<>();
-                                    List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
-
-                                    //Traversing the items in order to extract columns and values
-                                    for (Map<String, Object> element : itemsList) {
-                                        for (Map.Entry<String, Object> entry : element.entrySet()) {
-                                            //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-                                            listValues.add(String.valueOf(entry.getValue()));//Assigns the value
-                                        }
-                                    }
-
-                                    ObjectWriter writerobj = mapper.writerFor(String.class).with(schema);
-                                    File tempFile = new File("c:\\temp\\" + file_name + ".csv");
-                                    writerobj.writeValues(tempFile).writeAll(listValues);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }*/
-
-        int written;
-
-        for (written = 0; items.hasNext(); written++) {
-            writer.write(items.next());
-
-
-        ObjectWriter writer = this.getCsvMapper().writer(schema);
+        ObjectWriter writerobj = this.getCsvMapper().writer(schema);
         SequenceWriter sequenceWriter;
 
-        if (isFileOn) {
+        if (!isFileOn) {
             File tempFile = new File(serviceName.name().toLowerCase() + ".csv");
-            sequenceWriter = writer.writeValues(tempFile);
+            sequenceWriter = writerobj.writeValues(tempFile);
         } else {
-            sequenceWriter = writer.writeValues(response.getOutputStream());
+            sequenceWriter = writerobj.writeValues(response.getOutputStream());
 
         }
 
