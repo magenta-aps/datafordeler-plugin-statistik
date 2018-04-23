@@ -21,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.Null;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -71,7 +73,7 @@ public abstract class StatisticsService {
         STATUS;
     }
 
-    public static final boolean isFileOn = true;
+    public static boolean isFileOn = true;
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -180,8 +182,9 @@ public abstract class StatisticsService {
 
 
 
+            if(isFileOn){boolean file= this.fileWriting(keys, items, writer, serviceName, response);}
 
-        boolean file= this.fileWriting(keys, items, writer, serviceName, response);
+
         int written;
 
         for (written = 0; items.hasNext(); written++) {
@@ -196,26 +199,27 @@ public abstract class StatisticsService {
 
         return written;
     }
-    
+
 
     private boolean fileWriting(List<String> keys, Iterator<Map<String, Object>> items, SequenceWriter writerContent,ServiceName serviceName , HttpServletResponse response){
+
+        String file_name = null;
+
+        //Helper routine to check content of object. Can be deleted after.
         try {
 
-
-   System.out.println("Are there items: "+items);
-System.out.println("Are there keys: "+keys.isEmpty());
-    System.out.println("Anything in writerContent: "+writerContent.toString().getBytes());
-
-
-
-
-}catch (Exception e ){
-    System.out.println(e.toString());}
+            System.out.println("Are there items: "+items);
+            System.out.println("Are there keys: "+keys.isEmpty());
+            System.out.println("Anything in writerContent: "+writerContent.toString().getBytes());
+            }
+            catch (Exception e ){
+            System.out.println(e.toString());
+            }
 
 
 
-            String file_name = null;
 
+        //Routine to define the name of the file in directory
         switch (serviceName){
             case BIRTH :
                 System.out.println("Birth service ran...");
@@ -238,65 +242,56 @@ System.out.println("Are there keys: "+keys.isEmpty());
                 System.out.println("IT DOES NOT WORK!!!!!");
         }
 
-        CsvSchema schema =  CsvSchema.builder().addColumn("parentCategoryCode").addColumn("code").addColumn("name").addColumn("description").build();
-
-        for (String column : keys) {
-            schema = CsvSchema.builder().addColumn(column).build();
-        }
-
-        //Iteratate over the items values and write them to files.
-
-        CsvMapper mapper = new CsvMapper();
-        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-        ObjectWriter writer;
-        writer = mapper.writerFor(String.class).with(schema);
-
-
-        try {
-            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), keys);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        try {
-            //writer.writeValues(tempFile).writeAll((Iterable<?>) writerContent);
-
-          /*  FileOutputStream fop = new FileOutputStream("c:\\temp\\"+file_name+".csv");
-            fop.write(list.toString().getBytes());
-            fop.write(writerContent.toString().getBytes());
-
-            fop.flush();
-            fop.close();*/
-
-
-//source: https://stackoverflow.com/questions/10117026/convert-iterator-to-arraylist
-
-            Iterator<?>  iter = items;
-            List<Map<String, Object>> list = IteratorUtils.toList(iter);
-                list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
-
-            ArrayList<String> listValues = new ArrayList<>();
-
-
-            for (Map<String, Object> element : list) {
-
-            listValues.add(element.values().toString());
-
-            }
-
-
-            listValues.forEach(s -> System.out.println("Values: "+s));
 
 
 
 
-            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), listValues, StandardOpenOption.APPEND);
-            Files.write(Paths.get("c:\\temp\\"+file_name+".csv"), listValues, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return true;
+         //Routine to write the content to the file
+         try {
+
+             CsvSchema schema =  CsvSchema.builder().build();
+             CsvMapper mapper = new CsvMapper();
+             mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
+             Iterator<?>  iterator = items;
+             List<String> listValues = new ArrayList<>();
+
+             List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
+
+
+             CsvSchema.Builder builder = new CsvSchema.Builder();
+
+             //Traversing the items in order to extract columns and values
+             for (Map<String, Object> element : itemsList) {
+                 System.out.println("Map Value"+element.values().toString());
+
+                 for (Map.Entry<String, Object> entry : element.entrySet())
+                 {System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+
+                    // builder.addColumn(entry.getKey());//Get the column name
+                     listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+                 }
+             }
+
+
+             //listValues.forEach(s -> System.out.println("Values: "+s));
+
+
+             ObjectWriter writer = mapper.writerFor(String.class).with(schema);
+
+             File tempFile = new File("c:\\temp\\"+file_name+".csv");
+             try {
+               
+                 writer.writeValues(tempFile).writeAll(listValues);
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
+             return true;
+
+         }finally {
+             System.out.println("----");
+         }
+
 
     }
 
