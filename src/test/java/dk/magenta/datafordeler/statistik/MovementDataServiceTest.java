@@ -2,6 +2,8 @@ package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.statistik.services.MovementDataService;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,8 +28,12 @@ public class MovementDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
+    @Autowired
+    private MovementDataService movementDataService;
+
     @Test
-    public void testMovementDataService()throws Exception {
+    public void testMovementDataService() throws Exception {
+        StatisticsService.isFileOn = false;
         testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
         TestUserDetails testUserDetails = new TestUserDetails();

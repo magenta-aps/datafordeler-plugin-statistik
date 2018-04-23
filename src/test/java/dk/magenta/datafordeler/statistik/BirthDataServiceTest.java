@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +38,8 @@ public class BirthDataServiceTest {
 
     @Test
     public void testBirthDataService() throws Exception {
+        StatisticsService.isFileOn = false;
+
         testsUtils.loadPersonData("person.txt");
         testsUtils.loadGladdrregData();
 

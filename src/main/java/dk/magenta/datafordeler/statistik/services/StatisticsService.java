@@ -230,6 +230,11 @@ public abstract class StatisticsService {
         return StringUtils.leftPad(houseNr, 4, '0');
     }
 
+    protected static String formatLocalityCode(int localityCode) {
+        if (localityCode == 0) return "";
+        return String.format("%04d", localityCode);
+    }
+
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);

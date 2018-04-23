@@ -176,7 +176,7 @@ public class DeathDataService extends StatisticsService {
                         );
                         if (lookup != null) {
                             item.put(LOCALITY_NAME, lookup.localityName);
-                            item.put(LOCALITY_CODE, lookup.localityCode);
+                            item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                         }
                     }
 

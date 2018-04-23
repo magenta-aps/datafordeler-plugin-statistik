@@ -171,7 +171,7 @@ public class StatusDataService extends StatisticsService {
                     }
 
                     PersonAddressData addressData = data.getAddress();
-                    if (addressData != null) {
+                    if (addressData != null && effect.getEffectFrom() != null) {
                         if (latestAddressTime == null || latestAddressTime.isBefore(effect.getEffectFrom()) ||
                                 (latestAddressTime.isEqual(effect.getEffectFrom()) && (latestAddress == null || latestAddress.getId() < addressData.getId()))) {
                             latestAddressTime = effect.getEffectFrom();
@@ -229,7 +229,7 @@ public class StatusDataService extends StatisticsService {
             );
             if (lookup != null) {
                 item.put(LOCALITY_NAME, lookup.localityName);
-                item.put(LOCALITY_CODE, lookup.localityCode);
+                item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                 item.put(POST_CODE, lookup.postalCode);
             }

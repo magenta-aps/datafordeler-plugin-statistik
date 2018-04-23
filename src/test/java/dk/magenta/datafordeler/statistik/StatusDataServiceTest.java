@@ -5,6 +5,8 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.services.StatusDataService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +34,8 @@ public class StatusDataServiceTest {
 
     @Test
     public void testStatusDataService() throws Exception {
+        StatisticsService.isFileOn = false;
+
         testsUtils.loadPersonData("statusperson.txt");
         testsUtils.loadGladdrregData();
         TestUserDetails testUserDetails = new TestUserDetails();
