@@ -14,6 +14,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 
@@ -21,6 +22,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.Null;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -175,12 +178,10 @@ public abstract class StatisticsService {
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
 
 
-        //This line couses the response to be null. (nota: making a copy of some the objects can be a solution and pass the to the calling function)
-       boolean file= this.fileWriting(keys, items, writer, serviceName, response);
 
 
 
-
+        boolean file= this.fileWriting(keys, items, writer, serviceName, response);
         int written;
 
         for (written = 0; items.hasNext(); written++) {
@@ -191,8 +192,12 @@ public abstract class StatisticsService {
 
 
 
+
+
         return written;
     }
+    
+
     private boolean fileWriting(List<String> keys, Iterator<Map<String, Object>> items, SequenceWriter writerContent,ServiceName serviceName , HttpServletResponse response){
         try {
 
