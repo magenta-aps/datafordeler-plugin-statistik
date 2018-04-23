@@ -192,7 +192,7 @@ public abstract class StatisticsService {
 
 
                                 //Routine to write the content to the file
-                               if(isFileOn) {
+                               if(!isFileOn) {
                                 String file_name = null;
                                 switch (serviceName) {
                                     case BIRTH:
