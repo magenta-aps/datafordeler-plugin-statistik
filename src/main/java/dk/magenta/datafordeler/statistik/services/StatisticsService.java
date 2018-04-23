@@ -183,8 +183,8 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
-        SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
-
+        ObjectWriter writer = this.getCsvMapper().writer(schema);
+        SequenceWriter sequenceWriter;
 
         //Routine to write the content to the file
         if (isFileOn) {
@@ -210,31 +210,29 @@ public abstract class StatisticsService {
                     System.out.println("No file name assigned!!!");
             }*/
 
-            try {
-                Iterator<?> iterator = items;
-                List<String> listValues = new ArrayList<>();
-                List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
 
-                //Traversing the items in order to extract columns and values
-                for (Map<String, Object> element : itemsList) {
-                    for (Map.Entry<String, Object> entry : element.entrySet()) {
-                        //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-                        listValues.add(String.valueOf(entry.getValue()));//Assigns the value
-                    }
-                }
+            File tempFile = new File("c:\\temp\\" + fileName + ".csv");
+            sequenceWriter = writer.writeValues(tempFile);
 
-                ObjectWriter writerobj = mapper.writerFor(String.class).with(schema);
-                File tempFile = new File("c:\\temp\\" + fileName + ".csv");
-                writerobj.writeValues(tempFile).writeAll(listValues);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } else {
+            sequenceWriter = writer.writeValues(response.getOutputStream());
         }
 
-        int written;
+/*
+        List<String> listValues = new ArrayList<>();
+        List<Map<String, Object>> itemsList = IteratorUtils.toList(items);
 
+        //Traversing the items in order to extract columns and values
+        for (Map<String, Object> element : itemsList) {
+            for (Map.Entry<String, Object> entry : element.entrySet()) {
+                //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+                listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+            }
+        }*/
+
+        int written;
         for (written = 0; items.hasNext(); written++) {
-            writer.write(items.next());
+            sequenceWriter.write(items.next());
         }
 
 
