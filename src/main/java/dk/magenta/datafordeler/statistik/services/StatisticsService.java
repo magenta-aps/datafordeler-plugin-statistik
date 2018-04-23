@@ -1,6 +1,9 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SequenceWriter;
+
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
@@ -15,29 +18,40 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Null;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
-    protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+
+    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+
 
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for "+this.getClass().getSimpleName()+" with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
+
 
 
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
@@ -51,7 +65,7 @@ public abstract class StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response, serviceName);
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
@@ -72,6 +86,15 @@ public abstract class StatisticsService {
     protected abstract Logger getLogger();
 
     protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
+
+    public enum ServiceName {
+        BIRTH,
+        DEATH,
+        MOVEMENT,
+        STATUS;
+    }
+
+    public static boolean isFileOn = true;
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -149,7 +172,7 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response) throws IOException {
+    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
         List<String> keys = this.getColumnNames();
@@ -162,12 +185,124 @@ public abstract class StatisticsService {
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
+
+
+
+
+            if(isFileOn){boolean file= this.fileWriting(keys, items, writer, serviceName, response);}
+
+
         int written;
+
         for (written = 0; items.hasNext(); written++) {
             writer.write(items.next());
+
         }
+
+
+
+
+
+
         return written;
     }
+
+
+    private boolean fileWriting(List<String> keys, Iterator<Map<String, Object>> items, SequenceWriter writerContent,ServiceName serviceName , HttpServletResponse response){
+
+        String file_name = null;
+
+        //Helper routine to check content of object. Can be deleted after.
+        try {
+
+            System.out.println("Are there items: "+items);
+            System.out.println("Are there keys: "+keys.isEmpty());
+            System.out.println("Anything in writerContent: "+writerContent.toString().getBytes());
+            }
+            catch (Exception e ){
+            System.out.println(e.toString());
+            }
+
+
+
+
+        //Routine to define the name of the file in directory
+        switch (serviceName){
+            case BIRTH :
+                System.out.println("Birth service ran...");
+                file_name = "birth";
+
+                break;
+            case DEATH :
+                System.out.println("Death service ran...");
+                file_name = "death";
+                break;
+            case STATUS :
+                System.out.println("Status service ran...");
+                file_name = "status";
+                break;
+            case MOVEMENT:
+                System.out.println("Movement service ran...");
+                file_name = "movement";
+                break;
+            default :
+                System.out.println("IT DOES NOT WORK!!!!!");
+        }
+
+
+
+
+
+         //Routine to write the content to the file
+         try {
+
+             CsvSchema schema =  CsvSchema.builder().build();
+             CsvMapper mapper = new CsvMapper();
+             mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
+             Iterator<?>  iterator = items;
+             List<String> listValues = new ArrayList<>();
+
+             List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
+             //list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
+
+             CsvSchema.Builder builder = new CsvSchema.Builder();
+             // builder.setColumnSeparator(';');
+
+             //Traversing the items in order to extract columns and values
+             for (Map<String, Object> element : itemsList) {
+                 System.out.println("Map Value"+element.values().toString());
+
+                 for (Map.Entry<String, Object> entry : element.entrySet())
+                 {System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+
+                    // builder.addColumn(entry.getKey());//Get the column name
+                     listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+                 }
+             }
+
+
+             //listValues.forEach(s -> System.out.println("Values: "+s));
+
+
+             ObjectWriter writer = mapper.writerFor(String.class).with(schema);
+
+             File tempFile = new File("c:\\temp\\"+file_name+".csv");
+             try {
+
+                 writer.writeValues(tempFile).writeAll(listValues);
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
+             return true;
+
+         }finally {
+             System.out.println("----");
+         }
+
+
+    }
+
 
     public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
         return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
