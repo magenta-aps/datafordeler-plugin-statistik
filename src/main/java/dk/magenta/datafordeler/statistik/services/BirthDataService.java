@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -49,6 +50,9 @@ public class BirthDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
+    @Autowired
+    private DafoUserManager dafoUserManager;
+
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
 
@@ -86,6 +90,17 @@ public class BirthDataService extends StatisticsService {
         return this.csvMapper;
     }
 
+
+    @Override
+    protected DafoUserManager getDafoUserManager() {
+        return this.dafoUserManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return this.log;
+    }
+
     @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
         PersonBirthQuery personBirthQuery = new PersonBirthQuery();
@@ -96,6 +111,10 @@ public class BirthDataService extends StatisticsService {
         OffsetDateTime bornAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
         if (bornAfterDate != null) {
             personBirthQuery.setBirthDateTimeAfter(bornAfterDate.toLocalDateTime()); // Timezone?
+        }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personBirthQuery.setPersonnummer(pnr);
         }
         return personBirthQuery;
     }

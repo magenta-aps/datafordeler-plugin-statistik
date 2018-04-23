@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -42,6 +43,9 @@ public class MovementDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
+    @Autowired
+    private DafoUserManager dafoUserManager;
+
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
     //This function should have the following inputs:
@@ -74,6 +78,17 @@ public class MovementDataService extends StatisticsService {
         return this.csvMapper;
     }
 
+
+    @Override
+    protected DafoUserManager getDafoUserManager() {
+        return this.dafoUserManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return this.log;
+    }
+
     @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
         PersonMoveQuery personMoveQuery = new PersonMoveQuery();
@@ -85,6 +100,10 @@ public class MovementDataService extends StatisticsService {
         if (moveBeforeDate != null) {
             personMoveQuery.setMoveDateTimeBefore(moveBeforeDate);
         }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personMoveQuery.setPersonnummer(pnr);
+        }
         return personMoveQuery;
     }
 
@@ -93,7 +112,9 @@ public class MovementDataService extends StatisticsService {
         HashMap<String, Object> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
+        // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
         for (PersonRegistration registration: person.getRegistrations()) {

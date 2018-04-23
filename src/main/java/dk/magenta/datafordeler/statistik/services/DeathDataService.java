@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -47,10 +48,15 @@ public class DeathDataService extends StatisticsService {
     @Autowired
     private CsvMapper csvMapper;
 
+    @Autowired
+    DafoUserManager dafoUserManager;
+
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
-    @RequestMapping(method = RequestMethod.GET, path = "/", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void get(HttpServletRequest request, HttpServletResponse response)
+
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response, ServiceName.DEATH);
     }
@@ -75,6 +81,16 @@ public class DeathDataService extends StatisticsService {
     }
 
     @Override
+    protected DafoUserManager getDafoUserManager() {
+        return this.dafoUserManager;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return this.log;
+    }
+
+    @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
         PersonDeathQuery personDeathQuery = new PersonDeathQuery();
 
@@ -86,6 +102,10 @@ public class DeathDataService extends StatisticsService {
         OffsetDateTime diedAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
         if (diedAfterDate != null) {
             personDeathQuery.setDeathDateTimeAfter(diedAfterDate.toLocalDateTime()); // Timezone?
+        }
+        String pnr = request.getParameter("pnr");
+        if (pnr != null) {
+            personDeathQuery.setPersonnummer(pnr);
         }
 
         return personDeathQuery;
