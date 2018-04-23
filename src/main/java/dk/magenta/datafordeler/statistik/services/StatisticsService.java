@@ -257,9 +257,10 @@ public abstract class StatisticsService {
              List<String> listValues = new ArrayList<>();
 
              List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
-
+             //list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
 
              CsvSchema.Builder builder = new CsvSchema.Builder();
+             // builder.setColumnSeparator(';');
 
              //Traversing the items in order to extract columns and values
              for (Map<String, Object> element : itemsList) {
@@ -281,7 +282,7 @@ public abstract class StatisticsService {
 
              File tempFile = new File("c:\\temp\\"+file_name+".csv");
              try {
-               
+              
                  writer.writeValues(tempFile).writeAll(listValues);
              } catch (IOException e) {
                  e.printStackTrace();
