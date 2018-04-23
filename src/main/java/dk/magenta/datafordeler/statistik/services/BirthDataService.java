@@ -66,15 +66,15 @@ public class BirthDataService extends StatisticsService {
         super.get(request, response);
     }
 
+    private static final String OWN_PREFIX = "B_";
 
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE,
-                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_CITIZENSHIP_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_LOCALITY_CODE, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
-                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_CITIZENSHIP_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_LOCALITY_CODE, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+                OWN_PREFIX + PNR, OWN_PREFIX + BIRTHDAY_YEAR, OWN_PREFIX + EFFECTIVE_PNR, OWN_PREFIX + BIRTH_AUTHORITY, OWN_PREFIX + CITIZENSHIP_CODE, OWN_PREFIX + PROD_DATE,
+                MOTHER_PREFIX + PNR, MOTHER_PREFIX + BIRTH_AUTHORITY, MOTHER_PREFIX + CITIZENSHIP_CODE, MOTHER_PREFIX + MUNICIPALITY_CODE, MOTHER_PREFIX + LOCALITY_NAME, MOTHER_PREFIX + LOCALITY_CODE, MOTHER_PREFIX + ROAD_CODE, MOTHER_PREFIX + HOUSE_NUMBER, MOTHER_PREFIX + DOOR_NUMBER, MOTHER_PREFIX + BNR,
+                FATHER_PREFIX + PNR, FATHER_PREFIX + BIRTH_AUTHORITY, FATHER_PREFIX + CITIZENSHIP_CODE, FATHER_PREFIX + MUNICIPALITY_CODE, FATHER_PREFIX + LOCALITY_NAME, FATHER_PREFIX + LOCALITY_CODE, FATHER_PREFIX + ROAD_CODE, FATHER_PREFIX + HOUSE_NUMBER, FATHER_PREFIX + DOOR_NUMBER, FATHER_PREFIX + BNR
         });
-
     }
 
     @Override
@@ -119,8 +119,8 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
-        item.put(PNR, person.getPersonnummer());
-        //item.put(EFFECTIVE_PNR, person.getPersonnummer());
+        item.put(OWN_PREFIX + PNR, person.getPersonnummer());
+        //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
@@ -131,16 +131,16 @@ public class BirthDataService extends StatisticsService {
 
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
-                        item.put(EFFECTIVE_PNR, coreData.getCprNumber());
+                        item.put(OWN_PREFIX + EFFECTIVE_PNR, coreData.getCprNumber());
                     }
 
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
+                            item.put(OWN_PREFIX + BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
+                            item.put(OWN_PREFIX + BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
                         }
                         if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
                             earliestProdDate = registration.getRegistrationFrom();
@@ -149,36 +149,36 @@ public class BirthDataService extends StatisticsService {
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                        item.put(OWN_PREFIX + CITIZENSHIP_CODE, citizenshipData.getCountryCode());
                     }
 
                     PersonParentData personMotherData = data.getMother();
                     if (personMotherData != null) {
-                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
+                        item.put(MOTHER_PREFIX + PNR, personMotherData.getCprNumber());
                         PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(personMotherData.getCprNumber()), PersonEntity.class);
                         if (mother != null) {
-                            item.putAll(this.formatParentPerson(mother, session, MOTHER_PREFIX, lookupService));
+                            item.putAll(this.formatParentPerson(mother, MOTHER_PREFIX, lookupService));
                         }
                     }
 
                     PersonParentData personFatherData = data.getFather();
                     if (personFatherData != null) {
-                        item.put(FATHER_PNR, personFatherData.getCprNumber());
+                        item.put(MOTHER_PREFIX + PNR, personFatherData.getCprNumber());
                         PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
                         if (father != null) {
-                            item.putAll(this.formatParentPerson(father, session, FATHER_PREFIX, lookupService));
+                            item.putAll(this.formatParentPerson(father, FATHER_PREFIX, lookupService));
                         }
                     }
                 }
             }
         }
         if (earliestProdDate != null) {
-            item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));
+            item.put(OWN_PREFIX + PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
         return item;
     }
 
-    private Map<String, Object> formatParentPerson(PersonEntity person, Session session, String prefix, LookupService lookupService) {
+    private Map<String, Object> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
