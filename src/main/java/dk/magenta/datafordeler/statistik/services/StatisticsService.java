@@ -188,27 +188,27 @@ public abstract class StatisticsService {
 
         //Routine to write the content to the file
         if (isFileOn) {
-            String file_name = null;
-            switch (serviceName) {
+            String fileName = serviceName.name().toLowerCase();
+            /*switch (serviceName) {
                 case BIRTH:
                     System.out.println("Birth service ran...");
-                    file_name = "birth";
+                    fileName = "birth";
                     break;
                 case DEATH:
                     System.out.println("Death service ran...");
-                    file_name = "death";
+                    fileName = "death";
                     break;
                 case STATUS:
                     System.out.println("Status service ran...");
-                    file_name = "status";
+                    fileName = "status";
                     break;
                 case MOVEMENT:
                     System.out.println("Movement service ran...");
-                    file_name = "movement";
+                    fileName = "movement";
                     break;
                 default:
                     System.out.println("No file name assigned!!!");
-            }
+            }*/
 
             try {
                 Iterator<?> iterator = items;
@@ -224,7 +224,7 @@ public abstract class StatisticsService {
                 }
 
                 ObjectWriter writerobj = mapper.writerFor(String.class).with(schema);
-                File tempFile = new File("c:\\temp\\" + file_name + ".csv");
+                File tempFile = new File("c:\\temp\\" + fileName + ".csv");
                 writerobj.writeValues(tempFile).writeAll(listValues);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -235,7 +235,6 @@ public abstract class StatisticsService {
 
         for (written = 0; items.hasNext(); written++) {
             writer.write(items.next());
-
         }
 
 
