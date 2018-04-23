@@ -212,6 +212,7 @@ public abstract class StatisticsService {
     }
 
     protected static String formatHouseNnr(String houseNr) {
+        if (houseNr == null || houseNr.equals("0")) return "";
         return StringUtils.leftPad(houseNr, 4, '0');
     }
 
