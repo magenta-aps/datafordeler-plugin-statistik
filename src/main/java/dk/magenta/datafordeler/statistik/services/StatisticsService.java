@@ -186,104 +186,17 @@ public abstract class StatisticsService {
         ObjectWriter writer = this.getCsvMapper().writer(schema);
         SequenceWriter sequenceWriter;
 
-        //Routine to write the content to the file
         if (isFileOn) {
-            String fileName = serviceName.name().toLowerCase();
-            /*switch (serviceName) {
-                case BIRTH:
-                    System.out.println("Birth service ran...");
-                    fileName = "birth";
-                    break;
-                case DEATH:
-                    System.out.println("Death service ran...");
-                    fileName = "death";
-                    break;
-                case STATUS:
-                    System.out.println("Status service ran...");
-                    fileName = "status";
-                    break;
-                case MOVEMENT:
-                    System.out.println("Movement service ran...");
-                    fileName = "movement";
-                    break;
-                default:
-                    System.out.println("No file name assigned!!!");
-            }*/
-
-
-            File tempFile = new File("c:\\temp\\" + fileName + ".csv");
+            File tempFile = new File(serviceName.name().toLowerCase() + ".csv");
             sequenceWriter = writer.writeValues(tempFile);
-
         } else {
             sequenceWriter = writer.writeValues(response.getOutputStream());
         }
-
-/*
-        List<String> listValues = new ArrayList<>();
-        List<Map<String, Object>> itemsList = IteratorUtils.toList(items);
-
-        //Traversing the items in order to extract columns and values
-        for (Map<String, Object> element : itemsList) {
-            for (Map.Entry<String, Object> entry : element.entrySet()) {
-                //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-                listValues.add(String.valueOf(entry.getValue()));//Assigns the value
-            }
-        }*/
 
         int written;
         for (written = 0; items.hasNext(); written++) {
             sequenceWriter.write(items.next());
         }
-
-
-        //Routine to write the content to the file
-     /*    try {
-
-             CsvSchema schema =  CsvSchema.builder().build();
-             CsvMapper mapper = new CsvMapper();
-             mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-
-             Iterator<?>  iterator = items;
-             List<String> listValues = new ArrayList<>();
-
-             List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
-             //list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
-
-             CsvSchema.Builder builder = new CsvSchema.Builder();
-             // builder.setColumnSeparator(';');
-
-             //Traversing the items in order to extract columns and values
-             for (Map<String, Object> element : itemsList) {
-                 System.out.println("Map Value"+element.values().toString());
-
-                 for (Map.Entry<String, Object> entry : element.entrySet())
-                 {System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-
-                    // builder.addColumn(entry.getKey());//Get the column name
-                     listValues.add(String.valueOf(entry.getValue()));//Assigns the value
-                 }
-             }
-
-
-             //listValues.forEach(s -> System.out.println("Values: "+s));
-
-
-             ObjectWriter writer = mapper.writerFor(String.class).with(schema);
-
-             File tempFile = new File("c:\\temp\\"+file_name+".csv");
-             try {
-
-                 writer.writeValues(tempFile).writeAll(listValues);
-             } catch (IOException e) {
-                 e.printStackTrace();
-             }
-             return true;
-
-         }finally {
-             System.out.println("----");
-         }
-*/
-
 
         return written;
     }
