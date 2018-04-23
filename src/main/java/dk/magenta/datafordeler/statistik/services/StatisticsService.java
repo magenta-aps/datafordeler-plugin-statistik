@@ -49,9 +49,8 @@ public abstract class StatisticsService {
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
-        loggerHelper.info("Incoming request for "+this.getClass().getSimpleName()+" with parameters " + request.getParameterMap());
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
-
 
 
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
@@ -103,7 +102,7 @@ public abstract class StatisticsService {
 
     //Column names for person
     public static final String PNR = "Pnr";
-    public static final String BIRTHDAY_YEAR ="FoedAar";
+    public static final String BIRTHDAY_YEAR = "FoedAar";
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
     public static final String FIRST_NAME = "Fornavn";
     public static final String LAST_NAME = "Efternavn";
@@ -125,7 +124,7 @@ public abstract class StatisticsService {
     public static final String BNR = "Bnr";
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
-    public static final String POST_CODE =  "Postnr";
+    public static final String POST_CODE = "Postnr";
     public static final String CHURCH = "Kirke";
 
 
@@ -158,10 +157,6 @@ public abstract class StatisticsService {
     public static final String SPOUSE_PNR = "AegtePnr";
 
 
-
-
-
-
     protected PersonQuery getQuery(HttpServletRequest request) {
         OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
         PersonQuery personQuery = new PersonQuery();
@@ -188,11 +183,12 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
+
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
 
 
                                 //Routine to write the content to the file
-                               if(!isFileOn) {
+                               /*if(!isFileOn) {
                                 String file_name = null;
                                 switch (serviceName) {
                                     case BIRTH:
@@ -234,21 +230,69 @@ public abstract class StatisticsService {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                            }
+                            }*/
 
         int written;
 
         for (written = 0; items.hasNext(); written++) {
             writer.write(items.next());
 
+
+        ObjectWriter writer = this.getCsvMapper().writer(schema);
+        SequenceWriter sequenceWriter;
+
+        //Routine to write the content to the file
+        if (isFileOn) {
+            String fileName = serviceName.name().toLowerCase();
+            /*switch (serviceName) {
+                case BIRTH:
+                    System.out.println("Birth service ran...");
+                    fileName = "birth";
+                    break;
+                case DEATH:
+                    System.out.println("Death service ran...");
+                    fileName = "death";
+                    break;
+                case STATUS:
+                    System.out.println("Status service ran...");
+                    fileName = "status";
+                    break;
+                case MOVEMENT:
+                    System.out.println("Movement service ran...");
+                    fileName = "movement";
+                    break;
+                default:
+                    System.out.println("No file name assigned!!!");
+            }*/
+
+
+            File tempFile = new File("c:\\temp\\" + fileName + ".csv");
+            sequenceWriter = writer.writeValues(tempFile);
+
+        } else {
+            sequenceWriter = writer.writeValues(response.getOutputStream());
+
+        }
+
+/*
+        List<String> listValues = new ArrayList<>();
+        List<Map<String, Object>> itemsList = IteratorUtils.toList(items);
+
+        //Traversing the items in order to extract columns and values
+        for (Map<String, Object> element : itemsList) {
+            for (Map.Entry<String, Object> entry : element.entrySet()) {
+                //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+                listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+            }
+        }*/
+
+        int written;
+        for (written = 0; items.hasNext(); written++) {
+            sequenceWriter.write(items.next());
         }
 
 
-
-
-
-
-         //Routine to write the content to the file
+        //Routine to write the content to the file
      /*    try {
 
              CsvSchema schema =  CsvSchema.builder().build();
@@ -332,10 +376,9 @@ public abstract class StatisticsService {
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-        }
-        catch (AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             loggerHelper.info("Access denied: " + e.getMessage());
-            throw(e);
+            throw (e);
         }
     }
 }
