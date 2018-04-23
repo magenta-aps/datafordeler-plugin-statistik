@@ -70,9 +70,9 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, BIRTH_AUTHORITY, CITIZENSHIP_CODE, STATUS_CODE, PROD_DATE,
-                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_STATUS_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_LOCALITY_CODE, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
-                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_STATUS_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_LOCALITY_CODE, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE,
+                MOTHER_PNR, MOTHER_BIRTH_AUTHORIRTY, MOTHER_CITIZENSHIP_CODE, MOTHER_MUNICIPALITY_CODE, MOTHER_LOCALITY_NAME, MOTHER_LOCALITY_CODE, MOTHER_ROAD_CODE, MOTHER_HOUSE_NUMBER, MOTHER_DOOR_NUMBER, MOTHER_BNR,
+                FATHER_PNR, FATHER_BIRTH_AUTHORIRTY, FATHER_CITIZENSHIP_CODE, FATHER_MUNICIPALITY_CODE, FATHER_LOCALITY_NAME, FATHER_LOCALITY_CODE, FATHER_ROAD_CODE, FATHER_HOUSE_NUMBER, FATHER_DOOR_NUMBER, FATHER_BNR
         });
 
     }
@@ -147,11 +147,6 @@ public class BirthDataService extends StatisticsService {
                         }
                     }
 
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null) {
-                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
-                    }
-
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
                         item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
@@ -188,10 +183,6 @@ public class BirthDataService extends StatisticsService {
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect: registration.getEffects()) {
                 for (PersonBaseData data: effect.getDataItems()) {
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null){
-                        item.put(prefix + "status_code", statusData.getStatus());
-                    }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
