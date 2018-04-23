@@ -61,7 +61,7 @@ public class MovementDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY,
+                PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, CITIZENSHIP_CODE,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, PROD_DATE, MOVE_DATE,
                 ORIGIN_MUNICIPALITY_CODE, ORIGIN_LOCALITY_NAME, ORIGIN_ROAD_CODE, ORIGIN_HOUSE_NUMBER, ORIGIN_FLOOR, ORIGIN_DOOR_NUMBER, ORIGIN_BNR,
                 DESTINATION_MUNICIPALITY_CODE, DESTINATION_LOCALITY_NAME, DESTINATION_ROAD_CODE, DESTINATION_HOUSE_NUMBER, DESTINATION_FLOOR, DESTINATION_DOOR_NUMBER, DESTINATION_BNR
@@ -151,20 +151,20 @@ public class MovementDataService extends StatisticsService {
                 if (previousAddress != null) {
                     item.put(ORIGIN_MUNICIPALITY_CODE, previousAddress.getMunicipalityCode());
                     //item.put("origin_locality_name", null);
-                    item.put(ORIGIN_ROAD_CODE, previousAddress.getRoadCode());
-                    item.put(ORIGIN_HOUSE_NUMBER, previousAddress.getHouseNumber());
+                    item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousAddress.getRoadCode()));
+                    item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousAddress.getHouseNumber()));
                     item.put(ORIGIN_FLOOR, previousAddress.getFloor());
                     item.put(ORIGIN_DOOR_NUMBER, previousAddress.getDoor());
-                    item.put(ORIGIN_BNR, previousAddress.getBuildingNumber());
+                    item.put(ORIGIN_BNR, formatBnr(previousAddress.getBuildingNumber()));
                 }
                 if (currentAddress != null) {
                     item.put(DESTINATION_MUNICIPALITY_CODE, currentAddress.getMunicipalityCode());
                     //item.put("destination_locality_name", null);
-                    item.put(DESTINATION_ROAD_CODE, currentAddress.getRoadCode());
-                    item.put(DESTINATION_HOUSE_NUMBER, currentAddress.getHouseNumber());
+                    item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentAddress.getRoadCode()));
+                    item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentAddress.getHouseNumber()));
                     item.put(DESTINATION_FLOOR, currentAddress.getFloor());
                     item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
-                    item.put(DESTINATION_BNR, currentAddress.getBuildingNumber());
+                    item.put(DESTINATION_BNR, formatBnr(currentAddress.getBuildingNumber()));
                     item.put(MOVE_DATE, current.format(dmyFormatter));
                     if (registrations.containsKey(current)) {
                         item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
@@ -195,11 +195,14 @@ public class MovementDataService extends StatisticsService {
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put(STATUS_CODE, statusData.getStatus());
+                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                     }
 
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    }
 
-                    item.put(EFFECTIVE_PNR, person.getPersonnummer());
                     PersonCoreData coreData = data.getCoreData();
                     if (coreData != null) {
                         item.put(EFFECTIVE_PNR, coreData.getCprNumber());

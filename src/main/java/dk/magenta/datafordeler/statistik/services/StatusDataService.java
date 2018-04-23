@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.ListHashMap;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -60,8 +61,8 @@ public class StatusDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
-                BIRTH_AUTHORITY, MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, CIVIL_STATUS,
-                MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, FLOOR_NUMBER,
+                BIRTH_AUTHORITY, CITIZENSHIP_CODE, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
+                MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
                 BNR, MOVING_IN_DATE, POST_CODE, CIVIL_STATUS_DATE, CHURCH
 
         });
@@ -109,7 +110,7 @@ public class StatusDataService extends StatisticsService {
         LookupService lookupService = new LookupService(session);
 
         // Map of effectTime to addresses (when address was moved into)
-        HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
@@ -119,7 +120,7 @@ public class StatusDataService extends StatisticsService {
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        addresses.put(effectTime, addressData);
+                        addresses.add(effectTime, addressData);
 
                         if (!registrations.containsKey(effectTime)) {
                             OffsetDateTime oldTime = registrations.get(effectTime);
@@ -135,11 +136,12 @@ public class StatusDataService extends StatisticsService {
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
-
         OffsetDateTime latestCivilStatusDate = null;
+        OffsetDateTime latestAddressTime = null;
+        PersonAddressData latestAddress = null;
 
-        for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
+        for (PersonRegistration registration : person.getRegistrations()){
+            for (PersonEffect effect : registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
                     PersonNameData nameData = data.getName();
@@ -160,29 +162,20 @@ public class StatusDataService extends StatisticsService {
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put(STATUS_CODE, statusData.getStatus());
+                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
+                    }
+
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
                     }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        item.put(POST_CODE, addressData.getPostalCode());
-                        item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
-                        item.put(ROAD_CODE, addressData.getRoadCode());
-                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
-                        item.put(DOOR_NUMBER, addressData.getDoor());
-                        item.put(BNR, addressData.getBuildingNumber());
-                        item.put(FLOOR_NUMBER,addressData.getFloor());
-                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
-                        if (lookup != null) {
-                            item.put(LOCALITY_NAME, lookup.localityName);
-                            item.put(LOCALITY_CODE, lookup.localityCode);
-                            item.put(POST_CODE, lookup.postalCode);
-                        }
-                        for (OffsetDateTime addressTime : addressTimes) {
-                            if (addresses.get(addressTime) == addressData) {
-                                item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
-                                break;
-                            }
+                        if (latestAddressTime == null || latestAddressTime.isBefore(effect.getEffectFrom()) ||
+                                (latestAddressTime.isEqual(effect.getEffectFrom()) && (latestAddress == null || latestAddress.getId() < addressData.getId()))) {
+                            latestAddressTime = effect.getEffectFrom();
+                            latestAddress = addressData;
                         }
                     }
 
@@ -218,6 +211,34 @@ public class StatusDataService extends StatisticsService {
         }
         if (latestCivilStatusDate != null) {
             item.put(CIVIL_STATUS_DATE, latestCivilStatusDate.format(dmyFormatter));
+        }
+
+
+        if (latestAddress != null) {
+            item.put(POST_CODE, latestAddress.getPostalCode());
+            item.put(MUNICIPALITY_CODE, latestAddress.getMunicipalityCode());
+            item.put(ROAD_CODE, formatRoadCode(latestAddress.getRoadCode()));
+            item.put(HOUSE_NUMBER, formatHouseNnr(latestAddress.getHouseNumber()));
+            item.put(DOOR_NUMBER, latestAddress.getDoor());
+            item.put(BNR, formatBnr(latestAddress.getBuildingNumber()));
+            item.put(FLOOR_NUMBER,latestAddress.getFloor());
+            Lookup lookup = lookupService.doLookup(
+                    latestAddress.getMunicipalityCode(),
+                    latestAddress.getRoadCode(),
+                    latestAddress.getHouseNumber()
+            );
+            if (lookup != null) {
+                item.put(LOCALITY_NAME, lookup.localityName);
+                item.put(LOCALITY_CODE, lookup.localityCode);
+                item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                item.put(POST_CODE, lookup.postalCode);
+            }
+            for (OffsetDateTime addressTime : addressTimes) {
+                if (addresses.get(addressTime).contains(latestAddress)) {
+                    item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
+                    break;
+                }
+            }
         }
         return item;
     }

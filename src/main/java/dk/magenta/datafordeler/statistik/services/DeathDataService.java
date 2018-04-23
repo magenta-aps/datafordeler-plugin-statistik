@@ -66,7 +66,7 @@ public class DeathDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
-                EFFECTIVE_PNR, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
+                EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
                 LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
@@ -114,7 +114,7 @@ public class DeathDataService extends StatisticsService {
     protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
         HashMap<String, Object> item = new HashMap<String, Object>();
         item.put(PNR, person.getPersonnummer());
-        item.put(EFFECTIVE_PNR, person.getPersonnummer());
+        //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
@@ -157,15 +157,23 @@ public class DeathDataService extends StatisticsService {
                         }
                     }
 
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    }
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
-                        item.put(ROAD_CODE, addressData.getRoadCode());
-                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
+                        item.put(ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
+                        item.put(HOUSE_NUMBER, formatHouseNnr(addressData.getHouseNumber()));
                         item.put(DOOR_NUMBER, addressData.getDoor());
-                        item.put(BNR, addressData.getBuildingNumber());
+                        item.put(BNR, formatBnr(addressData.getBuildingNumber()));
                         item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
-                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode());
+                        Lookup lookup = lookupService.doLookup(
+                                addressData.getMunicipalityCode(),
+                                addressData.getRoadCode(),
+                                addressData.getHouseNumber()
+                        );
                         if (lookup != null) {
                             item.put(LOCALITY_NAME, lookup.localityName);
                             item.put(LOCALITY_CODE, lookup.localityCode);
@@ -191,7 +199,7 @@ public class DeathDataService extends StatisticsService {
             }
         }
         if (earliestDeathTime != null) {
-            item.put(DEATH_DATE, earliestDeathTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // Timezone?
+            item.put(DEATH_DATE, earliestDeathTime.format(dmyFormatter)); // Timezone?
         }
         if (earliestProdDate != null) {
             item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));

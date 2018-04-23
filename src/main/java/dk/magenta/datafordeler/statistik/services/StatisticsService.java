@@ -17,6 +17,7 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
@@ -101,74 +102,60 @@ public abstract class StatisticsService {
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
     //Column names for person
-    public static final String PNR = "pnr";
-    public static final String BIRTHDAY_YEAR ="birth_year";
-    public static final String BIRTH_AUTHORITY = "birth_authority";
-    public static final String FIRST_NAME = "first_name";
-    public static final String LAST_NAME = "last_name";
-    public static final String EFFECTIVE_PNR = "effective_pnr";
-    public static final String STATUS_CODE = "status_code";
-    public static final String CIVIL_STATUS = "civil_status";
-    public static final String CIVIL_STATUS_DATE = "civil_status_date";
-    public static final String DEATH_DATE = "death_date";
-    public static final String PROD_DATE = "prod_date";
-    public static final String MUNICIPALITY_CODE = "municipality_code";
-    public static final String LOCALITY_NAME = "locality_name";
-    public static final String LOCALITY_CODE = "locality_code";
-    public static final String ROAD_CODE = "road_code";
-    public static final String HOUSE_NUMBER = "house_number";
-    public static final String DOOR_NUMBER = "door_number";
-    public static final String FLOOR_NUMBER = "floor_number";
-    public static final String BNR = "bnr";
-    public static final String MOVING_IN_DATE = "moving_in_date";
-    public static final String MOVE_DATE = "move_date";
-    public static final String POST_CODE =  "post_code";
-    public static final String CHURCH = "church";
+    public static final String PNR = "Pnr";
+    public static final String BIRTHDAY_YEAR ="FoedAar";
+    public static final String BIRTH_AUTHORITY = "FoedMynKod";
+    public static final String FIRST_NAME = "Fornavn";
+    public static final String LAST_NAME = "Efternavn";
+    public static final String EFFECTIVE_PNR = "PnrGaeld";
+    public static final String STATUS_CODE = "Status";
+    public static final String CITIZENSHIP_CODE = "StatKod";
+    public static final String CIVIL_STATUS = "CivSt";
+    public static final String CIVIL_STATUS_DATE = "CivDto";
+    public static final String DEATH_DATE = "DoedDto";
+    public static final String PROD_DATE = "ProdDto";
+    public static final String MUNICIPALITY_CODE = "KomKod";
+    public static final String LOCALITY_NAME = "LokNavn";
+    public static final String LOCALITY_CODE = "LokKode";
+    public static final String LOCALITY_ABBREVIATION = "LokKortNavn";
+    public static final String ROAD_CODE = "VejKod";
+    public static final String HOUSE_NUMBER = "HusNr";
+    public static final String DOOR_NUMBER = "SideDoer";
+    public static final String FLOOR_NUMBER = "Etage";
+    public static final String BNR = "Bnr";
+    public static final String MOVING_IN_DATE = "TilFlyDto";
+    public static final String MOVE_DATE = "FlyDto";
+    public static final String POST_CODE =  "Postnr";
+    public static final String CHURCH = "Kirke";
 
-    public static final String ORIGIN_MUNICIPALITY_CODE = "origin_municipality_code";
-    public static final String ORIGIN_LOCALITY_NAME = "origin_locality_name";
-    public static final String ORIGIN_ROAD_CODE = "origin_road_code";
-    public static final String ORIGIN_HOUSE_NUMBER = "origin_house_number";
-    public static final String ORIGIN_FLOOR = "origin_floor";
-    public static final String ORIGIN_DOOR_NUMBER = "origin_door_number";
-    public static final String ORIGIN_BNR = "origin_bnr";
 
-    public static final String DESTINATION_MUNICIPALITY_CODE = "destination_municipality_code";
-    public static final String DESTINATION_LOCALITY_NAME = "destination_locality_name";
-    public static final String DESTINATION_ROAD_CODE = "destination_road_code";
-    public static final String DESTINATION_HOUSE_NUMBER = "destination_house_number";
-    public static final String DESTINATION_FLOOR = "destination_floor";
-    public static final String DESTINATION_DOOR_NUMBER = "destination_door_number";
-    public static final String DESTINATION_BNR = "destination_bnr";
+    public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
+    public static final String ORIGIN_LOCALITY_NAME = "FraLokKortNavn";
+    public static final String ORIGIN_ROAD_CODE = "FraVejKod";
+    public static final String ORIGIN_HOUSE_NUMBER = "FraHusNr";
+    public static final String ORIGIN_FLOOR = "FraEtage";
+    public static final String ORIGIN_DOOR_NUMBER = "FraSideDoer";
+    public static final String ORIGIN_BNR = "FraBnr";
+
+    public static final String DESTINATION_MUNICIPALITY_CODE = "TilKomKod";
+    public static final String DESTINATION_LOCALITY_NAME = "TilLokKortNavn";
+    public static final String DESTINATION_ROAD_CODE = "TilVejKod";
+    public static final String DESTINATION_HOUSE_NUMBER = "TilHusNr";
+    public static final String DESTINATION_FLOOR = "TilEtage";
+    public static final String DESTINATION_DOOR_NUMBER = "TilSideDoer";
+    public static final String DESTINATION_BNR = "TilBnr";
+
 
     //Column names for parent mother person
-    public static final String MOTHER_PREFIX = "mother_";
-    public static final String MOTHER_PNR = "mother_pnr";
-    public static final String MOTHER_BIRTH_AUTHORIRTY = "mother_birth_authority";
-    public static final String MOTHER_STATUS_CODE = "mother_status_code";
-    public static final String MOTHER_MUNICIPALITY_CODE = "mother_municipality_code";
-    public static final String MOTHER_LOCALITY_CODE = "mother_locality_code";
-    public static final String MOTHER_LOCALITY_NAME = "mother_locality_name";
-    public static final String MOTHER_ROAD_CODE = "mother_road_code";
-    public static final String MOTHER_HOUSE_NUMBER = "mother_house_number";
-    public static final String MOTHER_DOOR_NUMBER = "mother_door_number";
-    public static final String MOTHER_BNR = "mother_bnr";
+    public static final String MOTHER_PREFIX = "M_";
+    public static final String MOTHER_PNR = MOTHER_PREFIX + PNR;
 
     //Column names for parent father person
-    public static final String FATHER_PREFIX = "father_";
-    public static final String FATHER_PNR = "father_pnr";
-    public static final String FATHER_BIRTH_AUTHORIRTY = "father_birth_authority";
-    public static final String FATHER_STATUS_CODE = "father_status_code";
-    public static final String FATHER_MUNICIPALITY_CODE = "father_municipality_code";
-    public static final String FATHER_LOCALITY_CODE = "father_locality_code";
-    public static final String FATHER_LOCALITY_NAME = "father_locality_name";
-    public static final String FATHER_ROAD_CODE = "father_road_code";
-    public static final String FATHER_HOUSE_NUMBER = "father_house_number";
-    public static final String FATHER_DOOR_NUMBER = "father_door_number";
-    public static final String FATHER_BNR = "father_bnr";
+    public static final String FATHER_PREFIX = "F_";
+    public static final String FATHER_PNR = FATHER_PREFIX + PNR;
 
     //Column names for  spouse person
-    public static final String SPOUSE_PNR = "spouse_pnr";
+    public static final String SPOUSE_PNR = "AegtePnr";
 
 
 
@@ -188,6 +175,10 @@ public abstract class StatisticsService {
     protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
+
+        CsvMapper mapper = new CsvMapper();
+        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
             builder.addColumn(new CsvSchema.Column(
@@ -200,68 +191,50 @@ public abstract class StatisticsService {
         SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
 
 
+                                //Routine to write the content to the file
+                               if(isFileOn) {
+                                String file_name = null;
+                                switch (serviceName) {
+                                    case BIRTH:
+                                        System.out.println("Birth service ran...");
+                                        file_name = "birth";
+                                        break;
+                                    case DEATH:
+                                        System.out.println("Death service ran...");
+                                        file_name = "death";
+                                        break;
+                                    case STATUS:
+                                        System.out.println("Status service ran...");
+                                        file_name = "status";
+                                        break;
+                                    case MOVEMENT:
+                                        System.out.println("Movement service ran...");
+                                        file_name = "movement";
+                                        break;
+                                    default:
+                                        System.out.println("No file name assigned!!!");
+                                }
 
-                   if(isFileOn) {
+                                try {
+                                    Iterator<?> iterator = items;
+                                    List<String> listValues = new ArrayList<>();
+                                    List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
 
-                    String file_name = null;
-                    //Routine to define the name of the file in directory
-                    switch (serviceName) {
-                        case BIRTH:
-                            System.out.println("Birth service ran...");
-                            file_name = "birth";
+                                    //Traversing the items in order to extract columns and values
+                                    for (Map<String, Object> element : itemsList) {
+                                        for (Map.Entry<String, Object> entry : element.entrySet()) {
+                                            //System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+                                            listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+                                        }
+                                    }
 
-                            break;
-                        case DEATH:
-                            System.out.println("Death service ran...");
-                            file_name = "death";
-                            break;
-                        case STATUS:
-                            System.out.println("Status service ran...");
-                            file_name = "status";
-                            break;
-                        case MOVEMENT:
-                            System.out.println("Movement service ran...");
-                            file_name = "movement";
-                            break;
-                        default:
-                            System.out.println("IT DOES NOT WORK!!!!!");
-                    }
-
-
-                    //Routine to write the content to the file
-                    try {
-                        CsvMapper mapper = new CsvMapper();
-                        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-
-
-
-                        Iterator<?> iterator = items;
-                        List<String> listValues = new ArrayList<>();
-
-                        List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
-
-
-                        //Traversing the items in order to extract columns and values
-                        for (Map<String, Object> element : itemsList) {
-                            System.out.println("Map Value" + element.values().toString());
-
-                            for (Map.Entry<String, Object> entry : element.entrySet()) {
-                                System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-                                listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+                                    ObjectWriter writerobj = mapper.writerFor(String.class).with(schema);
+                                    File tempFile = new File("c:\\temp\\" + file_name + ".csv");
+                                    writerobj.writeValues(tempFile).writeAll(listValues);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
-                        }
-
-                        ObjectWriter writerobj = mapper.writerFor(String.class).with(schema);
-
-                        File tempFile = new File("c:\\temp\\" + file_name + ".csv");
-
-
-                        writerobj.writeValues(tempFile).writeAll(listValues);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
 
         int written;
 
@@ -273,6 +246,55 @@ public abstract class StatisticsService {
 
 
 
+
+
+         //Routine to write the content to the file
+     /*    try {
+
+             CsvSchema schema =  CsvSchema.builder().build();
+             CsvMapper mapper = new CsvMapper();
+             mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
+             Iterator<?>  iterator = items;
+             List<String> listValues = new ArrayList<>();
+
+             List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
+             //list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
+
+             CsvSchema.Builder builder = new CsvSchema.Builder();
+             // builder.setColumnSeparator(';');
+
+             //Traversing the items in order to extract columns and values
+             for (Map<String, Object> element : itemsList) {
+                 System.out.println("Map Value"+element.values().toString());
+
+                 for (Map.Entry<String, Object> entry : element.entrySet())
+                 {System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
+
+                    // builder.addColumn(entry.getKey());//Get the column name
+                     listValues.add(String.valueOf(entry.getValue()));//Assigns the value
+                 }
+             }
+
+
+             //listValues.forEach(s -> System.out.println("Values: "+s));
+
+
+             ObjectWriter writer = mapper.writerFor(String.class).with(schema);
+
+             File tempFile = new File("c:\\temp\\"+file_name+".csv");
+             try {
+
+                 writer.writeValues(tempFile).writeAll(listValues);
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
+             return true;
+
+         }finally {
+             System.out.println("----");
+         }
+*/
 
 
         return written;
@@ -289,6 +311,23 @@ public abstract class StatisticsService {
     }
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    protected static String formatRoadCode(Integer roadCode) {
+        return roadCode != null ? String.format("%04d", roadCode) : null;
+    }
+
+    protected static String formatStatusCode(int statusCode) {
+        return String.format("%02d", statusCode);
+    }
+
+    protected static String formatBnr(String bnr) {
+        return (bnr != null && !bnr.isEmpty()) ? StringUtils.leftPad(bnr, 4, '0') : "";
+    }
+
+    protected static String formatHouseNnr(String houseNr) {
+        if (houseNr == null || houseNr.equals("0")) return "";
+        return StringUtils.leftPad(houseNr, 4, '0');
+    }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
