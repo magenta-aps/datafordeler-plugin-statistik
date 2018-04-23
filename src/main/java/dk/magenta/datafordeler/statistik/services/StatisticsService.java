@@ -204,7 +204,6 @@ public abstract class StatisticsService {
                    if(isFileOn) {
 
                     String file_name = null;
-
                     //Routine to define the name of the file in directory
                     switch (serviceName) {
                         case BIRTH:
@@ -278,89 +277,6 @@ public abstract class StatisticsService {
 
         return written;
     }
-
-
-    /*private void fileWriting(List<String> keys, Iterator<Map<String, Object>> items, SequenceWriter writerContent,ServiceName serviceName , HttpServletResponse response){
-
-        String file_name = null;
-
-        //Routine to define the name of the file in directory
-        switch (serviceName){
-            case BIRTH :
-                System.out.println("Birth service ran...");
-                file_name = "birth";
-
-                break;
-            case DEATH :
-                System.out.println("Death service ran...");
-                file_name = "death";
-                break;
-            case STATUS :
-                System.out.println("Status service ran...");
-                file_name = "status";
-                break;
-            case MOVEMENT:
-                System.out.println("Movement service ran...");
-                file_name = "movement";
-                break;
-            default :
-                System.out.println("IT DOES NOT WORK!!!!!");
-        }
-
-
-
-
-
-         //Routine to write the content to the file
-         try {
-
-             CsvSchema schema =  CsvSchema.builder().build();
-             CsvMapper mapper = new CsvMapper();
-             mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-
-             Iterator<?>  iterator = items;
-             List<String> listValues = new ArrayList<>();
-
-             List<Map<String, Object>> itemsList = IteratorUtils.toList(iterator);
-             //list.forEach(listElement -> System.out.println("List Content: "+  listElement   ));
-
-             CsvSchema.Builder builder = new CsvSchema.Builder();
-             // builder.setColumnSeparator(';');
-
-             //Traversing the items in order to extract columns and values
-             for (Map<String, Object> element : itemsList) {
-                 System.out.println("Map Value"+element.values().toString());
-
-                 for (Map.Entry<String, Object> entry : element.entrySet())
-                 {System.out.println("--   Key : " + entry.getKey() + " --   Value : " + entry.getValue());
-
-                    // builder.addColumn(entry.getKey());//Get the column name
-                     listValues.add(String.valueOf(entry.getValue()));//Assigns the value
-                 }
-             }
-
-
-             //listValues.forEach(s -> System.out.println("Values: "+s));
-
-
-             ObjectWriter writer = mapper.writerFor(String.class).with(schema);
-
-             File tempFile = new File("c:\\temp\\"+file_name+".csv");
-             try {
-              
-                 writer.writeValues(tempFile).writeAll(listValues);
-             } catch (IOException e) {
-                 e.printStackTrace();
-             }
-            // return true;
-
-         }finally {
-             System.out.println("----");
-         }
-
-
-    }
-*/
 
     public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
         return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
