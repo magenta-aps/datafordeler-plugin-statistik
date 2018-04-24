@@ -178,10 +178,9 @@ public abstract class StatisticsService {
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
 
-        //SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
+
         SequenceWriter writer;
         ObjectWriter writerobj = this.getCsvMapper().writer(schema);
-       // SequenceWriter sequenceWriter;
 
             if (isFileOn) {
                 //Get current date time
