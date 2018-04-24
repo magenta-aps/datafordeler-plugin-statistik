@@ -34,7 +34,7 @@ public class StatusDataServiceTest {
 
     @Test
     public void testStatusDataService() throws Exception {
-        StatisticsService.isFileOn = false;
+        StatisticsService.isFileOn = true;
 
         testsUtils.loadPersonData("statusperson.txt");
         testsUtils.loadGladdrregData();

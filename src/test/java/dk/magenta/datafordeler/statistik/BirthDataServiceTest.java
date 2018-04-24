@@ -1,5 +1,8 @@
 package dk.magenta.datafordeler.statistik;
 
+import static com.jcabi.matchers.RegexMatchers.matchesPattern;
+import jdk.nashorn.internal.runtime.regexp.RegExpMatcher;
+import org.apache.commons.io.FilenameUtils;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
@@ -17,18 +20,29 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.prefs.AbstractPreferences;
 
+import static junit.framework.TestCase.assertTrue;
+import static org.apache.commons.lang3.Validate.matchesPattern;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class BirthDataServiceTest {
+public class BirthDataServiceTest  {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -38,7 +52,7 @@ public class BirthDataServiceTest {
 
     @Test
     public void testBirthDataService() throws Exception {
-        StatisticsService.isFileOn = false;
+        StatisticsService.isFileOn = true;
 
         testsUtils.loadPersonData("person.txt");
         testsUtils.loadGladdrregData();
@@ -47,7 +61,6 @@ public class BirthDataServiceTest {
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/", HttpMethod.GET, httpEntity, String.class);
 
-        //Assert.assertEquals(400, response.getStatusCodeValue());
 
         Assert.assertEquals(403, response.getStatusCodeValue());
 
@@ -61,8 +74,42 @@ public class BirthDataServiceTest {
         response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
 
-
-
     }
+
+    @Test
+    public void testDirectoryCreation(){
+       // StatisticsService.isFileOn = true;
+        //Directory and file creation
+        File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
+        assertTrue(folder.exists());
+
+        //Checking all files in folder have content
+        File[] listOfFiles = folder.listFiles();
+        for (File file : listOfFiles)
+            if (file.isFile()) {
+                System.out.println(file.getName());
+
+                assertTrue(file.length() > 0);
+                String basename = FilenameUtils.getBaseName(file.getName());
+                String extension = FilenameUtils.getExtension(file.getName());
+
+                assertThat(basename, containsString("birth"));
+                assertThat(extension, is("csv"));
+
+                String content;
+                try {
+                    content =  new String (Files.readAllBytes(Paths.get(folder + File.separator +file.getName())));
+                    Assert.assertEquals("B_Pnr;B_FoedAar;B_PnrGaeld;B_FoedMynKod;B_StatKod;B_ProdDto;M_Pnr;M_FoedMynKod;M_StatKod;M_KomKod;M_LokNavn;M_LokKode;M_VejKod;M_HusNr;M_SideDoer;M_Bnr;F_Pnr;F_FoedMynKod;F_StatKod;F_KomKod;F_LokNavn;F_LokKode;F_VejKod;F_HusNr;F_SideDoer;F_Bnr\n" +
+                                    "\"0101001234\";2000;;9516;5100;\"13-01-2000\";\"0101641234\";6666;;955;;;\"0001\";\"0005\";tv;\"1234\";;8888;;955;;;\"0001\";\"0005\";tv;\"1234\""
+                            , content.trim()
+                    );
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+    }
+
+
+
 
 }

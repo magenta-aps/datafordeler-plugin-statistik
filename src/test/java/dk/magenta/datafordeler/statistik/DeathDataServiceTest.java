@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +19,16 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 //import org.hamcrest.core.Is.is;
 
@@ -57,5 +68,43 @@ public class DeathDataServiceTest {
         Assert.assertNotEquals("", response.getBody());
         System.out.println("Body response: "+response.getBody());
     }
+
+
+    @Test
+    public void testDirectoryCreation(){
+        // StatisticsService.isFileOn = true;
+        //Directory and file creation
+        File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
+        assertTrue(folder.exists());
+
+        //Checking all files in folder have content
+        File[] listOfFiles = folder.listFiles();
+        for (File file : listOfFiles)
+            if (file.isFile()) {
+                System.out.println(file.getName());
+
+                assertTrue(file.length() > 0);
+                String basename = FilenameUtils.getBaseName(file.getName());
+                String extension = FilenameUtils.getExtension(file.getName());
+
+                assertThat(basename, containsString("death"));
+                assertThat(extension, is("csv"));
+
+                String content;
+                try {
+                    content =  new String (Files.readAllBytes(Paths.get(folder + File.separator +file.getName())));
+                    Assert.assertEquals(
+                            "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
+                                    "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
+                            , content.trim()
+                    );
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+    }
+
 
 }
