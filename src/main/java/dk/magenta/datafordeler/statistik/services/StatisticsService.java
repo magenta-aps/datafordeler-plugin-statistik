@@ -111,8 +111,10 @@ public abstract class StatisticsService {
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
     public static final String CIVIL_STATUS_DATE = "CivDto";
+    public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
     public static final String PROD_DATE = "ProdDto";
+    public static final String MOVE_PROD_DATE = "FlytProdDto";
     public static final String MUNICIPALITY_CODE = "KomKod";
     public static final String LOCALITY_NAME = "LokNavn";
     public static final String LOCALITY_CODE = "LokKode";
