@@ -5,10 +5,13 @@ import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
+import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 
 public class PersonStatusQuery extends PersonQuery {
 
@@ -28,36 +31,44 @@ public class PersonStatusQuery extends PersonQuery {
         lookupDefinition.setMatchNulls(true);
 
         if (this.livingInGreenlandOn != null) {
-            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(
+            ArrayList<LookupDefinition.FieldDefinition> fieldDefinitions = new ArrayList<>();
+            fieldDefinitions.add(lookupDefinition.put(
                     PersonBaseData.DB_FIELD_ADDRESS + LookupDefinition.separator + PersonAddressData.DB_FIELD_MUNICIPALITY_CODE,
                     900,
                     Integer.class,
                     LookupDefinition.Operator.GTE
-            );
+            ));
+            fieldDefinitions.add(lookupDefinition.put(
+                    PersonBaseData.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusData.DB_FIELD_STATUS,
+                    90,
+                    Integer.class,
+                    LookupDefinition.Operator.NE
+            ));
 
-            LookupDefinition.FieldDefinition effectFromDef = fieldDefinition.and(
+            for (LookupDefinition.FieldDefinition fieldDefinition : fieldDefinitions) {
+                fieldDefinition.and(
                     LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
                     this.livingInGreenlandOn,
                     OffsetDateTime.class,
                     LookupDefinition.Operator.LTE
-            );
-            effectFromDef.or(
+            ).or(
                     LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
                     null,
                     OffsetDateTime.class
             );
 
-            LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(
+                fieldDefinition.and(
                     LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
                     this.livingInGreenlandOn,
                     OffsetDateTime.class
-            );
-            effectToDef.or(
+            ).or(
                     LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
                     null,
                     OffsetDateTime.class
             );
+            }
         }
+
         return lookupDefinition;
     }
 
