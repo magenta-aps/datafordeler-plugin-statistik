@@ -189,16 +189,14 @@ public abstract class StatisticsService {
             String formatDateTime = now.format(formatter);
 
             //Directory and file creation
-            String userHome = System.getProperty("user.home");
-            String outputFolder = userHome + File.separator + "statistik";
-            File folder = new File(outputFolder);
-
+            File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
             if (!folder.exists()) {
                 folder.mkdirs();
             }
 
-            folder = new File(outputFolder+ File.separator + serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
-            writer = writerobj.writeValues(folder);
+            File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
+            file.createNewFile();
+            writer = writerobj.writeValues(file);
         } else {
              writer = writerobj.writeValues(response.getOutputStream());
         }
