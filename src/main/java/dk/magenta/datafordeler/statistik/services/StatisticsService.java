@@ -44,7 +44,6 @@ public abstract class StatisticsService {
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
 
-
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
@@ -60,6 +59,8 @@ public abstract class StatisticsService {
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -198,13 +199,14 @@ public abstract class StatisticsService {
             file.createNewFile();
             writer = writerobj.writeValues(file);
         } else {
-             writer = writerobj.writeValues(response.getOutputStream());
+            writer = writerobj.writeValues(response.getOutputStream());
         }
 
         int written;
         for (written = 0; items.hasNext(); written++) {
            writer.write(items.next());
         }
+        writer.close();
 
         return written;
     }
