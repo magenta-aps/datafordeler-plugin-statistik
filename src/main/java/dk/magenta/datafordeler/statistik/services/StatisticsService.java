@@ -182,26 +182,26 @@ public abstract class StatisticsService {
         SequenceWriter writer;
         ObjectWriter writerobj = this.getCsvMapper().writer(schema);
 
-            if (isFileOn) {
-                //Get current date time
-                LocalDateTime now = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-                String formatDateTime = now.format(formatter);
+        if (isFileOn) {
+            //Get current date time
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+            String formatDateTime = now.format(formatter);
 
-                //Directory and file creation
-                String userHome = System.getProperty("user.home");
-                String outputFolder = userHome + File.separator + "statistik";
-                File folder_file = new File(outputFolder);
+            //Directory and file creation
+            String userHome = System.getProperty("user.home");
+            String outputFolder = userHome + File.separator + "statistik";
+            File folder = new File(outputFolder);
 
-                    if (!folder_file.exists()) {
-                        folder_file.mkdir();
-                    }
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
 
-                folder_file = new File(outputFolder+ File.separator + serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
-                writer = writerobj.writeValues(folder_file);
-            } else {
-                 writer = writerobj.writeValues(response.getOutputStream());
-                 }
+            folder = new File(outputFolder+ File.separator + serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
+            writer = writerobj.writeValues(folder);
+        } else {
+             writer = writerobj.writeValues(response.getOutputStream());
+        }
 
         int written;
         for (written = 0; items.hasNext(); written++) {
