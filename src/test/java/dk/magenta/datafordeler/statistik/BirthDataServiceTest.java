@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +17,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -31,12 +38,17 @@ public class BirthDataServiceTest {
 
     @Test
     public void testBirthDataService() throws Exception {
+        StatisticsService.isFileOn = false;
+
         testsUtils.loadPersonData("person.txt");
         testsUtils.loadGladdrregData();
 
         TestUserDetails testUserDetails = new TestUserDetails();
         HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/", HttpMethod.GET, httpEntity, String.class);
+
+        //Assert.assertEquals(400, response.getStatusCodeValue());
+
         Assert.assertEquals(403, response.getStatusCodeValue());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
@@ -45,8 +57,12 @@ public class BirthDataServiceTest {
         response = restTemplate.exchange("/statistik/birth_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
+
         response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
+
+
+
     }
 
 }

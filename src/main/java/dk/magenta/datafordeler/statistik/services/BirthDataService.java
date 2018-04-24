@@ -61,9 +61,9 @@ public class BirthDataService extends StatisticsService {
     // registration before date
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-        super.get(request, response);
+        super.get(request, response, ServiceName.BIRTH);
     }
 
     private static final String OWN_PREFIX = "B_";

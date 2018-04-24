@@ -1,6 +1,9 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SequenceWriter;
+
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.database.QueryManager;
@@ -15,28 +18,38 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Null;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
-    protected void get(HttpServletRequest request, HttpServletResponse response) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+
+    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+
 
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
-        loggerHelper.info("Incoming request for "+this.getClass().getSimpleName()+" with parameters " + request.getParameterMap());
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
 
 
@@ -51,7 +64,7 @@ public abstract class StatisticsService {
             personQuery.applyFilters(primary_session);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
 
-            int written = 0;//this.writeItems(this.formatItems(personEntities, secondary_session, filter), response);
+            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response, serviceName);
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
@@ -73,6 +86,15 @@ public abstract class StatisticsService {
 
     protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
 
+    public enum ServiceName {
+        BIRTH,
+        DEATH,
+        MOVEMENT,
+        STATUS;
+    }
+
+    public static boolean isFileOn = true;
+
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
@@ -80,7 +102,7 @@ public abstract class StatisticsService {
 
     //Column names for person
     public static final String PNR = "Pnr";
-    public static final String BIRTHDAY_YEAR ="FoedAar";
+    public static final String BIRTHDAY_YEAR = "FoedAar";
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
     public static final String FIRST_NAME = "Fornavn";
     public static final String LAST_NAME = "Efternavn";
@@ -89,8 +111,10 @@ public abstract class StatisticsService {
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
     public static final String CIVIL_STATUS_DATE = "CivDto";
+    public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
     public static final String PROD_DATE = "ProdDto";
+    public static final String MOVE_PROD_DATE = "FlytProdDto";
     public static final String MUNICIPALITY_CODE = "KomKod";
     public static final String LOCALITY_NAME = "LokNavn";
     public static final String LOCALITY_CODE = "LokKode";
@@ -102,7 +126,7 @@ public abstract class StatisticsService {
     public static final String BNR = "Bnr";
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
-    public static final String POST_CODE =  "Postnr";
+    public static final String POST_CODE = "Postnr";
     public static final String CHURCH = "Kirke";
 
 
@@ -135,10 +159,6 @@ public abstract class StatisticsService {
     public static final String SPOUSE_PNR = "AegtePnr";
 
 
-
-
-
-
     protected PersonQuery getQuery(HttpServletRequest request) {
         OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
         PersonQuery personQuery = new PersonQuery();
@@ -149,9 +169,13 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response) throws IOException {
+    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
+
+        CsvMapper mapper = new CsvMapper();
+        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
             builder.addColumn(new CsvSchema.Column(
@@ -161,11 +185,21 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
-        SequenceWriter writer = this.getCsvMapper().writer(schema).writeValues(response.getOutputStream());
+        ObjectWriter writer = this.getCsvMapper().writer(schema);
+        SequenceWriter sequenceWriter;
+
+        if (isFileOn) {
+            File tempFile = new File(serviceName.name().toLowerCase() + ".csv");
+            sequenceWriter = writer.writeValues(tempFile);
+        } else {
+            sequenceWriter = writer.writeValues(response.getOutputStream());
+        }
+
         int written;
         for (written = 0; items.hasNext(); written++) {
-            writer.write(items.next());
+            sequenceWriter.write(items.next());
         }
+
         return written;
     }
 
@@ -198,13 +232,17 @@ public abstract class StatisticsService {
         return StringUtils.leftPad(houseNr, 4, '0');
     }
 
+    protected static String formatLocalityCode(int localityCode) {
+        if (localityCode == 0) return "";
+        return String.format("%04d", localityCode);
+    }
+
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-        }
-        catch (AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             loggerHelper.info("Access denied: " + e.getMessage());
-            throw(e);
+            throw (e);
         }
     }
 }

@@ -52,9 +52,9 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response)
+    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response);
+        super.get(request, response, ServiceName.STATUS);
     }
 
     @Override
@@ -63,8 +63,7 @@ public class StatusDataService extends StatisticsService {
                 PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
                 BIRTH_AUTHORITY, CITIZENSHIP_CODE, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
                 MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
-                BNR, MOVING_IN_DATE, POST_CODE, CIVIL_STATUS_DATE, CHURCH
-
+                BNR, MOVING_IN_DATE, MOVE_PROD_DATE, POST_CODE, CIVIL_STATUS_DATE, CIVIL_STATUS_PROD_DATE, CHURCH
         });
     }
 
@@ -114,7 +113,7 @@ public class StatusDataService extends StatisticsService {
         // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
-        for (PersonRegistration registration: person.getRegistrations()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
                 OffsetDateTime effectTime = effect.getEffectFrom();
                 for (PersonBaseData data : effect.getDataItems()) {
@@ -137,6 +136,7 @@ public class StatusDataService extends StatisticsService {
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
         OffsetDateTime latestCivilStatusDate = null;
+        OffsetDateTime civilStatusRegistrationDate = null;
         OffsetDateTime latestAddressTime = null;
         PersonAddressData latestAddress = null;
 
@@ -171,7 +171,7 @@ public class StatusDataService extends StatisticsService {
                     }
 
                     PersonAddressData addressData = data.getAddress();
-                    if (addressData != null) {
+                    if (addressData != null && effect.getEffectFrom() != null) {
                         if (latestAddressTime == null || latestAddressTime.isBefore(effect.getEffectFrom()) ||
                                 (latestAddressTime.isEqual(effect.getEffectFrom()) && (latestAddress == null || latestAddress.getId() < addressData.getId()))) {
                             latestAddressTime = effect.getEffectFrom();
@@ -190,10 +190,11 @@ public class StatusDataService extends StatisticsService {
                     }
 
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
-                    if (personCivilStatus != null ){
+                    if (personCivilStatus != null) {
                         item.put(CIVIL_STATUS, personCivilStatus.getCivilStatus());
                         if (effect.getEffectFrom() != null && (latestCivilStatusDate == null || effect.getEffectFrom().isAfter(latestCivilStatusDate))) {
                             latestCivilStatusDate = effect.getEffectFrom();
+                            civilStatusRegistrationDate = registration.getRegistrationFrom();
                         }
                     }
 
@@ -212,6 +213,9 @@ public class StatusDataService extends StatisticsService {
         if (latestCivilStatusDate != null) {
             item.put(CIVIL_STATUS_DATE, latestCivilStatusDate.format(dmyFormatter));
         }
+        if (civilStatusRegistrationDate != null) {
+            item.put(CIVIL_STATUS_PROD_DATE, civilStatusRegistrationDate.format(dmyFormatter));
+        }
 
 
         if (latestAddress != null) {
@@ -229,13 +233,14 @@ public class StatusDataService extends StatisticsService {
             );
             if (lookup != null) {
                 item.put(LOCALITY_NAME, lookup.localityName);
-                item.put(LOCALITY_CODE, lookup.localityCode);
+                item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                 item.put(POST_CODE, lookup.postalCode);
             }
             for (OffsetDateTime addressTime : addressTimes) {
                 if (addresses.get(addressTime).contains(latestAddress)) {
                     item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
+                    item.put(MOVE_PROD_DATE, registrations.get(addressTime) != null ? registrations.get(addressTime).format(dmyFormatter) : null);
                     break;
                 }
             }
