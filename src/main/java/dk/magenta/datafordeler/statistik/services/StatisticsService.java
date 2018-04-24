@@ -18,23 +18,15 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Null;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -185,19 +177,35 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
-        ObjectWriter writer = this.getCsvMapper().writer(schema);
-        SequenceWriter sequenceWriter;
 
-        if (isFileOn) {
-            File tempFile = new File(serviceName.name().toLowerCase() + ".csv");
-            sequenceWriter = writer.writeValues(tempFile);
-        } else {
-            sequenceWriter = writer.writeValues(response.getOutputStream());
-        }
+
+        SequenceWriter writer;
+        ObjectWriter writerobj = this.getCsvMapper().writer(schema);
+
+            if (isFileOn) {
+                //Get current date time
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String formatDateTime = now.format(formatter);
+
+                //Directory and file creation
+                String userHome = System.getProperty("user.home");
+                String outputFolder = userHome + File.separator + "statistik";
+                File folder_file = new File(outputFolder);
+
+                    if (!folder_file.exists()) {
+                        folder_file.mkdir();
+                    }
+
+                folder_file = new File(outputFolder+ File.separator + serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
+                writer = writerobj.writeValues(folder_file);
+            } else {
+                 writer = writerobj.writeValues(response.getOutputStream());
+                 }
 
         int written;
         for (written = 0; items.hasNext(); written++) {
-            sequenceWriter.write(items.next());
+           writer.write(items.next());
         }
 
         return written;
