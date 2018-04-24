@@ -18,23 +18,15 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.collections.IteratorUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Null;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -52,7 +44,6 @@ public abstract class StatisticsService {
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
 
-
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
@@ -68,6 +59,8 @@ public abstract class StatisticsService {
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             primary_session.close();
             secondary_session.close();
@@ -185,20 +178,35 @@ public abstract class StatisticsService {
         }
         CsvSchema schema = builder.build().withHeader();
         response.setContentType("text/csv");
-        ObjectWriter writer = this.getCsvMapper().writer(schema);
-        SequenceWriter sequenceWriter;
+
+
+        SequenceWriter writer;
+        ObjectWriter writerobj = this.getCsvMapper().writer(schema);
 
         if (isFileOn) {
-            File tempFile = new File(serviceName.name().toLowerCase() + ".csv");
-            sequenceWriter = writer.writeValues(tempFile);
+            //Get current date time
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+            String formatDateTime = now.format(formatter);
+
+            //Directory and file creation
+            File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+
+            File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
+            file.createNewFile();
+            writer = writerobj.writeValues(file);
         } else {
-            sequenceWriter = writer.writeValues(response.getOutputStream());
+            writer = writerobj.writeValues(response.getOutputStream());
         }
 
         int written;
         for (written = 0; items.hasNext(); written++) {
-            sequenceWriter.write(items.next());
+           writer.write(items.next());
         }
+        writer.close();
 
         return written;
     }

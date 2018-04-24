@@ -47,25 +47,25 @@ public class PersonStatusQuery extends PersonQuery {
 
             for (LookupDefinition.FieldDefinition fieldDefinition : fieldDefinitions) {
                 fieldDefinition.and(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
-                    this.livingInGreenlandOn,
-                    OffsetDateTime.class,
-                    LookupDefinition.Operator.LTE
-            ).or(
-                    LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
-                    null,
-                    OffsetDateTime.class
-            );
+                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                        this.livingInGreenlandOn,
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.LTE
+                ).or(
+                        LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                        null,
+                        OffsetDateTime.class
+                );
 
                 fieldDefinition.and(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
-                    this.livingInGreenlandOn,
-                    OffsetDateTime.class
-            ).or(
-                    LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
-                    null,
-                    OffsetDateTime.class
-            );
+                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
+                        this.livingInGreenlandOn,
+                        OffsetDateTime.class
+                ).or(
+                        LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
+                        null,
+                        OffsetDateTime.class
+                );
             }
         }
 

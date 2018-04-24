@@ -113,6 +113,7 @@ public class BirthDataService extends StatisticsService {
         if (pnr != null) {
             personBirthQuery.setPersonnummer(pnr);
         }
+        personBirthQuery.setPageSize(1000000);
         return personBirthQuery;
     }
 
