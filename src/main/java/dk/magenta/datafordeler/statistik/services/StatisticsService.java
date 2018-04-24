@@ -103,8 +103,10 @@ public abstract class StatisticsService {
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
     public static final String CIVIL_STATUS_DATE = "CivDto";
+    public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
     public static final String PROD_DATE = "ProdDto";
+    public static final String MOVE_PROD_DATE = "FlytProdDto";
     public static final String MUNICIPALITY_CODE = "KomKod";
     public static final String LOCALITY_NAME = "LokNavn";
     public static final String LOCALITY_CODE = "LokKode";
@@ -237,6 +239,11 @@ public abstract class StatisticsService {
     protected static String formatHouseNnr(String houseNr) {
         if (houseNr == null || houseNr.equals("0")) return "";
         return StringUtils.leftPad(houseNr, 4, '0');
+    }
+
+    protected static String formatLocalityCode(int localityCode) {
+        if (localityCode == 0) return "";
+        return String.format("%04d", localityCode);
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {

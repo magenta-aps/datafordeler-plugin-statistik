@@ -4,6 +4,8 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.statistik.services.DeathDataService;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,8 +33,12 @@ public class DeathDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
+    @Autowired
+    private DeathDataService deathDataService;
+
     @Test
-    public void testDeathDataService()throws Exception {
+    public void testDeathDataService() throws Exception {
+        StatisticsService.isFileOn = false;
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
         TestUserDetails testUserDetails = new TestUserDetails();
