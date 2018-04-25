@@ -70,14 +70,6 @@ public class StatusDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         System.out.println("Body response: "+response.getBody());
 
-        /*if(response.getBody() != null) {
-            Assert.assertEquals("Pnr;FoedAar;Fornavn;Efternavn;Status;FoedMynKod;StatKod;M_Pnr;F_Pnr;CivSt;AegtePnr;KomKod;LokNavn;LokKode;LokKortNavn;VejKod;HusNr;Etage;SideDoer;Bnr;TilFlyDto;FlytProdDto;Postnr;CivDto;CivProdDto;Kirke\n" +
-                            "\"0101001234\";2000;\"Tester Testmember\";Testersen;\"05\";9516;5100;\"2903641234\";\"0101641234\";G;\"0202994321\";955;;;;\"0001\";\"0005\";\"1\";tv;\"1234\";\"30-08-2016\";\"31-08-2016\";0;\"12-10-2017\";\"13-10-2017\";F",
-                    response.getBody().trim());
-        }
-
-*/
-
     }
 
 
