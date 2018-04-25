@@ -41,6 +41,10 @@ import java.util.*;
 @RequestMapping("/statistik/birth_data")
 public class BirthDataService extends StatisticsService {
 
+    private class Exclude extends Exception {
+
+    }
+
     @Autowired
     SessionManager sessionManager;
 
@@ -118,8 +122,8 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, Object> item = new HashMap<String, Object>();
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter) {
+        HashMap<String, String> item = new HashMap<String, String>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
         //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
 
@@ -148,11 +152,11 @@ public class BirthDataService extends StatisticsService {
                 PersonBirthData birthData = data.getBirth();
                 if (birthData != null) {
                     if (birthData.getBirthDatetime() != null) {
-                        item.put(OWN_PREFIX + BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
+                        item.put(OWN_PREFIX + BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         birthTime = birthData.getBirthDatetime();
                     }
                     if (birthData.getBirthPlaceCode() != null) {
-                        item.put(OWN_PREFIX + BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
+                        item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                     }
                     OffsetDateTime registrationFrom = effect.getRegistration().getRegistrationFrom();
                     if (registrationFrom != null && (earliestProdDate == null || registrationFrom.isBefore(earliestProdDate))) {
@@ -162,7 +166,7 @@ public class BirthDataService extends StatisticsService {
 
                 PersonCitizenshipData citizenshipData = data.getCitizenship();
                 if (citizenshipData != null) {
-                    item.put(OWN_PREFIX + CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                 }
 
                 PersonParentData personMotherData = data.getMother();
@@ -173,11 +177,6 @@ public class BirthDataService extends StatisticsService {
                 PersonParentData personFatherData = data.getFather();
                 if (personFatherData != null) {
                     fatherPnr = personFatherData.getCprNumber();
-                    item.put(FATHER_PREFIX + PNR, personFatherData.getCprNumber());
-                    PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(personFatherData.getCprNumber()), PersonEntity.class);
-                    if (father != null) {
-                        item.putAll(this.formatParentPerson(father, FATHER_PREFIX, lookupService, filter));
-                    }
                 }
             }
         }
@@ -193,26 +192,33 @@ public class BirthDataService extends StatisticsService {
         if (motherPnr != null) {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
             if (mother != null) {
-                item.putAll(this.formatParentPerson(mother, MOTHER_PREFIX, lookupService, parentFilter));
+                try {
+                    item.putAll(this.formatParentPerson(mother, MOTHER_PREFIX, lookupService, parentFilter, true));
+                } catch (Exclude e) {
+                    // Do not include births where the mother lives outside of Greenland at the time of birth
+                    return null;
+                }
             }
         }
+
+
         item.put(FATHER_PREFIX + PNR, fatherPnr);
         if (fatherPnr != null) {
             PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(fatherPnr), PersonEntity.class);
             if (father != null) {
-                item.putAll(this.formatParentPerson(father, FATHER_PREFIX, lookupService, parentFilter));
+                try {
+                    item.putAll(this.formatParentPerson(father, FATHER_PREFIX, lookupService, parentFilter, false));
+                } catch (Exclude exclude) {
+                    exclude.printStackTrace();
+                }
             }
-        }
-
-        if (item.containsKey(MOTHER_PREFIX + MUNICIPALITY_CODE) && (int) item.get(MOTHER_PREFIX + MUNICIPALITY_CODE) < 900) {
-            item = null;
         }
 
         return item;
     }
 
-    private Map<String, Object> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter) {
-        HashMap<String, Object> item = new HashMap<String, Object>();
+    private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
+        HashMap<String, String> item = new HashMap<String, String>();
         HashSet<PersonEffect> personEffects = new HashSet<>();
         for (PersonRegistration registration: person.getRegistrations()) {
             personEffects.addAll(registration.getEffectsAt(filter.effectAt));
@@ -220,6 +226,21 @@ public class BirthDataService extends StatisticsService {
 
         ArrayList<PersonEffect> effects = new ArrayList<>(personEffects);
         effects.sort(Comparator.nullsFirst(PersonEffect::compareTo));
+
+        if (excludeIfNonGreenlandic) {
+            for (PersonEffect effect: effects) {
+                for (PersonBaseData data : effect.getDataItems()) {
+                    PersonAddressData addressData = data.getAddress();
+                    if (addressData != null) {
+                        if (addressData.getMunicipalityCode() < 900) {
+                            throw new Exclude();
+                        }
+                    }
+                }
+            }
+        }
+
+
         for (PersonEffect effect: effects) {
             for (PersonBaseData data: effect.getDataItems()) {
 
@@ -231,7 +252,7 @@ public class BirthDataService extends StatisticsService {
                             addressData.getHouseNumber()
                     );
 
-                    item.put(prefix + MUNICIPALITY_CODE, addressData.getMunicipalityCode());
+                    item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressData.getMunicipalityCode()));
                     item.put(prefix + ROAD_CODE, formatRoadCode(addressData.getRoadCode()));
                     item.put(prefix + HOUSE_NUMBER, formatHouseNnr(addressData.getHouseNumber()));
                     item.put(prefix + FLOOR_NUMBER, addressData.getFloor());
@@ -248,13 +269,13 @@ public class BirthDataService extends StatisticsService {
 
                 PersonCitizenshipData citizenshipData = data.getCitizenship();
                 if (citizenshipData != null) {
-                    item.put(prefix + CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                    item.put(prefix + CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                 }
 
                 PersonBirthData birthData = data.getBirth();
                 if (birthData != null) {
                     if (birthData.getBirthPlaceCode() != null) {
-                        item.put(prefix + BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
+                        item.put(prefix + BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                     }
                 }
             }
