@@ -182,6 +182,13 @@ public abstract class StatisticsService {
         SequenceWriter writer;
         ObjectWriter writerobj = this.getCsvMapper().writer(schema);
 
+        /*TODO: Proposal for the sake of defining a better directory structure.
+        * For example:
+        * ../statistik/birth/birth_timestamp.csv
+        * ../statistik/death/death_timestamp.csv
+        * ../statistik/status/status_timestamp.csv
+        * ../statistik/movement/movement_timestamp.csv  */
+
         if (isFileOn) {
             //Get current date time
             LocalDateTime now = LocalDateTime.now();

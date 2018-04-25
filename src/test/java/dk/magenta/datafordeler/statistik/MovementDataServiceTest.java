@@ -53,4 +53,11 @@ public class MovementDataServiceTest {
         Assert.assertFalse(response.getBody().isEmpty());
         System.out.println("Body response: "+response.getBody());
     }
+
+
+
+
+
+
+
 }

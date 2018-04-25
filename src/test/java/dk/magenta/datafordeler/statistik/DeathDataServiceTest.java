@@ -69,42 +69,54 @@ public class DeathDataServiceTest {
         System.out.println("Body response: "+response.getBody());
     }
 
-
     @Test
-    public void testDirectoryCreation(){
-        // StatisticsService.isFileOn = true;
+    public void testDeathFileExistenceAndContent(){
+        //By now this test expects a file already created at directory. Otherwise, it shows a message non existing folder.
         //Directory and file creation
         File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
-        assertTrue(folder.exists());
+        if(folder.exists()){
+            //Checking all files in folder have content
+            File[] listOfFiles = folder.listFiles();
+            if(listOfFiles.length > 0) {
+                for (File file : listOfFiles) {
+                    if (file.isFile()) {
+                        assertTrue(file.length() > 0);
+                        String basename = FilenameUtils.getBaseName(file.getName());
+                        String extension = FilenameUtils.getExtension(file.getName());
 
-        //Checking all files in folder have content
-        File[] listOfFiles = folder.listFiles();
-        for (File file : listOfFiles)
-            if (file.isFile()) {
-                System.out.println(file.getName());
+                        if(basename.contains(StatisticsService.ServiceName.DEATH.name().toLowerCase())){
+                            String content;
+                            try {
+                                content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName())));
+                                assertThat(extension, is("csv"));
 
-                assertTrue(file.length() > 0);
-                String basename = FilenameUtils.getBaseName(file.getName());
-                String extension = FilenameUtils.getExtension(file.getName());
+                                Assert.assertEquals(
+                                        "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
+                                                "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
+                                        , content.trim()
+                                );
+                                System.out.println(file.getName()+" file process correctly.");
 
-                assertThat(basename, containsString("death"));
-                assertThat(extension, is("csv"));
-
-                String content;
-                try {
-                    content =  new String (Files.readAllBytes(Paths.get(folder + File.separator +file.getName())));
-                    Assert.assertEquals(
-                            "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
-                                    "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
-                            , content.trim()
-                    );
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }else{
+                            System.out.println(file.getName()+" was not process in this test.");
+                        }
 
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    }
                 }
+
             }
+
+        }else{
+            System.out.println("Folder do not exist.");
+        }
+
     }
+
+
 
 
 }
