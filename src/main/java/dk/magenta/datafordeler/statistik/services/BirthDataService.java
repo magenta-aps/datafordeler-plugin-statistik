@@ -204,6 +204,10 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
+        if (item.containsKey(MOTHER_PREFIX + MUNICIPALITY_CODE) && (int) item.get(MOTHER_PREFIX + MUNICIPALITY_CODE) < 900) {
+            item = null;
+        }
+
         return item;
     }
 

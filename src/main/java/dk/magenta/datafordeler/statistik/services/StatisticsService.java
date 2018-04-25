@@ -204,7 +204,10 @@ public abstract class StatisticsService {
 
         int written;
         for (written = 0; items.hasNext(); written++) {
-           writer.write(items.next());
+            Object item = items.next();
+            if (item != null) {
+                writer.write(item);
+            }
         }
         writer.close();
 
