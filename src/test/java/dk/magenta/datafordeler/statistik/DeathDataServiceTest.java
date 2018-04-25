@@ -8,6 +8,7 @@ import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,31 +48,41 @@ public class DeathDataServiceTest {
     @Autowired
     private DeathDataService deathDataService;
 
-    @Test
-    public void testDeathDataService() throws Exception {
-        StatisticsService.isFileOn = false;
+
+    HttpEntity<String> httpEntity;
+    ResponseEntity<String> response;
+    TestUserDetails testUserDetails;
+
+    @Before
+    public void initialize() throws Exception {
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
-        TestUserDetails testUserDetails = new TestUserDetails();
 
-        HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(403, response.getStatusCodeValue());
+        testUserDetails = new TestUserDetails();
+        httpEntity = new HttpEntity<String>("", new HttpHeaders());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(400, response.getStatusCodeValue());
+        response = null;
+    }
 
+
+    @Test
+    public void testDeathDataService() {
+        StatisticsService.isFileOn = false;
         response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertNotEquals("", response.getBody());
+        Assert.assertEquals(200, response.getStatusCodeValue());
         System.out.println("Body response: "+response.getBody());
     }
 
     @Test
     public void testDeathFileExistenceAndContent(){
-        //By now this test expects a file already created at directory. Otherwise, it shows a message non existing folder.
+        StatisticsService.isFileOn = true;
+        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        System.out.println("Body response: "+response.getBody());
+
+
         //Directory and file creation
         File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
         if(folder.exists()){
