@@ -103,8 +103,8 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, Object> item = new HashMap<String, Object>();
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter) {
+        HashMap<String, String> item = new HashMap<String, String>();
         item.put(PNR, person.getPersonnummer());
         LookupService lookupService = new LookupService(session);
 
@@ -153,10 +153,10 @@ public class StatusDataService extends StatisticsService {
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
+                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                         }
                     }
 
@@ -167,7 +167,7 @@ public class StatusDataService extends StatisticsService {
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                     }
 
                     PersonAddressData addressData = data.getAddress();
@@ -220,7 +220,7 @@ public class StatusDataService extends StatisticsService {
 
         if (latestAddress != null) {
             item.put(POST_CODE, latestAddress.getPostalCode());
-            item.put(MUNICIPALITY_CODE, latestAddress.getMunicipalityCode());
+            item.put(MUNICIPALITY_CODE, Integer.toString(latestAddress.getMunicipalityCode()));
             item.put(ROAD_CODE, formatRoadCode(latestAddress.getRoadCode()));
             item.put(HOUSE_NUMBER, formatHouseNnr(latestAddress.getHouseNumber()));
             item.put(DOOR_NUMBER, latestAddress.getDoor());
@@ -235,7 +235,7 @@ public class StatusDataService extends StatisticsService {
                 item.put(LOCALITY_NAME, lookup.localityName);
                 item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                item.put(POST_CODE, lookup.postalCode);
+                item.put(POST_CODE, Integer.toString(lookup.postalCode));
             }
             for (OffsetDateTime addressTime : addressTimes) {
                 if (addresses.get(addressTime).contains(latestAddress)) {

@@ -108,8 +108,8 @@ public class MovementDataService extends StatisticsService {
     }
 
     @Override
-    public Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter){
-        HashMap<String, Object> item = new HashMap<>();
+    public Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter){
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
         // Map of effectTime to addresses (when address was moved into)
@@ -149,7 +149,7 @@ public class MovementDataService extends StatisticsService {
                 PersonAddressData currentAddress = addresses.get(current);
                 PersonAddressData previousAddress = addresses.get(previous);
                 if (previousAddress != null) {
-                    item.put(ORIGIN_MUNICIPALITY_CODE, previousAddress.getMunicipalityCode());
+                    item.put(ORIGIN_MUNICIPALITY_CODE, Integer.toString(previousAddress.getMunicipalityCode()));
                     //item.put("origin_locality_name", null);
                     item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousAddress.getRoadCode()));
                     item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousAddress.getHouseNumber()));
@@ -158,7 +158,7 @@ public class MovementDataService extends StatisticsService {
                     item.put(ORIGIN_BNR, formatBnr(previousAddress.getBuildingNumber()));
                 }
                 if (currentAddress != null) {
-                    item.put(DESTINATION_MUNICIPALITY_CODE, currentAddress.getMunicipalityCode());
+                    item.put(DESTINATION_MUNICIPALITY_CODE, Integer.toString(currentAddress.getMunicipalityCode()));
                     //item.put("destination_locality_name", null);
                     item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentAddress.getRoadCode()));
                     item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentAddress.getHouseNumber()));
@@ -185,10 +185,10 @@ public class MovementDataService extends StatisticsService {
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         }
                         if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, birthData.getBirthPlaceCode());
+                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                         }
                     }
 
@@ -200,7 +200,7 @@ public class MovementDataService extends StatisticsService {
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                     }
 
                     PersonCoreData coreData = data.getCoreData();

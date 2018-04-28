@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
+import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fasterxml.jackson.dataformat.csv.impl.CsvEncoder;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
@@ -77,7 +79,7 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
+    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter);
 
     public enum ServiceName {
         BIRTH,
@@ -162,12 +164,13 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
-        CsvMapper mapper = new CsvMapper();
+        CsvMapper mapper = this.getCsvMapper();
         mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+        mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_STRINGS, true);
 
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
@@ -177,11 +180,12 @@ public abstract class StatisticsService {
             ));
         }
         CsvSchema schema = builder.build().withHeader();
+
+
         response.setContentType("text/csv");
 
-
         SequenceWriter writer;
-        ObjectWriter writerobj = this.getCsvMapper().writer(schema);
+        ObjectWriter writerobj = mapper.writer(schema);
 
         if (isFileOn) {
             //Get current date time
@@ -204,14 +208,17 @@ public abstract class StatisticsService {
 
         int written;
         for (written = 0; items.hasNext(); written++) {
-           writer.write(items.next());
+            Object item = items.next();
+            if (item != null) {
+                writer.write(item);
+            }
         }
         writer.close();
 
         return written;
     }
 
-    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
         return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
     }
 
@@ -243,6 +250,10 @@ public abstract class StatisticsService {
     protected static String formatLocalityCode(int localityCode) {
         if (localityCode == 0) return "";
         return String.format("%04d", localityCode);
+    }
+
+    protected static String string(int value) {
+        return Integer.toString(value);
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
