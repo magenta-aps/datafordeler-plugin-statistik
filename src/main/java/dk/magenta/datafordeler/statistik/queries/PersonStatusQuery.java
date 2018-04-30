@@ -6,7 +6,6 @@ import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
-import dk.magenta.datafordeler.statistik.utils.Lookup;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
