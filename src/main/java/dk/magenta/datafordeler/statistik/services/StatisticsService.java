@@ -52,6 +52,9 @@ public abstract class StatisticsService {
         final Session primary_session = this.getSessionManager().getSessionFactory().openSession();
         final Session secondary_session = this.getSessionManager().getSessionFactory().openSession();
 
+        primary_session.setDefaultReadOnly(true);
+        secondary_session.setDefaultReadOnly(true);
+
         try {
             PersonQuery personQuery = this.getQuery(request);
             personQuery.applyFilters(primary_session);
@@ -186,6 +189,7 @@ public abstract class StatisticsService {
 
         SequenceWriter writer;
         ObjectWriter writerobj = mapper.writer(schema);
+        String outputDescription = null;
 
         if (isFileOn) {
             //Get current date time
@@ -202,8 +206,10 @@ public abstract class StatisticsService {
             File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
             file.createNewFile();
             writer = writerobj.writeValues(file);
+            outputDescription = "Written to file " + file.getCanonicalPath();
         } else {
             writer = writerobj.writeValues(response.getOutputStream());
+            outputDescription = "Written to response";
         }
 
         int written;
@@ -214,6 +220,7 @@ public abstract class StatisticsService {
             }
         }
         writer.close();
+        System.out.println(outputDescription);
 
         return written;
     }
