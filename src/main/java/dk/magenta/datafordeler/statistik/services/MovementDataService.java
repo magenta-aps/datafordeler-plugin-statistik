@@ -13,6 +13,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +109,7 @@ public class MovementDataService extends StatisticsService {
     }
 
     @Override
-    public Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter){
+    public Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 

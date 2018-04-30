@@ -103,10 +103,9 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, String> item = new HashMap<String, String>();
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
-        LookupService lookupService = new LookupService(session);
 
         // Map of effectTime to addresses (when address was moved into)
         ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();

@@ -122,12 +122,11 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, String> item = new HashMap<String, String>();
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
         //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
 
-        LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
         LocalDateTime birthTime = null;
         String motherPnr = null;
