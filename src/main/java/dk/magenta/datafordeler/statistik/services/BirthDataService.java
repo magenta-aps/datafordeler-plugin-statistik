@@ -217,7 +217,10 @@ public class BirthDataService extends StatisticsService {
     }
 
     private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
-        HashMap<String, String> item = new HashMap<String, String>();
+
+        System.out.println("Formatting parent at "+filter.effectAt);
+
+        HashMap<String, String> item = new HashMap<>();
         HashSet<PersonEffect> personEffects = new HashSet<>();
         for (PersonRegistration registration: person.getRegistrations()) {
             personEffects.addAll(registration.getEffectsAt(filter.effectAt));
@@ -245,6 +248,7 @@ public class BirthDataService extends StatisticsService {
 
                 PersonAddressData addressData = data.getAddress();
                 if (addressData != null) {
+                    System.out.println("Parent has an address "+addressData.getMunicipalityCode()+" "+addressData.getRoadCode());
                     Lookup lookup = lookupService.doLookup(
                             addressData.getMunicipalityCode(),
                             addressData.getRoadCode(),
