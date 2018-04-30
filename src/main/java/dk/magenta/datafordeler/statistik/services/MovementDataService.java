@@ -105,6 +105,7 @@ public class MovementDataService extends StatisticsService {
         if (pnr != null) {
             personMoveQuery.setPersonnummer(pnr);
         }
+        personMoveQuery.setPageSize(1000000);
         return personMoveQuery;
     }
 

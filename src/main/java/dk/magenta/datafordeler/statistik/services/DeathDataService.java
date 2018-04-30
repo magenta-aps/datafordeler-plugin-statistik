@@ -107,6 +107,7 @@ public class DeathDataService extends StatisticsService {
         if (pnr != null) {
             personDeathQuery.setPersonnummer(pnr);
         }
+        personDeathQuery.setPageSize(1000000);
 
         return personDeathQuery;
     }
