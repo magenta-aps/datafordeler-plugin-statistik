@@ -31,6 +31,7 @@ import java.nio.file.Paths;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -53,7 +54,7 @@ public class StatusDataServiceTest {
         testsUtils.loadGladdrregData();
 
         testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<String>("", new HttpHeaders());
+        httpEntity = new HttpEntity<>("", new HttpHeaders());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
@@ -68,6 +69,15 @@ public class StatusDataServiceTest {
         StatisticsService.isFileOn = false;
         response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response contains a body", response);
+        Assert.assertEquals(
+                "Pnr;FoedAar;Fornavn;Efternavn;Status;FoedMynKod;StatKod;M_Pnr;F_Pnr;CivSt;AegtePnr;KomKod;LokNavn;LokKode;LokKortNavn;VejKod;HusNr;Etage;SideDoer;Bnr;TilFlyDto;FlytProdDto;Postnr;CivDto;CivProdDto;Kirke\n" +
+                        "\"0101001234\";2000;\"Tester Testmember\";Testersen;\"05\";9516;5100;\"2903641234\";\"0101641234\";G;\"0202994321\";955;;;;\"0001\";\"0005\";\"1\";tv;\"1234\";\"30-08-2016\";\"31-08-2016\";0;\"12-10-2017\";\"13-10-2017\";F",
+
+                response.getBody().trim()
+
+        );
+
         System.out.println("Body response: "+response.getBody());
 
     }

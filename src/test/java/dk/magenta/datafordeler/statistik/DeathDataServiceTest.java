@@ -29,8 +29,9 @@ import java.nio.file.Paths;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-
+import static org.junit.Assert.assertNotNull;
 //import org.hamcrest.core.Is.is;
 
 
@@ -59,7 +60,7 @@ public class DeathDataServiceTest {
         testsUtils.loadGladdrregData();
 
         testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<String>("", new HttpHeaders());
+        httpEntity = new HttpEntity<>("", new HttpHeaders());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
@@ -73,6 +74,12 @@ public class DeathDataServiceTest {
         StatisticsService.isFileOn = false;
         response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response contains a body", response);
+        Assert.assertEquals(
+                "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
+                        "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
+                , response.getBody().trim()
+        );
         System.out.println("Body response: "+response.getBody());
     }
 

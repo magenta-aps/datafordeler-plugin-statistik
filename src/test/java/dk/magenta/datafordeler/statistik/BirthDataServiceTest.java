@@ -39,6 +39,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang3.Validate.matchesPattern;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -61,7 +62,7 @@ public class BirthDataServiceTest  {
         testsUtils.loadGladdrregData();
 
         testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<String>("", new HttpHeaders());
+        httpEntity = new HttpEntity<>("", new HttpHeaders());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
@@ -74,8 +75,12 @@ public class BirthDataServiceTest  {
         StatisticsService.isFileOn = false;
         response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response contains a body", response);
+        Assert.assertEquals("B_Pnr;B_FoedAar;B_PnrGaeld;B_FoedMynKod;B_StatKod;B_ProdDto;M_Pnr;M_FoedMynKod;M_StatKod;M_KomKod;M_LokNavn;M_LokKode;M_VejKod;M_HusNr;M_SideDoer;M_Bnr;F_Pnr;F_FoedMynKod;F_StatKod;F_KomKod;F_LokNavn;F_LokKode;F_VejKod;F_HusNr;F_SideDoer;F_Bnr\n" +
+                        "\"0101001234\";2000;;9516;5100;\"13-01-2000\";\"0101641234\";6666;;955;;;\"0001\";\"0005\";tv;\"1234\";;8888;;955;;;\"0001\";\"0005\";tv;\"1234\""
+                , response.getBody().trim()
+        );
         System.out.println("Body response: "+response.getBody());
-
     }
 
     @Test
