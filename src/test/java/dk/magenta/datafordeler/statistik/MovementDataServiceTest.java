@@ -54,10 +54,4 @@ public class MovementDataServiceTest {
         System.out.println("Body response: "+response.getBody());
     }
 
-
-
-
-
-
-
 }

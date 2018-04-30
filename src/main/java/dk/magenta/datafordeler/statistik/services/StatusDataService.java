@@ -99,6 +99,7 @@ public class StatusDataService extends StatisticsService {
         if (pnr != null) {
             personStatusQuery.setPersonnummer(pnr);
         }
+        personStatusQuery.setPageSize(1000000);
         return personStatusQuery;
     }
 
@@ -215,7 +216,6 @@ public class StatusDataService extends StatisticsService {
         if (civilStatusRegistrationDate != null) {
             item.put(CIVIL_STATUS_PROD_DATE, civilStatusRegistrationDate.format(dmyFormatter));
         }
-
 
         if (latestAddress != null) {
             item.put(POST_CODE, latestAddress.getPostalCode());

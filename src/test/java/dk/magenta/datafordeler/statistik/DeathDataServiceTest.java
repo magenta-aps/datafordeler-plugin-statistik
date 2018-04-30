@@ -1,9 +1,7 @@
 package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
-import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FilenameUtils;
@@ -26,13 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
-//import org.hamcrest.core.Is.is;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -76,9 +68,9 @@ public class DeathDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
         Assert.assertEquals(
-                "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
-                        "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
-                , response.getBody().trim()
+                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\";\"\";\"0\";\"955\";\"\";\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                response.getBody().trim()
         );
         System.out.println("Body response: "+response.getBody());
     }
@@ -89,52 +81,42 @@ public class DeathDataServiceTest {
         response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
         System.out.println("Body response: "+response.getBody());
 
-
         //Directory and file creation
         File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
-        if(folder.exists()){
+        if (folder.exists()) {
             //Checking all files in folder have content
             File[] listOfFiles = folder.listFiles();
-            if(listOfFiles.length > 0) {
+            if (listOfFiles.length > 0) {
                 for (File file : listOfFiles) {
                     if (file.isFile()) {
-                        assertTrue(file.length() > 0);
+                        Assert.assertTrue(file.length() > 0);
                         String basename = FilenameUtils.getBaseName(file.getName());
                         String extension = FilenameUtils.getExtension(file.getName());
 
-                        if(basename.contains(StatisticsService.ServiceName.DEATH.name().toLowerCase())){
-                            String content;
+                        if (basename.contains(StatisticsService.ServiceName.DEATH.name().toLowerCase())) {
                             try {
-                                content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName())));
-                                assertThat(extension, is("csv"));
-
+                                String content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName()))).trim();
+                                Assert.assertEquals("csv", extension);
                                 Assert.assertEquals(
-                                        "Status;DoedDto;ProdDto;Pnr;FoedAar;M_Pnr;F_Pnr;AegtePnr;PnrGaeld;StatKod;FoedMynKod;KomKod;LokNavn;LokKode;VejKod;HusNr;SideDoer;Bnr\n" +
-                                                "90;\"30-08-2017\";\"31-08-2017\";\"0101501234\";2000;\"2903641234\";\"0101641234\";\"0202994321\";;;0;955;;;\"0001\";\"0005\";tv;\"1234\""
-                                        , content.trim()
+                                        "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                                                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";\"\";\"0\";\"955\";\"\";\"\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                                        content
                                 );
                                 System.out.println(file.getName()+" file process correctly.");
 
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                        }else{
-                            System.out.println(file.getName()+" was not process in this test.");
+                        } else {
+                            System.out.println(file.getName()+" was not processed in this test.");
                         }
-
-
                     }
                 }
 
             }
-
-        }else{
-            System.out.println("Folder do not exist.");
+        } else {
+            System.out.println("Folder does not exist.");
         }
-
     }
-
-
-
 
 }
