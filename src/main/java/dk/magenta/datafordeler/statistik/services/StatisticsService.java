@@ -19,6 +19,7 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
@@ -49,26 +50,26 @@ public abstract class StatisticsService {
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
-        final Session primary_session = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondary_session = this.getSessionManager().getSessionFactory().openSession();
+        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
+        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
 
-        primary_session.setDefaultReadOnly(true);
-        secondary_session.setDefaultReadOnly(true);
+        primarySession.setDefaultReadOnly(true);
+        secondarySession.setDefaultReadOnly(true);
 
         try {
             PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primary_session);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
+            personQuery.applyFilters(primarySession);
+            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response, serviceName);
+            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName);
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            primary_session.close();
-            secondary_session.close();
+            primarySession.close();
+            secondarySession.close();
         }
     }
 
@@ -82,7 +83,7 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter);
+    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
 
     public enum ServiceName {
         BIRTH,
@@ -225,8 +226,9 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
-        return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session session, Filter filter) {
+        LookupService lookupService = new LookupService(session);
+        return personEntities.map(personEntity -> formatPerson(personEntity, session, lookupService, filter)).iterator();
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {

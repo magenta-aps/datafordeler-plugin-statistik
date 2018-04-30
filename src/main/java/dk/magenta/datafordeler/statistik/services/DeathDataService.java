@@ -111,12 +111,12 @@ public class DeathDataService extends StatisticsService {
         return personDeathQuery;
     }
 
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, String> item = new HashMap<String, String>();
+    @Override
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
         //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
-        LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
 
         OffsetDateTime earliestDeathTime = null;
