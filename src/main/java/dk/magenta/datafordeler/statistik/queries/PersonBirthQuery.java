@@ -28,13 +28,32 @@ public class PersonBirthQuery extends PersonQuery {
     @Override
     public LookupDefinition getLookupDefinition() {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
-
+        LookupDefinition.FieldDefinition fieldDefinition = null;
         if (this.birthDateTimeAfter != null) {
-            lookupDefinition.put(PersonBaseData.DB_FIELD_BIRTH + LookupDefinition.separator + PersonBirthData.DB_FIELD_BIRTH_DATETIME, this.birthDateTimeAfter, LocalDateTime.class, LookupDefinition.Operator.GTE);
+            fieldDefinition = lookupDefinition.put(
+                    PersonBaseData.DB_FIELD_BIRTH + LookupDefinition.separator + PersonBirthData.DB_FIELD_BIRTH_DATETIME,
+                    this.birthDateTimeAfter,
+                    LocalDateTime.class,
+                    LookupDefinition.Operator.GTE
+            );
         }
 
         if (this.birthDateTimeBefore != null) {
-            lookupDefinition.put(PersonBaseData.DB_FIELD_BIRTH + LookupDefinition.separator + PersonBirthData.DB_FIELD_BIRTH_DATETIME, this.birthDateTimeBefore, LocalDateTime.class, LookupDefinition.Operator.LTE);
+            if (fieldDefinition != null) {
+                fieldDefinition.and(
+                        PersonBaseData.DB_FIELD_BIRTH + LookupDefinition.separator + PersonBirthData.DB_FIELD_BIRTH_DATETIME,
+                        this.birthDateTimeBefore,
+                        LocalDateTime.class,
+                        LookupDefinition.Operator.LTE
+                );
+            } else {
+                lookupDefinition.put(
+                        PersonBaseData.DB_FIELD_BIRTH + LookupDefinition.separator + PersonBirthData.DB_FIELD_BIRTH_DATETIME,
+                        this.birthDateTimeBefore,
+                        LocalDateTime.class,
+                        LookupDefinition.Operator.LTE
+                );
+            }
         }
 
         return lookupDefinition;

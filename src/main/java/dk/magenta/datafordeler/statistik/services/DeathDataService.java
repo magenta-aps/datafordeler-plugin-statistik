@@ -111,12 +111,12 @@ public class DeathDataService extends StatisticsService {
         return personDeathQuery;
     }
 
-    protected Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter) {
-        HashMap<String, Object> item = new HashMap<String, Object>();
+    @Override
+    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
         //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
-        LookupService lookupService = new LookupService(session);
         OffsetDateTime earliestProdDate = null;
 
         OffsetDateTime earliestDeathTime = null;
@@ -136,17 +136,17 @@ public class DeathDataService extends StatisticsService {
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, birthData.getBirthDatetime().getYear());
+                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         }
 
                         if (birthData.getBirthAuthorityText() != null) {
-                            item.put(BIRTH_AUTHORITY, birthData.getBirthAuthorityText());
+                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthAuthorityText()));
                         }
                     }
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {
-                        item.put(STATUS_CODE, statusData.getStatus());
+                        item.put(STATUS_CODE, Integer.toString(statusData.getStatus()));
                         if (statusData.getStatus() == 90) {
                             if (effect.getEffectFrom() != null && (earliestDeathTime == null || effect.getEffectFrom().isBefore(earliestDeathTime))) {
                                 earliestDeathTime = effect.getEffectFrom();
@@ -159,7 +159,7 @@ public class DeathDataService extends StatisticsService {
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, citizenshipData.getCountryCode());
+                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                     }
 
                     PersonAddressData addressData = data.getAddress();
@@ -168,7 +168,7 @@ public class DeathDataService extends StatisticsService {
                         item.put(HOUSE_NUMBER, formatHouseNnr(addressData.getHouseNumber()));
                         item.put(DOOR_NUMBER, addressData.getDoor());
                         item.put(BNR, formatBnr(addressData.getBuildingNumber()));
-                        item.put(MUNICIPALITY_CODE, addressData.getMunicipalityCode());
+                        item.put(MUNICIPALITY_CODE, Integer.toString(addressData.getMunicipalityCode()));
                         Lookup lookup = lookupService.doLookup(
                                 addressData.getMunicipalityCode(),
                                 addressData.getRoadCode(),

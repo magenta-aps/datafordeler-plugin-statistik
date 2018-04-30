@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
+import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fasterxml.jackson.dataformat.csv.impl.CsvEncoder;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
@@ -17,6 +19,7 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
@@ -44,25 +47,29 @@ public abstract class StatisticsService {
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
 
-
         this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
         Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
 
-        final Session primary_session = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondary_session = this.getSessionManager().getSessionFactory().openSession();
+        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
+        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
+
+        primarySession.setDefaultReadOnly(true);
+        secondarySession.setDefaultReadOnly(true);
 
         try {
             PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primary_session);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primary_session, personQuery, PersonEntity.class);
+            personQuery.applyFilters(primarySession);
+            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondary_session, filter), response, serviceName);
+            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName);
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
-            primary_session.close();
-            secondary_session.close();
+            primarySession.close();
+            secondarySession.close();
         }
     }
 
@@ -76,7 +83,7 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract Map<String, Object> formatPerson(PersonEntity person, Session session, Filter filter);
+    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
 
     public enum ServiceName {
         BIRTH,
@@ -161,12 +168,13 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, Object>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
-        CsvMapper mapper = new CsvMapper();
+        CsvMapper mapper = this.getCsvMapper();
         mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+        mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_STRINGS, true);
 
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
@@ -176,11 +184,13 @@ public abstract class StatisticsService {
             ));
         }
         CsvSchema schema = builder.build().withHeader();
+
+
         response.setContentType("text/csv");
 
-
         SequenceWriter writer;
-        ObjectWriter writerobj = this.getCsvMapper().writer(schema);
+        ObjectWriter writerobj = mapper.writer(schema);
+        String outputDescription = null;
 
         /*TODO: Proposal for the sake of defining a better directory structure.
         * For example:
@@ -204,20 +214,28 @@ public abstract class StatisticsService {
             File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
             file.createNewFile();
             writer = writerobj.writeValues(file);
+            outputDescription = "Written to file " + file.getCanonicalPath();
         } else {
-             writer = writerobj.writeValues(response.getOutputStream());
+            writer = writerobj.writeValues(response.getOutputStream());
+            outputDescription = "Written to response";
         }
 
         int written;
         for (written = 0; items.hasNext(); written++) {
-           writer.write(items.next());
+            Object item = items.next();
+            if (item != null) {
+                writer.write(item);
+            }
         }
+        writer.close();
+        System.out.println(outputDescription);
 
         return written;
     }
 
-    public Iterator<Map<String, Object>> formatItems(Stream<PersonEntity> personEntities, Session secondary_session, Filter filter) {
-        return personEntities.map(personEntity -> formatPerson(personEntity, secondary_session, filter)).iterator();
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session session, Filter filter) {
+        LookupService lookupService = new LookupService(session);
+        return personEntities.map(personEntity -> formatPerson(personEntity, session, lookupService, filter)).iterator();
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
@@ -248,6 +266,10 @@ public abstract class StatisticsService {
     protected static String formatLocalityCode(int localityCode) {
         if (localityCode == 0) return "";
         return String.format("%04d", localityCode);
+    }
+
+    protected static String string(int value) {
+        return Integer.toString(value);
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
