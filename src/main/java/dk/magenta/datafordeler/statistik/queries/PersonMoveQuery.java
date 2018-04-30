@@ -38,7 +38,7 @@ public class PersonMoveQuery extends PersonQuery {
         lookupDefinition.setMatchNulls(true);
 
         if (this.moveDateTimeAfter != null || this.moveDateTimeBefore != null) {
-            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_MOVEMUNICIPALITY, null, Integer.class, LookupDefinition.Operator.NE);
+            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE);
 
             if (this.moveDateTimeAfter != null) {
                 LookupDefinition.FieldDefinition effectFromDef = fieldDefinition.and(
@@ -71,5 +71,76 @@ public class PersonMoveQuery extends PersonQuery {
 
         return lookupDefinition;
     }
+
+    /*@Override
+    public LookupDefinition getLookupDefinition() {
+        LookupDefinition lookupDefinition = super.getLookupDefinition();
+        lookupDefinition.setMatchNulls(true);
+
+        if (this.moveDateTimeAfter != null || this.moveDateTimeBefore != null) {
+            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_MOVEMUNICIPALITY, null, Integer.class, LookupDefinition.Operator.NE);
+
+            if (this.moveDateTimeAfter != null) {
+                LookupDefinition.FieldDefinition effectFromDef = fieldDefinition.and(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        this.moveDateTimeAfter,
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.GTE
+                );
+                effectFromDef.or(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        null,
+                        OffsetDateTime.class
+                );
+            }
+
+            if (this.moveDateTimeBefore != null) {
+                LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        this.moveDateTimeBefore,
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.LTE
+                );
+                effectToDef.or(
+                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        null,
+                        OffsetDateTime.class
+                );
+            }
+        }
+
+        return lookupDefinition;
+    }*/
+
+
+    /*@Override
+    public LookupDefinition getLookupDefinition() {
+        LookupDefinition lookupDefinition = super.getLookupDefinition();
+        lookupDefinition.setMatchNulls(true);
+
+        if (this.moveDateTimeAfter != null || this.moveDateTimeBefore != null) {
+            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_MOVEMUNICIPALITY, null, Integer.class, LookupDefinition.Operator.NE);
+
+            if (this.moveDateTimeAfter != null) {
+                LookupDefinition.FieldDefinition effectFromDef = fieldDefinition.and(
+                        PersonBaseData.DB_FIELD_MOVEMUNICIPALITY + lookupDefinition.separator + PersonMoveMunicipalityData.DB_FIELD_IN_DATETIME,
+                        this.moveDateTimeAfter.toLocalDateTime(),
+                        LocalDateTime.class,
+                        LookupDefinition.Operator.GTE
+                );
+            }
+
+            if (this.moveDateTimeBefore != null) {
+                LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(
+                        PersonBaseData.DB_FIELD_MOVEMUNICIPALITY + lookupDefinition.separator + PersonMoveMunicipalityData.DB_FIELD_IN_DATETIME,
+                        this.moveDateTimeBefore.toLocalDateTime(),
+                        LocalDateTime.class,
+                        LookupDefinition.Operator.LTE
+                );
+            }
+        }
+
+        return lookupDefinition;
+    }*/
 
 }

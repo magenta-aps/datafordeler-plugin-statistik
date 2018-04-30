@@ -54,7 +54,7 @@ public class MovementDataService extends StatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void getDeath(HttpServletRequest request, HttpServletResponse response)
+    public void getMovement(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response, ServiceName.MOVEMENT);
     }
@@ -109,6 +109,14 @@ public class MovementDataService extends StatisticsService {
         return personMoveQuery;
     }
 
+
+    protected Filter getFilter(HttpServletRequest request) {
+        Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
+        filter.after = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
+        filter.before = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
+        return filter;
+    }
+
     @Override
     public Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
         HashMap<String, String> item = new HashMap<>();
@@ -126,7 +134,6 @@ public class MovementDataService extends StatisticsService {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
                         addresses.put(effectTime, addressData);
-
                         if (!registrations.containsKey(effectTime)) {
                             OffsetDateTime oldTime = registrations.get(effectTime);
                             OffsetDateTime newTime = registration.getRegistrationFrom();
@@ -142,12 +149,14 @@ public class MovementDataService extends StatisticsService {
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
         int last = addressTimes.size() - 1;
+        boolean found = false;
         for (int i=0; i<=last; i++) {
             OffsetDateTime previous = i > 0 ? addressTimes.get(i-1) : null;
             OffsetDateTime current = addressTimes.get(i);
             OffsetDateTime next = i < last ? addressTimes.get(i+1) : null;
 
-            if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
+            //if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
+            if (current != null && current.isAfter(filter.after) && current.isBefore(filter.before)) {
                 PersonAddressData currentAddress = addresses.get(current);
                 PersonAddressData previousAddress = addresses.get(previous);
                 if (previousAddress != null) {
@@ -167,14 +176,16 @@ public class MovementDataService extends StatisticsService {
                     item.put(DESTINATION_FLOOR, currentAddress.getFloor());
                     item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
                     item.put(DESTINATION_BNR, formatBnr(currentAddress.getBuildingNumber()));
-                    if (current != null) {
-                        item.put(MOVE_DATE, current.format(dmyFormatter));
-                        if (registrations.containsKey(current)) {
-                            item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
-                        }
+                    item.put(MOVE_DATE, current.format(dmyFormatter));
+                    if (registrations.containsKey(current)) {
+                        item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                     }
                 }
+                found = true;
             }
+        }
+        if (!found) {
+            return null;
         }
 
         for (PersonRegistration registration: person.getRegistrations()){
@@ -195,7 +206,6 @@ public class MovementDataService extends StatisticsService {
                             item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                         }
                     }
-
 
                     PersonStatusData statusData = data.getStatus();
                     if (statusData != null) {

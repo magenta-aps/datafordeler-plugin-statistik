@@ -8,4 +8,9 @@ public class Filter {
     public Filter(OffsetDateTime effectAt) {
         this.effectAt = effectAt;
     }
+
+
+    public OffsetDateTime after;
+
+    public OffsetDateTime before;
 }
