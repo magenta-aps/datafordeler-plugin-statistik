@@ -1,12 +1,12 @@
 package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
-import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-//import org.hamcrest.core.Is.is;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -36,26 +41,82 @@ public class DeathDataServiceTest {
     @Autowired
     private DeathDataService deathDataService;
 
-    @Test
-    public void testDeathDataService() throws Exception {
-        StatisticsService.isFileOn = false;
+
+    HttpEntity<String> httpEntity;
+    ResponseEntity<String> response;
+    TestUserDetails testUserDetails;
+
+    @Before
+    public void initialize() throws Exception {
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
-        TestUserDetails testUserDetails = new TestUserDetails();
 
-        HttpEntity<String> httpEntity = new HttpEntity<String>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(403, response.getStatusCodeValue());
+        testUserDetails = new TestUserDetails();
+        httpEntity = new HttpEntity<>("", new HttpHeaders());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        response = restTemplate.exchange("/statistik/death_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(400, response.getStatusCodeValue());
+        response = null;
+    }
 
+
+    @Test
+    public void testDeathDataService() {
+        StatisticsService.isFileOn = false;
         response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertNotEquals("", response.getBody());
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response contains a body", response);
+        Assert.assertEquals(
+                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\";\"\";\"0\";\"955\";\"\";\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                response.getBody().trim()
+        );
         System.out.println("Body response: "+response.getBody());
+    }
+
+    @Test
+    public void testDeathFileExistenceAndContent(){
+        StatisticsService.isFileOn = true;
+        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        System.out.println("Body response: "+response.getBody());
+
+        //Directory and file creation
+        File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
+        if (folder.exists()) {
+            //Checking all files in folder have content
+            File[] listOfFiles = folder.listFiles();
+            if (listOfFiles.length > 0) {
+                for (File file : listOfFiles) {
+                    if (file.isFile()) {
+                        Assert.assertTrue(file.length() > 0);
+                        String basename = FilenameUtils.getBaseName(file.getName());
+                        String extension = FilenameUtils.getExtension(file.getName());
+
+                        if (basename.contains(StatisticsService.ServiceName.DEATH.name().toLowerCase())) {
+                            try {
+                                String content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName()))).trim();
+                                Assert.assertEquals("csv", extension);
+                                Assert.assertEquals(
+                                        "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                                                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";\"\";\"0\";\"955\";\"\";\"\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                                        content
+                                );
+                                System.out.println(file.getName()+" file process correctly.");
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            System.out.println(file.getName()+" was not processed in this test.");
+                        }
+                    }
+                }
+
+            }
+        } else {
+            System.out.println("Folder does not exist.");
+        }
     }
 
 }
