@@ -175,6 +175,7 @@ public abstract class StatisticsService {
         CsvMapper mapper = this.getCsvMapper();
         mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
         mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_STRINGS, true);
+        mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_EMPTY_STRINGS, true);
 
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
