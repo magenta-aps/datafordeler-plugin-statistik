@@ -140,6 +140,7 @@ public abstract class StatisticsService {
     public static final String ORIGIN_FLOOR = "FraEtage";
     public static final String ORIGIN_DOOR_NUMBER = "FraSideDoer";
     public static final String ORIGIN_BNR = "FraBnr";
+    public static final String ORIGIN_COUNTRY_CODE = "FraLand";
 
     public static final String DESTINATION_MUNICIPALITY_CODE = "TilKomKod";
     public static final String DESTINATION_LOCALITY_NAME = "TilLokKortNavn";
@@ -148,6 +149,7 @@ public abstract class StatisticsService {
     public static final String DESTINATION_FLOOR = "TilEtage";
     public static final String DESTINATION_DOOR_NUMBER = "TilSideDoer";
     public static final String DESTINATION_BNR = "TilBnr";
+    public static final String DESTINATION_COUNTRY_CODE = "TilLand";
 
 
     //Column names for parent mother person
