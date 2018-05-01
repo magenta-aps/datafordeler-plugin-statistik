@@ -27,10 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /*Created by Efrin 06-04-2018*/
 
@@ -111,7 +108,7 @@ public class DeathDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
         //item.put(EFFECTIVE_PNR, person.getPersonnummer());
@@ -208,7 +205,7 @@ public class DeathDataService extends StatisticsService {
 
 
 
-        return item;
+        return Collections.singletonList(item);
     }
 
 }

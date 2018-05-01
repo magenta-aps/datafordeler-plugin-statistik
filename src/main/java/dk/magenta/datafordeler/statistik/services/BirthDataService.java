@@ -120,7 +120,7 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
         //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
@@ -214,7 +214,7 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-        return item;
+        return Collections.singletonList(item);
     }
 
     private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {

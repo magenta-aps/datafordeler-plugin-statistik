@@ -119,7 +119,7 @@ public class MovementDataService extends StatisticsService {
     }
 
     @Override
-    public Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
+    public List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
@@ -157,8 +157,6 @@ public class MovementDataService extends StatisticsService {
         }
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
-
-        System.out.println("addressTimes: "+addressTimes);
 
         int last = addressTimes.size() - 1;
         boolean found = false;
@@ -199,7 +197,6 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_DOOR_NUMBER, currentDomesticAddress.getDoor());
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, current.format(dmyFormatter));
-                        System.out.println("flytDto (dom): "+current.format(dmyFormatter));
                         if (registrations.containsKey(current)) {
                             item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                         }
@@ -210,7 +207,6 @@ public class MovementDataService extends StatisticsService {
                         PersonForeignAddressData currentForeignAddress = (PersonForeignAddressData) currentAddress;
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentForeignAddress.getAuthority()));
                         item.put(MOVE_DATE, current.format(dmyFormatter));
-                        System.out.println("flytDto (int): "+current.format(dmyFormatter));
                         if (registrations.containsKey(current)) {
                             item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                         }
@@ -275,6 +271,6 @@ public class MovementDataService extends StatisticsService {
             }
         }
         System.out.println(item);
-        return item;
+        return Collections.singletonList(item);
     }
 }

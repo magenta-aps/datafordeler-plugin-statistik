@@ -98,7 +98,7 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
+    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
 
     protected Filter getFilter(HttpServletRequest request) {
         return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
@@ -259,8 +259,8 @@ public abstract class StatisticsService {
 
     public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
         LookupService lookupService = new LookupService(lookupSession);
-        return personEntities.map(
-                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter)
+        return personEntities.flatMap(
+                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
         ).iterator();
     }
 

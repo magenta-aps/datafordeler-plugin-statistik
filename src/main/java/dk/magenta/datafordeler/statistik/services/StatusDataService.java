@@ -104,7 +104,7 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
@@ -264,6 +264,6 @@ public class StatusDataService extends StatisticsService {
                 }
             }
         }
-        return item;
+        return Collections.singletonList(item);
     }
 }
