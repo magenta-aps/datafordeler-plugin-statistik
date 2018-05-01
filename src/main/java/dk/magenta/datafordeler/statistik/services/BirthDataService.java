@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 
 
@@ -188,7 +187,7 @@ public class BirthDataService extends StatisticsService {
             item.put(OWN_PREFIX + PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
 
-        Filter parentFilter = new Filter(birthTime.atOffset(ZoneOffset.UTC));
+        Filter parentFilter = new Filter(birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime());
         item.put(MOTHER_PREFIX + PNR, motherPnr);
         if (motherPnr != null) {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);

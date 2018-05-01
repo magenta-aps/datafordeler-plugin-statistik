@@ -6,10 +6,10 @@ import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 
 public class PersonStatusQuery extends PersonQuery {
@@ -17,7 +17,7 @@ public class PersonStatusQuery extends PersonQuery {
     private OffsetDateTime livingInGreenlandOn = null;
 
     public void setLivingInGreenlandOn(LocalDateTime livingInGreenlandOn) {
-        this.livingInGreenlandOn = livingInGreenlandOn.atOffset(ZoneOffset.UTC);
+        this.livingInGreenlandOn = livingInGreenlandOn.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
     }
 
     public void setLivingInGreenlandOn(OffsetDateTime livingInGreenlandOn) {
