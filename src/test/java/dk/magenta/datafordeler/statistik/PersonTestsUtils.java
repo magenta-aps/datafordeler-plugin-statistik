@@ -7,7 +7,10 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.DataFordelerException;
 import dk.magenta.datafordeler.core.io.ImportMetadata;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
+import dk.magenta.datafordeler.cvr.data.unversioned.Municipality;
 import dk.magenta.datafordeler.gladdrreg.GladdrregPlugin;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntity;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntityManager;
@@ -29,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -137,5 +141,24 @@ public class PersonTestsUtils {
 
     public void applyAccess(TestUserDetails testUserDetails) {
         when(dafoUserManager.getFallbackUser()).thenReturn(testUserDetails);
+    }
+
+    public <E extends Entity> void deleteAll(Class<E> eClass) {
+        Session session = sessionManager.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+        Collection<E> entities = QueryManager.getAllEntities(session, eClass);
+        for (E entity : entities) {
+            session.delete(entity);
+        }
+        transaction.commit();
+        session.close();
+    }
+
+    public void deleteAll() {
+        this.deleteAll(PersonEntity.class);
+        this.deleteAll(LocalityEntity.class);
+        this.deleteAll(RoadEntity.class);
+        this.deleteAll(MunicipalityEntity.class);
+        this.deleteAll(PostalCodeEntity.class);
     }
 }

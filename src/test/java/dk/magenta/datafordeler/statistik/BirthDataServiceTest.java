@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FilenameUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,28 +38,30 @@ public class BirthDataServiceTest  {
     @Autowired
     private PersonTestsUtils testsUtils;
 
-    HttpEntity<String> httpEntity;
-    ResponseEntity<String> response;
     TestUserDetails testUserDetails;
 
     @Before
     public void initialize() throws Exception {
         testsUtils.loadPersonData("person.txt");
         testsUtils.loadGladdrregData();
+    }
 
-        testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<>("", new HttpHeaders());
-
-        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
-        testsUtils.applyAccess(testUserDetails);
-
-        response = null;
+    @After
+    public void cleanup() {
+        testsUtils.deleteAll();
     }
 
     @Test
     public void testBirthDataService(){
         StatisticsService.isFileOn = false;
-        response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(403, response.getStatusCodeValue());
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNotNull("Response contains a body", response);
         Assert.assertEquals("\"B_Pnr\";\"B_FoedAar\";\"B_PnrGaeld\";\"B_FoedMynKod\";\"B_FoedMynKodTxt\";\"B_StatKod\";\"B_ProdDto\";\"M_Pnr\";\"M_FoedMynKod\";\"M_FoedMynKodTxt\";\"M_StatKod\";\"M_KomKod\";\"M_LokNavn\";\"M_LokKode\";\"M_VejKod\";\"M_HusNr\";\"M_Etage\";\"M_SideDoer\";\"M_Bnr\";\"F_Pnr\";\"F_FoedMynKod\";\"F_FoedMynKodTxt\";\"F_StatKod\";\"F_KomKod\";\"F_LokNavn\";\"F_LokKode\";\"F_VejKod\";\"F_HusNr\";\"F_Etage\";\"F_SideDoer\";\"F_Bnr\"\n" +
@@ -72,7 +75,7 @@ public class BirthDataServiceTest  {
     public void testBirthFileExistenceAndContent(){
 
         StatisticsService.isFileOn = true;
-        response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
         //Directory and file creation
         File folder = new File(System.getProperty("user.home") + File.separator + "statistik");

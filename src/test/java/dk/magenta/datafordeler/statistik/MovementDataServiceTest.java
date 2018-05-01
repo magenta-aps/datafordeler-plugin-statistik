@@ -4,7 +4,9 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.MovementDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,17 @@ public class MovementDataServiceTest {
 
     @Autowired
     private MovementDataService movementDataService;
+
+    @Before
+    public void initialize() throws Exception {
+        testsUtils.loadPersonData("movedperson.txt");
+        testsUtils.loadGladdrregData();
+    }
+
+    @After
+    public void cleanup() {
+        testsUtils.deleteAll();
+    }
 
     @Test
     public void testMovementDataService() throws Exception {
