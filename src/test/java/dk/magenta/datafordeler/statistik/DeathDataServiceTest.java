@@ -68,8 +68,8 @@ public class DeathDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
         Assert.assertEquals(
-                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\";\"\";\"0\";\"955\";\"\";\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynKodTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"",
                 response.getBody().trim()
         );
         System.out.println("Body response: "+response.getBody());
@@ -98,8 +98,8 @@ public class DeathDataServiceTest {
                                 String content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName()))).trim();
                                 Assert.assertEquals("csv", extension);
                                 Assert.assertEquals(
-                                        "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                                                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";\"\";\"0\";\"955\";\"\";\"\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                                        "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynKodTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                                                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"",
                                         content
                                 );
                                 System.out.println(file.getName()+" file process correctly.");
