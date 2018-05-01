@@ -64,8 +64,8 @@ public class MovementDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, CITIZENSHIP_CODE,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, PROD_DATE, MOVE_DATE,
-                ORIGIN_MUNICIPALITY_CODE, ORIGIN_LOCALITY_NAME, ORIGIN_ROAD_CODE, ORIGIN_HOUSE_NUMBER, ORIGIN_FLOOR, ORIGIN_DOOR_NUMBER, ORIGIN_BNR,
-                DESTINATION_MUNICIPALITY_CODE, DESTINATION_LOCALITY_NAME, DESTINATION_ROAD_CODE, DESTINATION_HOUSE_NUMBER, DESTINATION_FLOOR, DESTINATION_DOOR_NUMBER, DESTINATION_BNR
+                ORIGIN_COUNTRY_CODE, ORIGIN_MUNICIPALITY_CODE, ORIGIN_LOCALITY_NAME, ORIGIN_ROAD_CODE, ORIGIN_HOUSE_NUMBER, ORIGIN_FLOOR, ORIGIN_DOOR_NUMBER, ORIGIN_BNR,
+                DESTINATION_COUNTRY_CODE, DESTINATION_MUNICIPALITY_CODE, DESTINATION_LOCALITY_NAME, DESTINATION_ROAD_CODE, DESTINATION_HOUSE_NUMBER, DESTINATION_FLOOR, DESTINATION_DOOR_NUMBER, DESTINATION_BNR
         });
     }
 
@@ -123,7 +123,7 @@ public class MovementDataService extends StatisticsService {
         item.put(PNR, person.getPersonnummer());
 
         // Map of effectTime to addresses (when address was moved into)
-        HashMap<OffsetDateTime, PersonAddressData> addresses = new HashMap<>();
+        HashMap<OffsetDateTime, AuthorityDetailData> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
         HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
 
@@ -131,9 +131,18 @@ public class MovementDataService extends StatisticsService {
             for (PersonEffect effect : registration.getEffects()) {
                 OffsetDateTime effectTime = effect.getEffectFrom();
                 for (PersonBaseData data : effect.getDataItems()) {
+                    boolean found = false;
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
                         addresses.put(effectTime, addressData);
+                        found = true;
+                    }
+                    PersonForeignAddressData foreignAddressData = data.getForeignAddress();
+                    if (foreignAddressData != null) {
+                        addresses.put(effectTime, foreignAddressData);
+                        found = true;
+                    }
+                    if (found) {
                         if (!registrations.containsKey(effectTime)) {
                             OffsetDateTime oldTime = registrations.get(effectTime);
                             OffsetDateTime newTime = registration.getRegistrationFrom();
@@ -148,6 +157,8 @@ public class MovementDataService extends StatisticsService {
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
+        System.out.println("addressTimes: "+addressTimes);
+
         int last = addressTimes.size() - 1;
         boolean found = false;
         for (int i=0; i<=last; i++) {
@@ -157,28 +168,42 @@ public class MovementDataService extends StatisticsService {
 
             //if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
             if (current != null && current.isAfter(filter.after) && current.isBefore(filter.before)) {
-                PersonAddressData currentAddress = addresses.get(current);
-                PersonAddressData previousAddress = addresses.get(previous);
+                AuthorityDetailData currentAddress = addresses.get(current);
+                AuthorityDetailData previousAddress = addresses.get(previous);
                 if (previousAddress != null) {
-                    item.put(ORIGIN_MUNICIPALITY_CODE, Integer.toString(previousAddress.getMunicipalityCode()));
-                    //item.put("origin_locality_name", null);
-                    item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousAddress.getRoadCode()));
-                    item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousAddress.getHouseNumber()));
-                    item.put(ORIGIN_FLOOR, previousAddress.getFloor());
-                    item.put(ORIGIN_DOOR_NUMBER, previousAddress.getDoor());
-                    item.put(ORIGIN_BNR, formatBnr(previousAddress.getBuildingNumber()));
+                    if (previousAddress instanceof PersonAddressData) {
+                        PersonAddressData previousDomesticAddress = (PersonAddressData) previousAddress;
+                        item.put(ORIGIN_MUNICIPALITY_CODE, Integer.toString(previousDomesticAddress.getMunicipalityCode()));
+                        //item.put("origin_locality_name", null);
+                        item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousDomesticAddress.getRoadCode()));
+                        item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousDomesticAddress.getHouseNumber()));
+                        item.put(ORIGIN_FLOOR, previousDomesticAddress.getFloor());
+                        item.put(ORIGIN_DOOR_NUMBER, previousDomesticAddress.getDoor());
+                        item.put(ORIGIN_BNR, formatBnr(previousDomesticAddress.getBuildingNumber()));
+                    }
+                    if (previousAddress instanceof PersonForeignAddressData) {
+                        PersonForeignAddressData previousForeignAddress = (PersonForeignAddressData) previousAddress;
+                        item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousForeignAddress.getAuthority()));
+                    }
                 }
                 if (currentAddress != null) {
-                    item.put(DESTINATION_MUNICIPALITY_CODE, Integer.toString(currentAddress.getMunicipalityCode()));
-                    //item.put("destination_locality_name", null);
-                    item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentAddress.getRoadCode()));
-                    item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentAddress.getHouseNumber()));
-                    item.put(DESTINATION_FLOOR, currentAddress.getFloor());
-                    item.put(DESTINATION_DOOR_NUMBER, currentAddress.getDoor());
-                    item.put(DESTINATION_BNR, formatBnr(currentAddress.getBuildingNumber()));
-                    item.put(MOVE_DATE, current.format(dmyFormatter));
-                    if (registrations.containsKey(current)) {
-                        item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
+                    if (currentAddress instanceof PersonAddressData) {
+                        PersonAddressData currentDomesticAddress = (PersonAddressData) currentAddress;
+                        item.put(DESTINATION_MUNICIPALITY_CODE, Integer.toString(currentDomesticAddress.getMunicipalityCode()));
+                        //item.put("destination_locality_name", null);
+                        item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentDomesticAddress.getRoadCode()));
+                        item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentDomesticAddress.getHouseNumber()));
+                        item.put(DESTINATION_FLOOR, currentDomesticAddress.getFloor());
+                        item.put(DESTINATION_DOOR_NUMBER, currentDomesticAddress.getDoor());
+                        item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
+                        item.put(MOVE_DATE, current.format(dmyFormatter));
+                        if (registrations.containsKey(current)) {
+                            item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
+                        }
+                    }
+                    if (currentAddress instanceof PersonForeignAddressData) {
+                        PersonForeignAddressData currentForeignAddress = (PersonForeignAddressData) currentAddress;
+                        item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentForeignAddress.getAuthority()));
                     }
                 }
                 found = true;
@@ -239,6 +264,7 @@ public class MovementDataService extends StatisticsService {
                 }
             }
         }
+        System.out.println(item);
         return item;
     }
 }

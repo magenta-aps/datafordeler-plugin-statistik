@@ -8,6 +8,7 @@ import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 
 public class PersonMoveQuery extends PersonQuery {
 
@@ -38,35 +39,41 @@ public class PersonMoveQuery extends PersonQuery {
         lookupDefinition.setMatchNulls(true);
 
         if (this.moveDateTimeAfter != null || this.moveDateTimeBefore != null) {
-            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(PersonBaseData.DB_FIELD_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE);
+            HashSet<LookupDefinition.FieldDefinition> fieldDefinitions = new HashSet<>();
+            fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
+            fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_FOREIGN_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
+            lookupDefinition.orDefinitions();
 
-            if (this.moveDateTimeAfter != null) {
-                LookupDefinition.FieldDefinition effectFromDef = fieldDefinition.and(
-                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
-                        this.moveDateTimeAfter,
-                        OffsetDateTime.class,
-                        LookupDefinition.Operator.GTE
-                );
-                effectFromDef.or(
-                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
-                        null,
-                        OffsetDateTime.class
-                );
+            for (LookupDefinition.FieldDefinition fieldDefinition : fieldDefinitions) {
+                if (this.moveDateTimeAfter != null) {
+                    LookupDefinition.FieldDefinition moveTimeDef = fieldDefinition.and(
+                            LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                            this.moveDateTimeAfter,
+                            OffsetDateTime.class,
+                            LookupDefinition.Operator.GTE
+                    );
+                    moveTimeDef.or(
+                            LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                            null,
+                            OffsetDateTime.class
+                    );
+                }
+
+                if (this.moveDateTimeBefore != null) {
+                    LookupDefinition.FieldDefinition moveTimeDef = fieldDefinition.and(
+                            LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                            this.moveDateTimeBefore,
+                            OffsetDateTime.class,
+                            LookupDefinition.Operator.LTE
+                    );
+                    moveTimeDef.or(
+                            LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                            null,
+                            OffsetDateTime.class
+                    );
+                }
             }
 
-            if (this.moveDateTimeBefore != null) {
-                LookupDefinition.FieldDefinition effectToDef = fieldDefinition.and(
-                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
-                        this.moveDateTimeBefore,
-                        OffsetDateTime.class,
-                        LookupDefinition.Operator.LTE
-                );
-                effectToDef.or(
-                        LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
-                        null,
-                        OffsetDateTime.class
-                );
-            }
         }
 
         return lookupDefinition;
