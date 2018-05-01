@@ -64,7 +64,7 @@ public class DeathDataService extends StatisticsService {
         return Arrays.asList(new String[]{
                 STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
-                EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, MUNICIPALITY_CODE,
+                EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
                 LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
@@ -137,9 +137,11 @@ public class DeathDataService extends StatisticsService {
                         if (birthData.getBirthDatetime() != null) {
                             item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         }
-
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+                        }
                         if (birthData.getBirthAuthorityText() != null) {
-                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthAuthorityText()));
+                            item.put(BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                         }
                     }
 
