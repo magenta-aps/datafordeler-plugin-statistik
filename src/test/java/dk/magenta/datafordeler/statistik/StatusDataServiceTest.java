@@ -61,8 +61,8 @@ public class StatusDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNotNull("Response contains a body", response);
         Assert.assertEquals(
-                "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\"\n" +
-                        "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\"",
+                "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynKodTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\"\n" +
+                        "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"0\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\"",
                 response.getBody().trim()
         );
         System.out.println("Body response: "+response.getBody());
@@ -93,16 +93,16 @@ public class StatusDataServiceTest {
                                 String content = new String(Files.readAllBytes(Paths.get(folder + File.separator + file.getName()))).trim();
                                 Assert.assertEquals("csv", extension);
                                 Assert.assertEquals(
-                                        "Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\n" +
-                                                "0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"955\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"0\";\"12-10-2017\";\"13-10-2017\";\"F",
+                                        "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynKodTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\"\n" +
+                                                "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"0\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\"",
                                         content
                                 );
-                                System.out.println(file.getName()+" file process correctly.");
+                                System.out.println(file.getName()+" file processed correctly.");
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         } else {
-                            System.out.println(file.getName()+" was not process in this test.");
+                            System.out.println(file.getName()+" was not processed in this test.");
                         }
                     }
                 }

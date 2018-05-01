@@ -107,6 +107,7 @@ public abstract class StatisticsService {
     public static final String PNR = "Pnr";
     public static final String BIRTHDAY_YEAR = "FoedAar";
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
+    public static final String BIRTH_AUTHORITY_TEXT = "FoedMynKodTxt";
     public static final String FIRST_NAME = "Fornavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
