@@ -2,9 +2,9 @@ package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FilenameUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,33 +38,32 @@ public class DeathDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
-    @Autowired
-    private DeathDataService deathDataService;
-
-
-    HttpEntity<String> httpEntity;
-    ResponseEntity<String> response;
     TestUserDetails testUserDetails;
 
     @Before
     public void initialize() throws Exception {
         testsUtils.loadPersonData("deadperson.txt");
         testsUtils.loadGladdrregData();
+    }
 
-        testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<>("", new HttpHeaders());
-
-        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
-        testsUtils.applyAccess(testUserDetails);
-
-        response = null;
+    @After
+    public void cleanup() {
+        testsUtils.deleteAll();
     }
 
 
     @Test
     public void testDeathDataService() {
         StatisticsService.isFileOn = false;
-        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(403, response.getStatusCodeValue());
+
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
         Assert.assertEquals(
@@ -78,7 +77,7 @@ public class DeathDataServiceTest {
     @Test
     public void testDeathFileExistenceAndContent(){
         StatisticsService.isFileOn = true;
-        response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         System.out.println("Body response: "+response.getBody());
 
         //Directory and file creation

@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FilenameUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,22 +35,17 @@ public class StatusDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
-    HttpEntity<String> httpEntity;
-    ResponseEntity<String> response;
     TestUserDetails testUserDetails;
 
     @Before
     public void initialize() throws Exception {
         testsUtils.loadPersonData("statusperson.txt");
         testsUtils.loadGladdrregData();
+    }
 
-        testUserDetails = new TestUserDetails();
-        httpEntity = new HttpEntity<>("", new HttpHeaders());
-
-        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
-        testsUtils.applyAccess(testUserDetails);
-
-        response = null;
+    @After
+    public void cleanup() {
+        testsUtils.deleteAll();
     }
 
 
@@ -57,7 +53,16 @@ public class StatusDataServiceTest {
     @Test
     public void testStatusDataService() {
         StatisticsService.isFileOn = false;
-        response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(403, response.getStatusCodeValue());
+
+        testUserDetails = new TestUserDetails();
+
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNotNull("Response contains a body", response);
         Assert.assertEquals(
@@ -73,7 +78,7 @@ public class StatusDataServiceTest {
     @Test
     public void testStatusFileExistenceAndContent(){
         StatisticsService.isFileOn = true;
-        response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, httpEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         System.out.println("Body response: "+response.getBody());
 
         //Directory and file creation
