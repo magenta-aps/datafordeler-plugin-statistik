@@ -13,6 +13,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -180,6 +181,8 @@ public class MovementDataService extends StatisticsService {
                         item.put(ORIGIN_FLOOR, previousDomesticAddress.getFloor());
                         item.put(ORIGIN_DOOR_NUMBER, previousDomesticAddress.getDoor());
                         item.put(ORIGIN_BNR, formatBnr(previousDomesticAddress.getBuildingNumber()));
+                        Lookup lookup = lookupService.doLookup(previousDomesticAddress.getMunicipalityCode(), previousDomesticAddress.getRoadCode());
+                        item.put(ORIGIN_LOCALITY_NAME, lookup.localityAbbrev);
                     }
                     if (previousAddress instanceof PersonForeignAddressData) {
                         PersonForeignAddressData previousForeignAddress = (PersonForeignAddressData) previousAddress;
@@ -190,7 +193,6 @@ public class MovementDataService extends StatisticsService {
                     if (currentAddress instanceof PersonAddressData) {
                         PersonAddressData currentDomesticAddress = (PersonAddressData) currentAddress;
                         item.put(DESTINATION_MUNICIPALITY_CODE, Integer.toString(currentDomesticAddress.getMunicipalityCode()));
-                        //item.put("destination_locality_name", null);
                         item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentDomesticAddress.getRoadCode()));
                         item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentDomesticAddress.getHouseNumber()));
                         item.put(DESTINATION_FLOOR, currentDomesticAddress.getFloor());
@@ -200,6 +202,8 @@ public class MovementDataService extends StatisticsService {
                         if (registrations.containsKey(current)) {
                             item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                         }
+                        Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
+                        item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
                     }
                     if (currentAddress instanceof PersonForeignAddressData) {
                         PersonForeignAddressData currentForeignAddress = (PersonForeignAddressData) currentAddress;
