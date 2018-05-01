@@ -33,10 +33,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
+    private class Counter {
+        public long count = 0;
+    }
 
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
@@ -61,7 +65,15 @@ public abstract class StatisticsService {
             personQuery.applyFilters(primarySession);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName);
+            final Counter counter = new Counter();
+            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter, primarySession), response, serviceName, item -> {
+                counter.count++;
+                if (counter.count > 100) {
+                    primarySession.clear();
+                    secondarySession.clear();
+                    counter.count = 0;
+                }
+            });
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
@@ -175,7 +187,7 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
@@ -234,6 +246,7 @@ public abstract class StatisticsService {
             if (item != null) {
                 writer.write(item);
             }
+            afterEach.accept(item);
         }
         writer.close();
         System.out.println(outputDescription);
@@ -241,9 +254,11 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session session, Filter filter) {
-        LookupService lookupService = new LookupService(session);
-        return personEntities.map(personEntity -> formatPerson(personEntity, session, lookupService, filter)).iterator();
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter, Session itemSession) {
+        LookupService lookupService = new LookupService(lookupSession);
+        return personEntities.map(
+                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter)
+        ).iterator();
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
