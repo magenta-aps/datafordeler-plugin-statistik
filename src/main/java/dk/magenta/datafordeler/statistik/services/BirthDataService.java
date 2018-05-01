@@ -74,9 +74,9 @@ public class BirthDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                OWN_PREFIX + PNR, OWN_PREFIX + BIRTHDAY_YEAR, OWN_PREFIX + EFFECTIVE_PNR, OWN_PREFIX + BIRTH_AUTHORITY, OWN_PREFIX + CITIZENSHIP_CODE, OWN_PREFIX + PROD_DATE,
-                MOTHER_PREFIX + PNR, MOTHER_PREFIX + BIRTH_AUTHORITY, MOTHER_PREFIX + CITIZENSHIP_CODE, MOTHER_PREFIX + MUNICIPALITY_CODE, MOTHER_PREFIX + LOCALITY_NAME, MOTHER_PREFIX + LOCALITY_CODE, MOTHER_PREFIX + ROAD_CODE, MOTHER_PREFIX + HOUSE_NUMBER, MOTHER_PREFIX + FLOOR_NUMBER, MOTHER_PREFIX + DOOR_NUMBER, MOTHER_PREFIX + BNR,
-                FATHER_PREFIX + PNR, FATHER_PREFIX + BIRTH_AUTHORITY, FATHER_PREFIX + CITIZENSHIP_CODE, FATHER_PREFIX + MUNICIPALITY_CODE, FATHER_PREFIX + LOCALITY_NAME, FATHER_PREFIX + LOCALITY_CODE, FATHER_PREFIX + ROAD_CODE, FATHER_PREFIX + HOUSE_NUMBER, FATHER_PREFIX + FLOOR_NUMBER, FATHER_PREFIX + DOOR_NUMBER, FATHER_PREFIX + BNR
+                OWN_PREFIX + PNR, OWN_PREFIX + BIRTHDAY_YEAR, OWN_PREFIX + EFFECTIVE_PNR, OWN_PREFIX + BIRTH_AUTHORITY, OWN_PREFIX + BIRTH_AUTHORITY_TEXT, OWN_PREFIX + CITIZENSHIP_CODE, OWN_PREFIX + PROD_DATE,
+                MOTHER_PREFIX + PNR, MOTHER_PREFIX + BIRTH_AUTHORITY, MOTHER_PREFIX + BIRTH_AUTHORITY_TEXT, MOTHER_PREFIX + CITIZENSHIP_CODE, MOTHER_PREFIX + MUNICIPALITY_CODE, MOTHER_PREFIX + LOCALITY_NAME, MOTHER_PREFIX + LOCALITY_CODE, MOTHER_PREFIX + ROAD_CODE, MOTHER_PREFIX + HOUSE_NUMBER, MOTHER_PREFIX + FLOOR_NUMBER, MOTHER_PREFIX + DOOR_NUMBER, MOTHER_PREFIX + BNR,
+                FATHER_PREFIX + PNR, FATHER_PREFIX + BIRTH_AUTHORITY, FATHER_PREFIX + BIRTH_AUTHORITY_TEXT, FATHER_PREFIX + CITIZENSHIP_CODE, FATHER_PREFIX + MUNICIPALITY_CODE, FATHER_PREFIX + LOCALITY_NAME, FATHER_PREFIX + LOCALITY_CODE, FATHER_PREFIX + ROAD_CODE, FATHER_PREFIX + HOUSE_NUMBER, FATHER_PREFIX + FLOOR_NUMBER, FATHER_PREFIX + DOOR_NUMBER, FATHER_PREFIX + BNR
         });
     }
 
@@ -155,6 +155,9 @@ public class BirthDataService extends StatisticsService {
                     }
                     if (birthData.getBirthPlaceCode() != null) {
                         item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+                    }
+                    if (birthData.getBirthAuthorityText() != null) {
+                        item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                     }
                     OffsetDateTime registrationFrom = effect.getRegistration().getRegistrationFrom();
                     if (registrationFrom != null && (earliestProdDate == null || registrationFrom.isBefore(earliestProdDate))) {
@@ -278,6 +281,9 @@ public class BirthDataService extends StatisticsService {
                 if (birthData != null) {
                     if (birthData.getBirthPlaceCode() != null) {
                         item.put(prefix + BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+                    }
+                    if (birthData.getBirthAuthorityText() != null) {
+                        item.put(prefix + BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                     }
                 }
             }
