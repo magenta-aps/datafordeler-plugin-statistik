@@ -5,17 +5,17 @@ import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 public class PersonDeathQuery extends PersonQuery {
 
     private OffsetDateTime deathDateTimeBefore = null;
 
     public void setDeathDateTimeBefore(LocalDateTime deathDateTimeBefore) {
-        this.deathDateTimeBefore = deathDateTimeBefore.atOffset(ZoneOffset.UTC);
+        this.deathDateTimeBefore = deathDateTimeBefore.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
     }
 
 
@@ -23,7 +23,7 @@ public class PersonDeathQuery extends PersonQuery {
     private OffsetDateTime deathDateTimeAfter = null;
 
     public void setDeathDateTimeAfter(LocalDateTime deathDateTimeAfter) {
-        this.deathDateTimeAfter = deathDateTimeAfter.atOffset(ZoneOffset.UTC);
+        this.deathDateTimeAfter = deathDateTimeAfter.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
     }
 
 

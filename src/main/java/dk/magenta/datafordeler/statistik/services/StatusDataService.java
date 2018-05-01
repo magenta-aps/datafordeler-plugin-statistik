@@ -104,14 +104,14 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
         // Map of effectTime to addresses (when address was moved into)
         ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
-        HashMap<OffsetDateTime, OffsetDateTime> registrations = new HashMap<>();
+        HashMap<OffsetDateTime, OffsetDateTime> addressRegistrationTimes = new HashMap<>();
 
         for (PersonRegistration registration : person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
@@ -121,11 +121,11 @@ public class StatusDataService extends StatisticsService {
                     if (addressData != null) {
                         addresses.add(effectTime, addressData);
 
-                        if (!registrations.containsKey(effectTime)) {
-                            OffsetDateTime oldTime = registrations.get(effectTime);
+                        if (!addressRegistrationTimes.containsKey(effectTime)) {
+                            OffsetDateTime oldTime = addressRegistrationTimes.get(effectTime);
                             OffsetDateTime newTime = registration.getRegistrationFrom();
                             if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
-                                registrations.put(effectTime, newTime);
+                                addressRegistrationTimes.put(effectTime, newTime);
                             }
                         }
                     }
@@ -144,33 +144,41 @@ public class StatusDataService extends StatisticsService {
             for (PersonEffect effect : registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
-                    PersonNameData nameData = data.getName();
-                    if (nameData != null) {
-                        item.put(FIRST_NAME, nameData.getFirstNames());
-                        item.put(LAST_NAME, nameData.getLastName());
-                    }
-
-                    PersonBirthData birthData = data.getBirth();
-                    if (birthData != null) {
-                        if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
-                        }
-                        if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
-                        }
-                        if (birthData.getBirthAuthorityText() != null) {
-                            item.put(BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
+                    if (!item.containsKey(FIRST_NAME) || !item.containsKey(LAST_NAME)) {
+                        PersonNameData nameData = data.getName();
+                        if (nameData != null) {
+                            item.put(FIRST_NAME, nameData.getFirstNames());
+                            item.put(LAST_NAME, nameData.getLastName());
                         }
                     }
 
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null) {
-                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
+                    if (!item.containsKey(BIRTHDAY_YEAR) || !item.containsKey(BIRTH_AUTHORITY) || !item.containsKey(BIRTH_AUTHORITY_TEXT)) {
+                        PersonBirthData birthData = data.getBirth();
+                        if (birthData != null) {
+                            if (birthData.getBirthDatetime() != null) {
+                                item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
+                            }
+                            if (birthData.getBirthPlaceCode() != null) {
+                                item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+                            }
+                            if (birthData.getBirthAuthorityText() != null) {
+                                item.put(BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
+                            }
+                        }
                     }
 
-                    PersonCitizenshipData citizenshipData = data.getCitizenship();
-                    if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
+                    if (!item.containsKey(STATUS_CODE)) {
+                        PersonStatusData statusData = data.getStatus();
+                        if (statusData != null) {
+                            item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
+                        }
+                    }
+
+                    if (!item.containsKey(CITIZENSHIP_CODE)) {
+                        PersonCitizenshipData citizenshipData = data.getCitizenship();
+                        if (citizenshipData != null) {
+                            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
+                        }
                     }
 
                     PersonAddressData addressData = data.getAddress();
@@ -182,16 +190,21 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                    PersonParentData personMotherData = data.getMother();
-                    if (personMotherData != null) {
-                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
+                    if (!item.containsKey(MOTHER_PNR)) {
+                        PersonParentData personMotherData = data.getMother();
+                        if (personMotherData != null) {
+                            item.put(MOTHER_PNR, personMotherData.getCprNumber());
+                        }
                     }
 
-                    PersonParentData personFatherData = data.getFather();
-                    if (personFatherData != null) {
-                        item.put(FATHER_PNR, personFatherData.getCprNumber());
+                    if (!item.containsKey(FATHER_PNR)) {
+                        PersonParentData personFatherData = data.getFather();
+                        if (personFatherData != null) {
+                            item.put(FATHER_PNR, personFatherData.getCprNumber());
+                        }
                     }
 
+                    // We can't skip this if it's already set; we need the registrationTime
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
                     if (personCivilStatus != null) {
                         item.put(CIVIL_STATUS, personCivilStatus.getCivilStatus());
@@ -201,14 +214,18 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
-                    if (personSpouseData != null) {
-                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
+                    if (!item.containsKey(SPOUSE_PNR)) {
+                        PersonCivilStatusData personSpouseData = data.getCivilStatus();
+                        if (personSpouseData != null) {
+                            item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
+                        }
                     }
 
-                    PersonChurchData personChurchData = data.getChurch();
-                    if (personChurchData != null) {
-                        item.put(CHURCH, personChurchData.getChurchRelation().toString());
+                    if (!item.containsKey(CHURCH)) {
+                        PersonChurchData personChurchData = data.getChurch();
+                        if (personChurchData != null) {
+                            item.put(CHURCH, personChurchData.getChurchRelation().toString());
+                        }
                     }
                 }
             }
@@ -242,11 +259,11 @@ public class StatusDataService extends StatisticsService {
             for (OffsetDateTime addressTime : addressTimes) {
                 if (addresses.get(addressTime).contains(latestAddress)) {
                     item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
-                    item.put(MOVE_PROD_DATE, registrations.get(addressTime) != null ? registrations.get(addressTime).format(dmyFormatter) : null);
+                    item.put(MOVE_PROD_DATE, addressRegistrationTimes.get(addressTime) != null ? addressRegistrationTimes.get(addressTime).format(dmyFormatter) : null);
                     break;
                 }
             }
         }
-        return item;
+        return Collections.singletonList(item);
     }
 }

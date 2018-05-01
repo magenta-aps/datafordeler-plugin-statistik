@@ -4,10 +4,10 @@ import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.HashSet;
 
 public class PersonMoveQuery extends PersonQuery {
@@ -15,7 +15,7 @@ public class PersonMoveQuery extends PersonQuery {
     private OffsetDateTime moveDateTimeBefore = null;
 
     public void setMoveDateTimeBefore(LocalDateTime moveDateTimeBefore) {
-        this.moveDateTimeBefore = moveDateTimeBefore.atOffset(ZoneOffset.UTC);
+        this.moveDateTimeBefore = moveDateTimeBefore.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
     }
 
     public void setMoveDateTimeBefore(OffsetDateTime moveDateTimeBefore) {
@@ -26,7 +26,7 @@ public class PersonMoveQuery extends PersonQuery {
     private OffsetDateTime moveDateTimeAfter = null;
 
     public void setMoveDateTimeAfter(LocalDateTime moveDateTimeAfter) {
-        this.moveDateTimeAfter = moveDateTimeAfter.atOffset(ZoneOffset.UTC);
+        this.moveDateTimeAfter = moveDateTimeAfter.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
     }
 
     public void setMoveDateTimeAfter(OffsetDateTime moveDateTimeAfter) {

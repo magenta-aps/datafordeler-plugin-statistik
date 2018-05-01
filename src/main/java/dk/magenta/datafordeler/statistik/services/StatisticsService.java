@@ -31,14 +31,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
+    public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
+
+    private class Counter {
+        public long count = 0;
+    }
 
     public static String PATH_FILE = null;
     public static Path path = null;
@@ -75,7 +82,15 @@ public abstract class StatisticsService {
             personQuery.applyFilters(primarySession);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName);
+            final Counter counter = new Counter();
+            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
+                counter.count++;
+                if (counter.count > 100) {
+                    primarySession.clear();
+                    secondarySession.clear();
+                    counter.count = 0;
+                }
+            });
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
             }
@@ -97,7 +112,7 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
+    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
 
     protected Filter getFilter(HttpServletRequest request) {
         return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
@@ -190,7 +205,7 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
@@ -272,6 +287,7 @@ public abstract class StatisticsService {
             if (item != null) {
                 writer.write(item);
             }
+            afterEach.accept(item);
         }
         writer.close();
         System.out.println(outputDescription);
@@ -279,9 +295,11 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session session, Filter filter) {
-        LookupService lookupService = new LookupService(session);
-        return personEntities.map(personEntity -> formatPerson(personEntity, session, lookupService, filter)).iterator();
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
+        LookupService lookupService = new LookupService(lookupSession);
+        return personEntities.flatMap(
+                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
+        ).iterator();
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {

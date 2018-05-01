@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 
 
@@ -121,7 +120,7 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected Map<String, String> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
         //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
@@ -188,7 +187,7 @@ public class BirthDataService extends StatisticsService {
             item.put(OWN_PREFIX + PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
 
-        Filter parentFilter = new Filter(birthTime.atOffset(ZoneOffset.UTC));
+        Filter parentFilter = new Filter(birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime());
         item.put(MOTHER_PREFIX + PNR, motherPnr);
         if (motherPnr != null) {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
@@ -215,7 +214,7 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-        return item;
+        return Collections.singletonList(item);
     }
 
     private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
