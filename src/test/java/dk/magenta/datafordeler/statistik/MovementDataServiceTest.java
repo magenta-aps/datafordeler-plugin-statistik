@@ -47,8 +47,6 @@ public class MovementDataServiceTest {
     @Test
     public void testMovementDataService() throws Exception {
         StatisticsService.isFileOn = false;
-        testsUtils.loadPersonData("movedperson.txt");
-        testsUtils.loadGladdrregData();
         TestUserDetails testUserDetails = new TestUserDetails();
 
         HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
