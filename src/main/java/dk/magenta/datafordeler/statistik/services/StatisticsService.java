@@ -254,7 +254,7 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter, Session itemSession) {
+    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
         LookupService lookupService = new LookupService(lookupSession);
         return personEntities.map(
                 personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter)
