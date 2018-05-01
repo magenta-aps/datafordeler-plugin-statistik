@@ -66,7 +66,7 @@ public abstract class StatisticsService {
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
             final Counter counter = new Counter();
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter, primarySession), response, serviceName, item -> {
+            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
                 counter.count++;
                 if (counter.count > 100) {
                     primarySession.clear();
