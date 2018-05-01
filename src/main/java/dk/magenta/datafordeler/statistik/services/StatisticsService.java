@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,6 +39,17 @@ import java.util.stream.Stream;
 
 public abstract class StatisticsService {
 
+
+    public static String PATH_FILE = null;
+    public static Path path = null;
+    static  {
+        try {
+             path = Files.createTempDirectory("statistik");
+             PATH_FILE = String.valueOf(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
@@ -55,6 +68,7 @@ public abstract class StatisticsService {
 
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
+
 
         try {
             PersonQuery personQuery = this.getQuery(request);
@@ -88,6 +102,7 @@ public abstract class StatisticsService {
     protected Filter getFilter(HttpServletRequest request) {
         return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
     }
+
 
     public enum ServiceName {
         BIRTH,
@@ -196,7 +211,7 @@ public abstract class StatisticsService {
 
         response.setContentType("text/csv");
 
-        SequenceWriter writer;
+        SequenceWriter writer = null;
         ObjectWriter writerobj = mapper.writer(schema);
         String outputDescription = null;
 
@@ -207,7 +222,7 @@ public abstract class StatisticsService {
         * ../statistik/status/status_timestamp.csv
         * ../statistik/movement/movement_timestamp.csv  */
 
-        if (isFileOn) {
+       /* if (isFileOn) {
             //Get current date time
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -226,7 +241,30 @@ public abstract class StatisticsService {
         } else {
             writer = writerobj.writeValues(response.getOutputStream());
             outputDescription = "Written to response";
+        }*/
+
+
+
+        if (isFileOn) {
+            //Get current date time
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+            String formatDateTime = now.format(formatter);
+
+            boolean b = Files.isDirectory(path);
+            if(b){
+                File file = new File(PATH_FILE, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
+                file.createNewFile();
+                writer = writerobj.writeValues(file);
+                outputDescription = "Written to file " + file.getCanonicalPath();
+            }
+
+        } else {
+            writer = writerobj.writeValues(response.getOutputStream());
+            outputDescription = "Written to response";
         }
+
+
 
         int written;
         for (written = 0; items.hasNext(); written++) {
