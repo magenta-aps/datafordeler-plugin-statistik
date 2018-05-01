@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.OffsetDateTimeAdapter;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -120,8 +121,6 @@ public class MovementDataService extends StatisticsService {
 
     @Override
     public List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
-        HashMap<String, String> item = new HashMap<>();
-        item.put(PNR, person.getPersonnummer());
 
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, AuthorityDetailData> addresses = new HashMap<>();
@@ -156,19 +155,22 @@ public class MovementDataService extends StatisticsService {
             }
         }
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
+        HashMap<OffsetDateTime, Map<String, String>> moves = new HashMap<>();
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
 
         int last = addressTimes.size() - 1;
-        boolean found = false;
         for (int i=0; i<=last; i++) {
             OffsetDateTime previous = i > 0 ? addressTimes.get(i-1) : null;
             OffsetDateTime current = addressTimes.get(i);
-            OffsetDateTime next = i < last ? addressTimes.get(i+1) : null;
 
             //if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
             if (current != null && current.isAfter(filter.after) && current.isBefore(filter.before)) {
                 AuthorityDetailData currentAddress = addresses.get(current);
                 AuthorityDetailData previousAddress = addresses.get(previous);
+
+                HashMap<String, String> item = new HashMap<>();
+                item.put(PNR, person.getPersonnummer());
+
                 if (previousAddress != null) {
                     if (previousAddress instanceof PersonAddressData) {
                         PersonAddressData previousDomesticAddress = (PersonAddressData) previousAddress;
@@ -212,65 +214,68 @@ public class MovementDataService extends StatisticsService {
                         }
                     }
                 }
-                found = true;
+                moves.put(current, item);
             }
         }
-        if (!found) {
+        if (moves.isEmpty()) {
             return null;
         }
 
+
         for (PersonRegistration registration: person.getRegistrations()){
+            for (OffsetDateTime moveTime : moves.keySet()) {
+                Map<String, String> item = moves.get(moveTime);
+                // Important: Populate the appropriate map with data as is relevant at the time of moving
+                for (PersonEffect effect : registration.getEffectsAt(moveTime)) {
+                    for (PersonBaseData data : effect.getDataItems()) {
 
-            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
-                for (PersonBaseData data : effect.getDataItems()) {
+                        //Check the type of service here and define with constructor to use for that service.
+                        //There most be an integer or any other kind of flag for the service.
+                        //   it can be a simple if checking of an integer
 
-                    //Check the type of service here and define with constructor to use for that service.
-                    //There most be an integer or any other kind of flag for the service.
-                     //   it can be a simple if checking of an integer
-
-                    PersonBirthData birthData = data.getBirth();
-                    if (birthData != null) {
-                        if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
+                        PersonBirthData birthData = data.getBirth();
+                        if (birthData != null) {
+                            if (birthData.getBirthDatetime() != null) {
+                                item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
+                            }
+                            if (birthData.getBirthPlaceCode() != null) {
+                                item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+                            }
                         }
-                        if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
+
+                        PersonStatusData statusData = data.getStatus();
+                        if (statusData != null) {
+                            item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                         }
-                    }
 
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null) {
-                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
-                    }
+                        PersonCitizenshipData citizenshipData = data.getCitizenship();
+                        if (citizenshipData != null) {
+                            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
+                        }
 
-                    PersonCitizenshipData citizenshipData = data.getCitizenship();
-                    if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
-                    }
+                        PersonCoreData coreData = data.getCoreData();
+                        if (coreData != null) {
+                            item.put(EFFECTIVE_PNR, coreData.getCprNumber());
+                        }
 
-                    PersonCoreData coreData = data.getCoreData();
-                    if (coreData != null) {
-                        item.put(EFFECTIVE_PNR, coreData.getCprNumber());
-                    }
+                        PersonParentData personMotherData = data.getMother();
+                        if (personMotherData != null) {
+                            item.put(MOTHER_PNR, personMotherData.getCprNumber());
+                        }
 
-                    PersonParentData personMotherData = data.getMother();
-                    if (personMotherData != null) {
-                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
-                    }
+                        PersonParentData personFatherData = data.getFather();
+                        if (personFatherData != null) {
+                            item.put(FATHER_PNR, personFatherData.getCprNumber());
+                        }
 
-                    PersonParentData personFatherData = data.getFather();
-                    if (personFatherData != null) {
-                        item.put(FATHER_PNR, personFatherData.getCprNumber());
-                    }
-
-                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
-                    if (personSpouseData != null) {
-                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
+                        PersonCivilStatusData personSpouseData = data.getCivilStatus();
+                        if (personSpouseData != null) {
+                            item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
+                        }
                     }
                 }
             }
         }
-        System.out.println(item);
-        return Collections.singletonList(item);
+        return new ArrayList<>(moves.values());
     }
 }
