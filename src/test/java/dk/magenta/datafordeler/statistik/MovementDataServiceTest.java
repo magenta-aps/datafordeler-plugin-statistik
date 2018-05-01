@@ -59,7 +59,7 @@ public class MovementDataServiceTest {
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
-        response = restTemplate.exchange("/statistik/movement_data/?effectDate=2012-01-02&afterDate=2012-01-01&beforeDate=2012-01-02", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?effectDate=2012-01-02&afterDate=2012-01-01&beforeDate=2012-04-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotNull(response.getBody());
         Assert.assertFalse(response.getBody().isEmpty());
         System.out.println("Body response: "+response.getBody());
