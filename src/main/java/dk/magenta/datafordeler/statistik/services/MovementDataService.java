@@ -199,6 +199,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_DOOR_NUMBER, currentDomesticAddress.getDoor());
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, current.format(dmyFormatter));
+                        System.out.println("flytDto (dom): "+current.format(dmyFormatter));
                         if (registrations.containsKey(current)) {
                             item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
                         }
@@ -208,6 +209,11 @@ public class MovementDataService extends StatisticsService {
                     if (currentAddress instanceof PersonForeignAddressData) {
                         PersonForeignAddressData currentForeignAddress = (PersonForeignAddressData) currentAddress;
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentForeignAddress.getAuthority()));
+                        item.put(MOVE_DATE, current.format(dmyFormatter));
+                        System.out.println("flytDto (int): "+current.format(dmyFormatter));
+                        if (registrations.containsKey(current)) {
+                            item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
+                        }
                     }
                 }
                 found = true;
