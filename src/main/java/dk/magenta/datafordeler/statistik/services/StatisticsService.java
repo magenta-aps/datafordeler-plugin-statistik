@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +38,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
+
+    public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
 
     private class Counter {
         public long count = 0;
