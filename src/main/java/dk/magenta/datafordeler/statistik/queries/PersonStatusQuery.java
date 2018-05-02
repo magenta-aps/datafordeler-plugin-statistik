@@ -1,6 +1,7 @@
 package dk.magenta.datafordeler.statistik.queries;
 
 import dk.magenta.datafordeler.core.database.Effect;
+import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
@@ -30,7 +31,7 @@ public class PersonStatusQuery extends PersonQuery {
         lookupDefinition.setMatchNulls(true);
 
         if (this.livingInGreenlandOn != null) {
-            ArrayList<LookupDefinition.FieldDefinition> fieldDefinitions = new ArrayList<>();
+            ArrayList<FieldDefinition> fieldDefinitions = new ArrayList<>();
             fieldDefinitions.add(lookupDefinition.put(
                     PersonBaseData.DB_FIELD_ADDRESS + LookupDefinition.separator + PersonAddressData.DB_FIELD_MUNICIPALITY_CODE,
                     900,
@@ -44,7 +45,7 @@ public class PersonStatusQuery extends PersonQuery {
                     LookupDefinition.Operator.NE
             ));
 
-            for (LookupDefinition.FieldDefinition fieldDefinition : fieldDefinitions) {
+            for (FieldDefinition fieldDefinition : fieldDefinitions) {
                 fieldDefinition.and(
                         LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
                         this.livingInGreenlandOn,

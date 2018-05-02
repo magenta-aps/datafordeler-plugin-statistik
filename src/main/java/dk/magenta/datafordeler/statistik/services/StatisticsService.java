@@ -134,6 +134,8 @@ public abstract class StatisticsService {
     public static final String AFTER_DATE_PARAMETER = "afterDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
+    public static final String REGISTRATION_AFTER = "registrationAfter";
+
     //Column names for person
     public static final String PNR = "Pnr";
     public static final String BIRTHDAY_YEAR = "FoedAar";
@@ -223,20 +225,22 @@ public abstract class StatisticsService {
             ));
         }
         CsvSchema schema = builder.build().withHeader();
+        int written = 0;
+
+        if (items.hasNext()) {
+            response.setContentType("text/csv");
 
 
-        response.setContentType("text/csv");
+            SequenceWriter writer = null;
+            ObjectWriter writerobj = mapper.writer(schema);
+            String outputDescription = null;
 
-        SequenceWriter writer = null;
-        ObjectWriter writerobj = mapper.writer(schema);
-        String outputDescription = null;
-
-        /*TODO: Proposal for the sake of defining a better directory structure.
-        * For example:
-        * ../statistik/birth/birth_timestamp.csv
-        * ../statistik/death/death_timestamp.csv
-        * ../statistik/status/status_timestamp.csv
-        * ../statistik/movement/movement_timestamp.csv  */
+            /*TODO: Proposal for the sake of defining a better directory structure.
+             * For example:
+             * ../statistik/birth/birth_timestamp.csv
+             * ../statistik/death/death_timestamp.csv
+             * ../statistik/status/status_timestamp.csv
+             * ../statistik/movement/movement_timestamp.csv  */
 
        /* if (isFileOn) {
             //Get current date time
@@ -260,40 +264,37 @@ public abstract class StatisticsService {
         }*/
 
 
+            if (isFileOn) {
+                //Get current date time
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String formatDateTime = now.format(formatter);
 
-        if (isFileOn) {
-            //Get current date time
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-            String formatDateTime = now.format(formatter);
+                // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
+                // if(b){
+                if (PATH_FILE != null) {
+                    System.out.println(PATH_FILE);
+                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
+                    file.createNewFile();
+                    writer = writerobj.writeValues(file);
+                    outputDescription = "Written to file " + file.getCanonicalPath();
+                }
 
-           // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
-           // if(b){
-            if(PATH_FILE != null){
-                System.out.println(PATH_FILE);
-                File file = new File(PATH_FILE, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
-                file.createNewFile();
-                writer = writerobj.writeValues(file);
-                outputDescription = "Written to file " + file.getCanonicalPath();
+            } else {
+                writer = writerobj.writeValues(response.getOutputStream());
+                outputDescription = "Written to response";
             }
 
-        } else {
-            writer = writerobj.writeValues(response.getOutputStream());
-            outputDescription = "Written to response";
-        }
-
-
-
-        int written;
-        for (written = 0; items.hasNext(); written++) {
-            Object item = items.next();
-            if (item != null) {
-                writer.write(item);
+            for (written = 0; items.hasNext(); written++) {
+                Object item = items.next();
+                if (item != null) {
+                    writer.write(item);
+                }
+                afterEach.accept(item);
             }
-            afterEach.accept(item);
+            writer.close();
+            System.out.println(outputDescription);
         }
-        writer.close();
-        System.out.println(outputDescription);
 
         return written;
     }

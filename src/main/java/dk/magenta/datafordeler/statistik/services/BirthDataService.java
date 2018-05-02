@@ -115,6 +115,10 @@ public class BirthDataService extends StatisticsService {
         if (pnr != null) {
             personBirthQuery.setPersonnummer(pnr);
         }
+        OffsetDateTime registrationAfter = Query.parseDateTime(request.getParameter(REGISTRATION_AFTER));
+        if (registrationAfter != null) {
+            personBirthQuery.setRegistrationTimeAfter(registrationAfter);
+        }
         personBirthQuery.setPageSize(1000000);
         return personBirthQuery;
     }

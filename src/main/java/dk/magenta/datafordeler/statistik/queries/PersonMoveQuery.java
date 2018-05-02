@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.queries;
 
+import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -39,14 +40,14 @@ public class PersonMoveQuery extends PersonQuery {
         lookupDefinition.setMatchNulls(true);
 
         if (this.moveDateTimeAfter != null || this.moveDateTimeBefore != null) {
-            HashSet<LookupDefinition.FieldDefinition> fieldDefinitions = new HashSet<>();
+            HashSet<FieldDefinition> fieldDefinitions = new HashSet<>();
             fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
             fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_FOREIGN_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
             lookupDefinition.orDefinitions();
 
-            for (LookupDefinition.FieldDefinition fieldDefinition : fieldDefinitions) {
+            for (FieldDefinition fieldDefinition : fieldDefinitions) {
                 if (this.moveDateTimeAfter != null) {
-                    LookupDefinition.FieldDefinition moveTimeDef = fieldDefinition.and(
+                    FieldDefinition moveTimeDef = fieldDefinition.and(
                             LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
                             this.moveDateTimeAfter,
                             OffsetDateTime.class,
@@ -60,7 +61,7 @@ public class PersonMoveQuery extends PersonQuery {
                 }
 
                 if (this.moveDateTimeBefore != null) {
-                    LookupDefinition.FieldDefinition moveTimeDef = fieldDefinition.and(
+                    FieldDefinition moveTimeDef = fieldDefinition.and(
                             LookupDefinition.registrationref + lookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
                             this.moveDateTimeBefore,
                             OffsetDateTime.class,
