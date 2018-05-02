@@ -79,7 +79,7 @@ public class StatusDataServiceTest {
     }
 
     @Test
-    public void testDirectoryFile_CreationDeletion() {
+    public void testDirectoryFileCreationDeletion() {
         StatisticsService.isFileOn = true;
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);

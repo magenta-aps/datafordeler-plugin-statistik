@@ -89,7 +89,7 @@ public class BirthDataServiceTest {
 
 
     @Test
-    public void testDirectoryFile_CreationDeletion() {
+    public void testDirectoryFileCreationDeletion() {
         StatisticsService.isFileOn = true;
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?afterDate=2000-01-01&beforeDate=2000-01-14&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);

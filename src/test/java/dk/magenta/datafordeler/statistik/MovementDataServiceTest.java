@@ -73,7 +73,7 @@ public class MovementDataServiceTest {
     }
 
     @Test
-    public void testDirectoryFile_CreationDeletion() {
+    public void testDirectoryFileCreationDeletion() {
         StatisticsService.isFileOn = true;
 
 

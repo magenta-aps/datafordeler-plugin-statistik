@@ -236,34 +236,6 @@ public abstract class StatisticsService {
             ObjectWriter writerobj = mapper.writer(schema);
             String outputDescription = null;
             
-            /*TODO: Proposal for the sake of defining a better directory structure.
-             * For example:
-             * ../statistik/birth/birth_timestamp.csv
-             * ../statistik/death/death_timestamp.csv
-             * ../statistik/status/status_timestamp.csv
-             * ../statistik/movement/movement_timestamp.csv  */
-
-       /* if (isFileOn) {
-            //Get current date time
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-            String formatDateTime = now.format(formatter);
-
-            //Directory and file creation
-            File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
-
-            File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
-            file.createNewFile();
-            writer = writerobj.writeValues(file);
-            outputDescription = "Written to file " + file.getCanonicalPath();
-        } else {
-            writer = writerobj.writeValues(response.getOutputStream());
-            outputDescription = "Written to response";
-        }*/
-
 
             if (isFileOn) {
                 //Get current date time

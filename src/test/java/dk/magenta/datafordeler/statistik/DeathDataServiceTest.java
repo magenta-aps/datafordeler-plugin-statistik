@@ -82,7 +82,7 @@ public class DeathDataServiceTest {
 
 
     @Test
-    public void testDirectoryFile_CreationDeletion() {
+    public void testDirectoryFileCreationDeletion() {
         StatisticsService.isFileOn = true;
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
