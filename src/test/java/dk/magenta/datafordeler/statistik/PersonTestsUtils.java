@@ -24,12 +24,16 @@ import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeRegistration;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadEntity;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadRegistration;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import org.apache.commons.io.FileUtils;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -160,5 +164,35 @@ public class PersonTestsUtils {
         this.deleteAll(RoadEntity.class);
         this.deleteAll(MunicipalityEntity.class);
         this.deleteAll(PostalCodeEntity.class);
+    }
+
+    public void deleteFiles(String path_file){
+        //This code can be places in @After
+        File tempDir = null;
+        try {
+            tempDir = new File(path_file);
+            boolean exists = tempDir.exists();
+            Assert.assertEquals(true, exists);
+        } catch (Exception e) {
+            // if any error occurs
+            e.printStackTrace();
+        } finally {
+            File[] listOfFiles = tempDir.listFiles();
+            if (listOfFiles.length > 0) {
+
+                System.out.println("Number of files to delete: " + listOfFiles.length);
+                for (File file : listOfFiles) {
+                    file.deleteOnExit();
+                    System.out.println("Deleted file: " + file.getName());
+                }
+
+            }
+            try {
+                FileUtils.deleteDirectory(new File(path_file));
+                System.out.println("Deleted directory: " + path_file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

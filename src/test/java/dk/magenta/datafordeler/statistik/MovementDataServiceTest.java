@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,6 +40,10 @@ public class MovementDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
+
+        //Use this code block when temp directories need to be created
+       /* Path path = Files.createTempDirectory("statistik");
+        StatisticsService.PATH_FILE = String.valueOf(path);*/
     }
 
     @After
@@ -63,6 +70,28 @@ public class MovementDataServiceTest {
         Assert.assertNotNull(response.getBody());
         Assert.assertFalse(response.getBody().isEmpty());
         System.out.println("Body response: "+response.getBody());
+    }
+
+    @Test
+    public void testDirectoryFile_CreationDeletion() {
+        StatisticsService.isFileOn = true;
+
+
+        TestUserDetails testUserDetails = new TestUserDetails();
+
+        HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertEquals(403, response.getStatusCodeValue());
+
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertEquals(400, response.getStatusCodeValue());
+
+        response = restTemplate.exchange("/statistik/movement_data/?effectDate=2012-01-02&afterDate=2012-01-01&beforeDate=2012-04-01", HttpMethod.GET, httpEntity, String.class);
+
+        testsUtils.deleteFiles(StatisticsService.PATH_FILE);
     }
 
 }

@@ -52,9 +52,10 @@ public abstract class StatisticsService {
 
 
     public static Path path = null;
-    static  {
+
+    static {
         StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
-        File folder = new File( StatisticsService.PATH_FILE);
+        File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) folder.mkdirs();
     }
 
@@ -234,7 +235,7 @@ public abstract class StatisticsService {
             SequenceWriter writer = null;
             ObjectWriter writerobj = mapper.writer(schema);
             String outputDescription = null;
-
+            
             /*TODO: Proposal for the sake of defining a better directory structure.
              * For example:
              * ../statistik/birth/birth_timestamp.csv
