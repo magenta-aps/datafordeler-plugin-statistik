@@ -56,8 +56,8 @@ public class BirthDataServiceTest  {
 
 
         //Use this code block when temp directories need to be created
-        Path path = Files.createTempDirectory("statistik");
-        StatisticsService.PATH_FILE = String.valueOf(path);
+       /* Path path = Files.createTempDirectory("statistik");
+        StatisticsService.PATH_FILE = String.valueOf(path);*/
     }
 
     @After

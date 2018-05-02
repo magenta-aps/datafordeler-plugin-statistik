@@ -49,17 +49,16 @@ public abstract class StatisticsService {
     }
 
     public static String PATH_FILE = null;
-   /* public static Path path = null;
+
+
+    public static Path path = null;
     static  {
-        try {
-             path = Files.createTempDirectory("statistik");
-             PATH_FILE = String.valueOf(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        File folder = new File( StatisticsService.PATH_FILE);
+        if (!folder.exists()) folder.mkdirs();
     }
 
-    */
+
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
 
@@ -268,7 +267,7 @@ public abstract class StatisticsService {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
             String formatDateTime = now.format(formatter);
 
-            boolean b = Files.isDirectory(Paths.get(PATH_FILE));
+           // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
            // if(b){
             if(PATH_FILE != null){
                 System.out.println(PATH_FILE);
