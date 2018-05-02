@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -48,7 +49,7 @@ public abstract class StatisticsService {
     }
 
     public static String PATH_FILE = null;
-    public static Path path = null;
+   /* public static Path path = null;
     static  {
         try {
              path = Files.createTempDirectory("statistik");
@@ -58,6 +59,7 @@ public abstract class StatisticsService {
         }
     }
 
+    */
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
 
@@ -266,8 +268,10 @@ public abstract class StatisticsService {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
             String formatDateTime = now.format(formatter);
 
-            boolean b = Files.isDirectory(path);
-            if(b){
+            boolean b = Files.isDirectory(Paths.get(PATH_FILE));
+           // if(b){
+            if(PATH_FILE != null){
+                System.out.println(PATH_FILE);
                 File file = new File(PATH_FILE, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
                 file.createNewFile();
                 writer = writerobj.writeValues(file);

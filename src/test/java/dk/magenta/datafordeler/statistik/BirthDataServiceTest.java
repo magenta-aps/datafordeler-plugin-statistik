@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -45,6 +46,18 @@ public class BirthDataServiceTest  {
     public void initialize() throws Exception {
         testsUtils.loadPersonData("person.txt");
         testsUtils.loadGladdrregData();
+
+        //Use this code block when local directories need to be created
+      /*  StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        File folder = new File( StatisticsService.PATH_FILE);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }*/
+
+
+        //Use this code block when temp directories need to be created
+        Path path = Files.createTempDirectory("statistik");
+        StatisticsService.PATH_FILE = String.valueOf(path);
     }
 
     @After
