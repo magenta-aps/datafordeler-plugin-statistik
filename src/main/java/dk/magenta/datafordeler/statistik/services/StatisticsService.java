@@ -27,6 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -45,6 +48,18 @@ public abstract class StatisticsService {
         public long count = 0;
     }
 
+    public static String PATH_FILE = null;
+
+
+    public static Path path = null;
+
+    static {
+        StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        File folder = new File(StatisticsService.PATH_FILE);
+        if (!folder.exists()) folder.mkdirs();
+    }
+
+
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
 
@@ -62,6 +77,7 @@ public abstract class StatisticsService {
 
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
+
 
         try {
             PersonQuery personQuery = this.getQuery(request);
@@ -104,6 +120,7 @@ public abstract class StatisticsService {
         return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
     }
 
+
     public enum ServiceName {
         BIRTH,
         DEATH,
@@ -117,6 +134,8 @@ public abstract class StatisticsService {
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
+
+    public static final String REGISTRATION_AFTER = "registrationAfter";
 
     //Column names for person
     public static final String PNR = "Pnr";
@@ -207,22 +226,24 @@ public abstract class StatisticsService {
             ));
         }
         CsvSchema schema = builder.build().withHeader();
+        int written = 0;
+
+        if (items.hasNext()) {
+            response.setContentType("text/csv");
 
 
-        response.setContentType("text/csv");
+            SequenceWriter writer = null;
+            ObjectWriter writerobj = mapper.writer(schema);
+            String outputDescription = null;
+            
+            /*TODO: Proposal for the sake of defining a better directory structure.
+             * For example:
+             * ../statistik/birth/birth_timestamp.csv
+             * ../statistik/death/death_timestamp.csv
+             * ../statistik/status/status_timestamp.csv
+             * ../statistik/movement/movement_timestamp.csv  */
 
-        SequenceWriter writer;
-        ObjectWriter writerobj = mapper.writer(schema);
-        String outputDescription = null;
-
-        /*TODO: Proposal for the sake of defining a better directory structure.
-        * For example:
-        * ../statistik/birth/birth_timestamp.csv
-        * ../statistik/death/death_timestamp.csv
-        * ../statistik/status/status_timestamp.csv
-        * ../statistik/movement/movement_timestamp.csv  */
-
-        if (isFileOn) {
+       /* if (isFileOn) {
             //Get current date time
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -241,18 +262,40 @@ public abstract class StatisticsService {
         } else {
             writer = writerobj.writeValues(response.getOutputStream());
             outputDescription = "Written to response";
-        }
+        }*/
 
-        int written;
-        for (written = 0; items.hasNext(); written++) {
-            Object item = items.next();
-            if (item != null) {
-                writer.write(item);
+
+            if (isFileOn) {
+                //Get current date time
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String formatDateTime = now.format(formatter);
+
+                // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
+                // if(b){
+                if (PATH_FILE != null) {
+                    System.out.println(PATH_FILE);
+                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
+                    file.createNewFile();
+                    writer = writerobj.writeValues(file);
+                    outputDescription = "Written to file " + file.getCanonicalPath();
+                }
+
+            } else {
+                writer = writerobj.writeValues(response.getOutputStream());
+                outputDescription = "Written to response";
             }
-            afterEach.accept(item);
+
+            for (written = 0; items.hasNext(); written++) {
+                Object item = items.next();
+                if (item != null) {
+                    writer.write(item);
+                }
+                afterEach.accept(item);
+            }
+            writer.close();
+            System.out.println(outputDescription);
         }
-        writer.close();
-        System.out.println(outputDescription);
 
         return written;
     }

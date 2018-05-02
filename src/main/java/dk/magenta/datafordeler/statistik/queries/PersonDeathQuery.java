@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.queries;
 
+import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -33,7 +34,7 @@ public class PersonDeathQuery extends PersonQuery {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
 
         if (this.deathDateTimeAfter != null || this.deathDateTimeBefore != null) {
-            LookupDefinition.FieldDefinition fieldDefinition = lookupDefinition.put(
+            FieldDefinition fieldDefinition = lookupDefinition.put(
                     PersonBaseData.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusData.DB_FIELD_STATUS,
                     90,
                     Integer.class
