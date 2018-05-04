@@ -1,6 +1,7 @@
 package dk.magenta.datafordeler.statistik;
 
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FileUtils;
@@ -21,6 +22,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,12 +51,13 @@ public class DeathDataServiceTest {
         testsUtils.loadGladdrregData();
 
         //Use this code block when temp directories need to be created
-        /*Path path = Files.createTempDirectory("statistik");
-        StatisticsService.PATH_FILE = String.valueOf(path);*/
+        Path path = Files.createTempDirectory("statistik");
+        StatisticsService.PATH_FILE = String.valueOf(path);
     }
 
     @After
     public void cleanup() {
+        testsUtils.deleteFiles(StatisticsService.PATH_FILE);
         testsUtils.deleteAll();
     }
 
@@ -82,7 +86,7 @@ public class DeathDataServiceTest {
 
 
     @Test
-    public void testFileOutput() {
+    public void testFileOutput() throws IOException {
         StatisticsService.isFileOn = true;
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
@@ -93,7 +97,24 @@ public class DeathDataServiceTest {
 
         response = restTemplate.exchange("/statistik/death_data/?afterDate=1817-07-01&beforeDate=2049-09-30&effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
-        testsUtils.deleteFiles(StatisticsService.PATH_FILE);
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        Assert.assertNull(response.getBody());
+
+        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("death"));
+        Assert.assertEquals(1, deathFiles.length);
+
+        FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + deathFiles[0]);
+        String contents = InputStreamReader.readInputStream(
+                fileInputStream,"UTF-8"
+        );
+        fileInputStream.close();
+
+
+        Assert.assertEquals(
+                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynKodTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";\"\";;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"",
+                contents.trim()
+        );
 
 
     }
