@@ -40,10 +40,6 @@ public class MovementDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
-
-        //Use this code block when temp directories need to be created
-       /* Path path = Files.createTempDirectory("statistik");
-        StatisticsService.PATH_FILE = String.valueOf(path);*/
     }
 
     @After
@@ -73,9 +69,8 @@ public class MovementDataServiceTest {
     }
 
     @Test
-    public void testDirectoryFileCreationDeletion() {
+    public void testFileOutput() {
         StatisticsService.isFileOn = true;
-
 
         TestUserDetails testUserDetails = new TestUserDetails();
 
