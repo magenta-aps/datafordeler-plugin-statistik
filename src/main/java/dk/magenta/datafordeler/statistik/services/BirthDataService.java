@@ -127,7 +127,6 @@ public class BirthDataService extends StatisticsService {
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
-        //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
 
         OffsetDateTime earliestProdDate = null;
         LocalDateTime birthTime = null;
@@ -185,8 +184,6 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-
-
         if (earliestProdDate != null) {
             item.put(OWN_PREFIX + PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
@@ -204,7 +201,6 @@ public class BirthDataService extends StatisticsService {
                 }
             }
         }
-
 
         item.put(FATHER_PREFIX + PNR, fatherPnr);
         if (fatherPnr != null) {
@@ -246,7 +242,6 @@ public class BirthDataService extends StatisticsService {
                 }
             }
         }
-
 
         for (PersonEffect effect: effects) {
             for (PersonBaseData data: effect.getDataItems()) {

@@ -27,9 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -50,18 +47,15 @@ public abstract class StatisticsService {
 
     public static String PATH_FILE = null;
 
-
-    public static Path path = null;
-
     static {
         StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
-        if (!folder.exists()) folder.mkdirs();
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
     }
 
-
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-
 
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
@@ -77,7 +71,6 @@ public abstract class StatisticsService {
 
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
-
 
         try {
             PersonQuery personQuery = this.getQuery(request);
@@ -119,7 +112,6 @@ public abstract class StatisticsService {
     protected Filter getFilter(HttpServletRequest request) {
         return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
     }
-
 
     public enum ServiceName {
         BIRTH,
@@ -166,7 +158,6 @@ public abstract class StatisticsService {
     public static final String MOVE_DATE = "FlyDto";
     public static final String POST_CODE = "Postnr";
     public static final String CHURCH = "Kirke";
-
 
     public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
     public static final String ORIGIN_LOCALITY_NAME = "FraLokKortNavn";
@@ -243,36 +234,12 @@ public abstract class StatisticsService {
              * ../statistik/status/status_timestamp.csv
              * ../statistik/movement/movement_timestamp.csv  */
 
-       /* if (isFileOn) {
-            //Get current date time
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-            String formatDateTime = now.format(formatter);
-
-            //Directory and file creation
-            File folder = new File(System.getProperty("user.home") + File.separator + "statistik");
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
-
-            File file = new File(folder, serviceName.name().toLowerCase() +"_" + formatDateTime.toString() +".csv");
-            file.createNewFile();
-            writer = writerobj.writeValues(file);
-            outputDescription = "Written to file " + file.getCanonicalPath();
-        } else {
-            writer = writerobj.writeValues(response.getOutputStream());
-            outputDescription = "Written to response";
-        }*/
-
-
             if (isFileOn) {
                 //Get current date time
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
                 String formatDateTime = now.format(formatter);
 
-                // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
-                // if(b){
                 if (PATH_FILE != null) {
                     System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
@@ -294,7 +261,7 @@ public abstract class StatisticsService {
                 afterEach.accept(item);
             }
             writer.close();
-            System.out.println(outputDescription);
+            this.getLogger().info(outputDescription);
         }
 
         return written;

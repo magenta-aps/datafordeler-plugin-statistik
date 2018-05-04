@@ -77,7 +77,6 @@ public class StatusDataService extends StatisticsService {
         return this.csvMapper;
     }
 
-
     @Override
     protected DafoUserManager getDafoUserManager() {
         return this.dafoUserManager;

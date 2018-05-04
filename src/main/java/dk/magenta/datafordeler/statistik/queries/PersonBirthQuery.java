@@ -18,13 +18,11 @@ public class PersonBirthQuery extends PersonQuery {
         this.birthDateTimeBefore = birthDateTimeBefore;
     }
 
-
     private LocalDateTime birthDateTimeAfter = null;
 
     public void setBirthDateTimeAfter(LocalDateTime birthDateTimeAfter) {
         this.birthDateTimeAfter = birthDateTimeAfter;
     }
-
 
     private OffsetDateTime registrationTimeAfter = null;
 

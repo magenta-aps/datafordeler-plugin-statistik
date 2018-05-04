@@ -87,7 +87,6 @@ public class BirthDataServiceTest {
         Assert.assertEquals(204, response.getStatusCodeValue());
     }
 
-
     @Test
     public void testDirectoryFile_CreationDeletion() {
         StatisticsService.isFileOn = true;
@@ -103,9 +102,5 @@ public class BirthDataServiceTest {
 
         testsUtils.deleteFiles(StatisticsService.PATH_FILE);
 
-
-
     }
-
-
 }
