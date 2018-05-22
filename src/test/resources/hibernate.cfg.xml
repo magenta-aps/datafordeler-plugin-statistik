@@ -12,14 +12,6 @@
     <property name="hibernate.hbm2ddl.auto">create-drop</property>
 
 
-<!--
-      <property name="connection.url">jdbc:postgresql://localhost:5432/datafordeler</property>
-      <property name="connection.driver_class">org.postgresql.Driver</property>
-      <property name="connection.username">test</property>
-      <property name="connection.password">test</property>
-      <property name="hibernate.hbm2ddl.auto">update</property>
--->
-
     <property name="hibernate.jdbc.batch_size">1000</property>
 
     <!-- DB schema will be updated if needed -->
