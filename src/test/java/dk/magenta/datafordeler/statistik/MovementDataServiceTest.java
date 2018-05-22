@@ -85,10 +85,6 @@ public class MovementDataServiceTest {
     }
 
     @Test
-    public void foo() throws IOException {
-    }
-
-    @Test
     public void testFileOutput() throws IOException {
         StatisticsService.isFileOn = true;
 
@@ -109,10 +105,10 @@ public class MovementDataServiceTest {
 
         Assert.assertEquals(200, response.getStatusCodeValue());
 
-        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("movement"));
-        Assert.assertEquals(1, birthFiles.length);
+        String[] movementFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("movement"));
+        Assert.assertEquals(1, movementFiles.length);
 
-        FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + birthFiles[0]);
+        FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + movementFiles[0]);
         String contents = InputStreamReader.readInputStream(
                 fileInputStream,"UTF-8"
         );
