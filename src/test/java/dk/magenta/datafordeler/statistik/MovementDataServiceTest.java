@@ -38,8 +38,11 @@ public class MovementDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
-    @Autowired
-    private MovementDataService movementDataService;
+    /*@Before
+    public void initialize() throws Exception {
+        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/tmp.txt"));
+        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/1608116792.txt"));
+    }*/
 
     @Before
     public void initialize() throws Exception {
@@ -53,13 +56,12 @@ public class MovementDataServiceTest {
 
     @After
     public void cleanup() {
-
         testsUtils.deleteFiles(StatisticsService.PATH_FILE);
         testsUtils.deleteAll();
     }
 
     @Test
-    public void testMovementDataService() throws Exception {
+    public void testService() throws Exception {
         StatisticsService.isFileOn = false;
         TestUserDetails testUserDetails = new TestUserDetails();
 
@@ -73,10 +75,17 @@ public class MovementDataServiceTest {
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
-        response = restTemplate.exchange("/statistik/movement_data/?effectDate=2012-01-02&afterDate=2012-01-01&beforeDate=2012-04-01", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotNull(response.getBody());
         Assert.assertFalse(response.getBody().isEmpty());
-        System.out.println("Body response: "+response.getBody());
+        Assert.assertEquals("\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
+                response.getBody().trim()
+        );
+    }
+
+    @Test
+    public void foo() throws IOException {
     }
 
     @Test
@@ -95,10 +104,10 @@ public class MovementDataServiceTest {
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
-        response = restTemplate.exchange("/statistik/movement_data/?effectDate=2012-01-02&afterDate=2012-01-01&beforeDate=2012-04-01", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
+        Assert.assertNull(response.getBody());
 
         Assert.assertEquals(200, response.getStatusCodeValue());
-        Assert.assertNull(response.getBody());
 
         String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("movement"));
         Assert.assertEquals(1, birthFiles.length);
@@ -109,9 +118,10 @@ public class MovementDataServiceTest {
         );
         fileInputStream.close();
 
+
         Assert.assertEquals(
-                "\"B_Pnr\";\"B_FoedAar\";\"B_PnrGaeld\";\"B_FoedMynKod\";\"B_FoedMynKodTxt\";\"B_StatKod\";\"B_ProdDto\";\"M_Pnr\";\"M_FoedMynKod\";\"M_FoedMynKodTxt\";\"M_StatKod\";\"M_KomKod\";\"M_LokNavn\";\"M_LokKode\";\"M_VejKod\";\"M_HusNr\";\"M_Etage\";\"M_SideDoer\";\"M_Bnr\";\"F_Pnr\";\"F_FoedMynKod\";\"F_FoedMynKodTxt\";\"F_StatKod\";\"F_KomKod\";\"F_LokNavn\";\"F_LokKode\";\"F_VejKod\";\"F_HusNr\";\"F_Etage\";\"F_SideDoer\";\"F_Bnr\"\n" +
-                        "\"0101001234\";\"2000\";;\"9516\";\"0\";\"5100\";\"13-01-2000\";\"2903641234\";\"6666\";\"0\";\"5100\";\"955\";\"Paamiut\";\"PAA\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"0101641234\";\"8888\";\"0\";\"5100\";\"955\";\"Paamiut\";\"PAA\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"",
+                "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                        "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
                 contents.trim()
         );
     }

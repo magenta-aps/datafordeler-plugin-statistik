@@ -1,10 +1,10 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -51,7 +51,6 @@ public class DeathDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
-
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
         super.get(request, response, ServiceName.DEATH);
     }
@@ -85,41 +84,58 @@ public class DeathDataService extends StatisticsService {
         return this.log;
     }
 
+    protected String[] requiredParameters() {
+        return new String[]{"registrationAfter"};
+    }
+
     @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
-        PersonDeathQuery personDeathQuery = new PersonDeathQuery();
-
-        OffsetDateTime diedBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
-        if (diedBeforeDate != null) {
-            personDeathQuery.setDeathDateTimeBefore(diedBeforeDate.toLocalDateTime()); // Timezone?
-        }
-
-        OffsetDateTime diedAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
-        if (diedAfterDate != null) {
-            personDeathQuery.setDeathDateTimeAfter(diedAfterDate.toLocalDateTime()); // Timezone?
-        }
-        String pnr = request.getParameter("pnr");
-        if (pnr != null) {
-            personDeathQuery.setPersonnummer(pnr);
-        }
-        personDeathQuery.setPageSize(1000000);
-
-        return personDeathQuery;
+        return new PersonDeathQuery(request);
     }
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
+        try {
+            System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(person));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         item.put(PNR, person.getPersonnummer());
-        //item.put(EFFECTIVE_PNR, person.getPersonnummer());
 
         OffsetDateTime earliestProdDate = null;
-
         OffsetDateTime earliestDeathTime = null;
 
+        for (PersonRegistration registration: person.getRegistrations()) {
+            for (PersonEffect effect : registration.getEffects()) {
+                for (PersonBaseData data : effect.getDataItems()) {
+                    PersonStatusData statusData = data.getStatus();
+                    if (statusData != null) {
+                        item.put(STATUS_CODE, Integer.toString(statusData.getStatus()));
+                        if (statusData.getStatus() == 90) {
+                            if (effect.getEffectFrom() != null && (earliestDeathTime == null || effect.getEffectFrom().isBefore(earliestDeathTime))) {
+                                earliestDeathTime = effect.getEffectFrom();
+                            }
+                            if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
+                                earliestProdDate = registration.getRegistrationFrom();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (
+                earliestDeathTime == null ||
+                (filter.after != null && earliestDeathTime.isBefore(filter.after)) ||
+                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
+        ) {
+            return Collections.emptyList();
+        }
+
         for (PersonRegistration registration: person.getRegistrations()){
-            //for (PersonEffect effect: registration.getEffects()) {
-            for (PersonEffect effect: registration.getEffectsAt(filter.effectAt)) {
+            for (PersonEffect effect: registration.getEffects()) {
+                //for (PersonEffect effect: registration.getEffectsAt(earliestDeathTime)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
                     PersonCoreData coreData = data.getCoreData();
@@ -142,18 +158,7 @@ public class DeathDataService extends StatisticsService {
                         }
                     }
 
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null) {
-                        item.put(STATUS_CODE, Integer.toString(statusData.getStatus()));
-                        if (statusData.getStatus() == 90) {
-                            if (effect.getEffectFrom() != null && (earliestDeathTime == null || effect.getEffectFrom().isBefore(earliestDeathTime))) {
-                                earliestDeathTime = effect.getEffectFrom();
-                            }
-                            if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
-                                earliestProdDate = registration.getRegistrationFrom();
-                            }
-                        }
-                    }
+
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
                     if (citizenshipData != null) {
@@ -197,13 +202,11 @@ public class DeathDataService extends StatisticsService {
             }
         }
         if (earliestDeathTime != null) {
-            item.put(DEATH_DATE, earliestDeathTime.format(dmyFormatter)); // Timezone?
+            item.put(DEATH_DATE, earliestDeathTime.atZoneSameInstant(cprDataOffset).format(dmyFormatter));
         }
         if (earliestProdDate != null) {
-            item.put(PROD_DATE, earliestProdDate.format(dmyFormatter));
+            item.put(PROD_DATE, earliestProdDate.atZoneSameInstant(cprDataOffset).format(dmyFormatter));
         }
-
-
 
         return Collections.singletonList(item);
     }

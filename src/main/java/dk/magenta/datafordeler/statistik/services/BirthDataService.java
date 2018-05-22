@@ -1,12 +1,10 @@
 package dk.magenta.datafordeler.statistik.services;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -40,7 +38,6 @@ import java.util.*;
 public class BirthDataService extends StatisticsService {
 
     private class Exclude extends Exception {
-
     }
 
     @Autowired
@@ -57,10 +54,6 @@ public class BirthDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
-
-    //This function should have the following inputs:
-    // birth year
-    // registration before date
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
@@ -100,47 +93,62 @@ public class BirthDataService extends StatisticsService {
         return this.log;
     }
 
+    protected String[] requiredParameters() {
+        return new String[]{"registrationAfter"};
+    }
+
     @Override
     protected PersonQuery getQuery(HttpServletRequest request) {
-        PersonBirthQuery personBirthQuery = new PersonBirthQuery();
-        OffsetDateTime bornBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
-        if (bornBeforeDate != null) {
-            personBirthQuery.setBirthDateTimeBefore(bornBeforeDate.toLocalDateTime()); // Timezone?
-        }
-        OffsetDateTime bornAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
-        if (bornAfterDate != null) {
-            personBirthQuery.setBirthDateTimeAfter(bornAfterDate.toLocalDateTime()); // Timezone?
-        }
-        String pnr = request.getParameter("pnr");
-        if (pnr != null) {
-            personBirthQuery.setPersonnummer(pnr);
-        }
-        OffsetDateTime registrationAfter = Query.parseDateTime(request.getParameter(REGISTRATION_AFTER));
-        if (registrationAfter != null) {
-            personBirthQuery.setRegistrationTimeAfter(registrationAfter);
-        }
-        personBirthQuery.setPageSize(1000000);
-        return personBirthQuery;
+        return new PersonBirthQuery(request);
     }
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        System.out.println("formatPerson");
+
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
-        //item.put(OWN_PREFIX + EFFECTIVE_PNR, person.getPersonnummer());
 
         OffsetDateTime earliestProdDate = null;
         LocalDateTime birthTime = null;
         String motherPnr = null;
         String fatherPnr = null;
 
+        OffsetDateTime earliestBirthTime = null;
+
+        for (PersonRegistration registration: person.getRegistrations()) {
+            for (PersonEffect effect : registration.getEffects()) {
+                for (PersonBaseData data : effect.getDataItems()) {
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthDatetime() != null) {
+                            if (effect.getEffectFrom() != null && (earliestBirthTime == null || effect.getEffectFrom().isBefore(earliestBirthTime))) {
+                                earliestBirthTime = effect.getEffectFrom();
+                            }
+                            if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
+                                earliestProdDate = registration.getRegistrationFrom();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("earliestProdDate: "+earliestProdDate);
+        if (
+                earliestProdDate == null ||
+                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
+        ) {
+            return Collections.emptyList();
+        }
+
         HashSet<PersonEffect> personEffects = new HashSet<>();
         for (PersonRegistration registration: person.getRegistrations()) {
-            personEffects.addAll(registration.getEffectsAt(filter.effectAt));
+            personEffects.addAll(registration.getEffectsAt(earliestBirthTime));
         }
 
         ArrayList<PersonEffect> effects = new ArrayList<>(personEffects);
-        effects.sort(Comparator.nullsFirst(PersonEffect::compareTo));
+        effects.sort(Comparator.nullsFirst(this.personComparator));
 
         for (PersonEffect effect: effects) {
             for (PersonBaseData data : effect.getDataItems()) {
@@ -162,10 +170,6 @@ public class BirthDataService extends StatisticsService {
                     if (birthData.getBirthAuthorityText() != null) {
                         item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                     }
-                    OffsetDateTime registrationFrom = effect.getRegistration().getRegistrationFrom();
-                    if (registrationFrom != null && (earliestProdDate == null || registrationFrom.isBefore(earliestProdDate))) {
-                        earliestProdDate = registrationFrom;
-                    }
                 }
 
                 PersonCitizenshipData citizenshipData = data.getCitizenship();
@@ -185,13 +189,15 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-
-
         if (earliestProdDate != null) {
             item.put(OWN_PREFIX + PROD_DATE, earliestProdDate.format(dmyFormatter));
         }
 
-        Filter parentFilter = new Filter(birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime());
+        Filter parentFilter = new Filter(
+                birthTime != null ?
+                birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime() :
+                earliestProdDate
+        );
         item.put(MOTHER_PREFIX + PNR, motherPnr);
         if (motherPnr != null) {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
@@ -200,11 +206,10 @@ public class BirthDataService extends StatisticsService {
                     item.putAll(this.formatParentPerson(mother, MOTHER_PREFIX, lookupService, parentFilter, true));
                 } catch (Exclude e) {
                     // Do not include births where the mother lives outside of Greenland at the time of birth
-                    return null;
+                    return Collections.emptyList();
                 }
             }
         }
-
 
         item.put(FATHER_PREFIX + PNR, fatherPnr);
         if (fatherPnr != null) {
@@ -223,8 +228,6 @@ public class BirthDataService extends StatisticsService {
 
     private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
 
-        System.out.println("Formatting parent at "+filter.effectAt);
-
         HashMap<String, String> item = new HashMap<>();
         HashSet<PersonEffect> personEffects = new HashSet<>();
         for (PersonRegistration registration: person.getRegistrations()) {
@@ -232,7 +235,7 @@ public class BirthDataService extends StatisticsService {
         }
 
         ArrayList<PersonEffect> effects = new ArrayList<>(personEffects);
-        effects.sort(Comparator.nullsFirst(PersonEffect::compareTo));
+        effects.sort(Comparator.nullsFirst(this.personComparator));
 
         if (excludeIfNonGreenlandic) {
             for (PersonEffect effect: effects) {
@@ -247,13 +250,11 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-
         for (PersonEffect effect: effects) {
             for (PersonBaseData data: effect.getDataItems()) {
 
                 PersonAddressData addressData = data.getAddress();
                 if (addressData != null) {
-                    System.out.println("Parent has an address "+addressData.getMunicipalityCode()+" "+addressData.getRoadCode());
                     Lookup lookup = lookupService.doLookup(
                             addressData.getMunicipalityCode(),
                             addressData.getRoadCode(),

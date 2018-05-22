@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -108,51 +109,22 @@ public class StatusDataService extends StatisticsService {
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
-        // Map of effectTime to addresses (when address was moved into)
-        ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
-        // Map of effectTime to registrationTime (when this move was first registered)
-        HashMap<OffsetDateTime, OffsetDateTime> addressRegistrationTimes = new HashMap<>();
-
-        for (PersonRegistration registration : person.getRegistrations()) {
-            for (PersonEffect effect : registration.getEffects()) {
-                OffsetDateTime effectTime = effect.getEffectFrom();
-                for (PersonBaseData data : effect.getDataItems()) {
-                    PersonAddressData addressData = data.getAddress();
-                    if (addressData != null) {
-                        addresses.add(effectTime, addressData);
-
-                        if (!addressRegistrationTimes.containsKey(effectTime)) {
-                            OffsetDateTime oldTime = addressRegistrationTimes.get(effectTime);
-                            OffsetDateTime newTime = registration.getRegistrationFrom();
-                            if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
-                                addressRegistrationTimes.put(effectTime, newTime);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
-        addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
-
         OffsetDateTime latestCivilStatusDate = null;
         OffsetDateTime civilStatusRegistrationDate = null;
         OffsetDateTime latestAddressTime = null;
         PersonAddressData latestAddress = null;
 
+        // Loop over the list of registrations (which is already sorted (by time, ascending))
         for (PersonRegistration registration : person.getRegistrations()){
             for (PersonEffect effect : registration.getEffectsAt(filter.effectAt)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
-                    if (!item.containsKey(FIRST_NAME) || !item.containsKey(LAST_NAME)) {
                         PersonNameData nameData = data.getName();
                         if (nameData != null) {
                             item.put(FIRST_NAME, nameData.getFirstNames());
                             item.put(LAST_NAME, nameData.getLastName());
                         }
-                    }
 
-                    if (!item.containsKey(BIRTHDAY_YEAR) || !item.containsKey(BIRTH_AUTHORITY) || !item.containsKey(BIRTH_AUTHORITY_TEXT)) {
                         PersonBirthData birthData = data.getBirth();
                         if (birthData != null) {
                             if (birthData.getBirthDatetime() != null) {
@@ -162,24 +134,25 @@ public class StatusDataService extends StatisticsService {
                                 item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                             }
                             if (birthData.getBirthAuthorityText() != null) {
-                                item.put(BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
+                                item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
+                            }
+                            if (birthData.getBirthSupplementalText() != null) {
+                                item.put(BIRTH_AUTHORITY_TEXT, birthData.getBirthSupplementalText());
                             }
                         }
-                    }
 
-                    if (!item.containsKey(STATUS_CODE)) {
+
                         PersonStatusData statusData = data.getStatus();
                         if (statusData != null) {
                             item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
                         }
-                    }
 
-                    if (!item.containsKey(CITIZENSHIP_CODE)) {
+
                         PersonCitizenshipData citizenshipData = data.getCitizenship();
                         if (citizenshipData != null) {
                             item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
                         }
-                    }
+
 
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null && effect.getEffectFrom() != null) {
@@ -190,19 +163,17 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                    if (!item.containsKey(MOTHER_PNR)) {
                         PersonParentData personMotherData = data.getMother();
                         if (personMotherData != null) {
                             item.put(MOTHER_PNR, personMotherData.getCprNumber());
                         }
-                    }
 
-                    if (!item.containsKey(FATHER_PNR)) {
+
                         PersonParentData personFatherData = data.getFather();
                         if (personFatherData != null) {
                             item.put(FATHER_PNR, personFatherData.getCprNumber());
                         }
-                    }
+
 
                     // We can't skip this if it's already set; we need the registrationTime
                     PersonCivilStatusData personCivilStatus = data.getCivilStatus();
@@ -214,19 +185,17 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                    if (!item.containsKey(SPOUSE_PNR)) {
                         PersonCivilStatusData personSpouseData = data.getCivilStatus();
                         if (personSpouseData != null) {
                             item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
                         }
-                    }
 
-                    if (!item.containsKey(CHURCH)) {
+
                         PersonChurchData personChurchData = data.getChurch();
                         if (personChurchData != null) {
                             item.put(CHURCH, personChurchData.getChurchRelation().toString());
                         }
-                    }
+
                 }
             }
         }
@@ -245,6 +214,8 @@ public class StatusDataService extends StatisticsService {
             item.put(DOOR_NUMBER, latestAddress.getDoor());
             item.put(BNR, formatBnr(latestAddress.getBuildingNumber()));
             item.put(FLOOR_NUMBER,latestAddress.getFloor());
+
+            // Use the lookup service to extract locality & postcode data from a municipality code and road code
             Lookup lookup = lookupService.doLookup(
                     latestAddress.getMunicipalityCode(),
                     latestAddress.getRoadCode(),
@@ -256,6 +227,34 @@ public class StatusDataService extends StatisticsService {
                 item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                 item.put(POST_CODE, Integer.toString(lookup.postalCode));
             }
+
+            // We're looking for a persons newest address, as well as the time it was first registered
+            // So, populate these two structures:
+            // Map of effectTime to addresses (when address was moved into)
+            ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
+            // Map of effectTime to registrationTime (when this move was *first* registered)
+            HashMap<OffsetDateTime, OffsetDateTime> addressRegistrationTimes = new HashMap<>();
+
+            for (PersonRegistration registration : person.getRegistrations()) {
+                for (PersonEffect effect : registration.getEffects()) {
+                    OffsetDateTime effectTime = effect.getEffectFrom();
+                    for (PersonBaseData data : effect.getDataItems()) {
+                        PersonAddressData addressData = data.getAddress();
+                        if (addressData != null) {
+                            addresses.add(effectTime, addressData);
+                            if (!addressRegistrationTimes.containsKey(effectTime)) {
+                                OffsetDateTime oldTime = addressRegistrationTimes.get(effectTime);
+                                OffsetDateTime newTime = registration.getRegistrationFrom();
+                                if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
+                                    addressRegistrationTimes.put(effectTime, newTime);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
+            addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
             for (OffsetDateTime addressTime : addressTimes) {
                 if (addresses.get(addressTime).contains(latestAddress)) {
                     item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));

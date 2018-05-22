@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
@@ -14,6 +15,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -34,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,13 +53,16 @@ public abstract class StatisticsService {
 
     public static String PATH_FILE = null;
 
-
-    public static Path path = null;
-
     static {
         StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
-        if (!folder.exists()) folder.mkdirs();
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+    }
+
+    protected String[] requiredParameters() {
+        return new String[]{};
     }
 
 
@@ -68,8 +74,9 @@ public abstract class StatisticsService {
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
-
-        this.requireParameter(EFFECT_DATE_PARAMETER, request.getParameter(EFFECT_DATE_PARAMETER));
+        for (String required : this.requiredParameters()) {
+            this.requireParameter(required, request.getParameter(required));
+        }
         Filter filter = this.getFilter(request);
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
@@ -77,7 +84,6 @@ public abstract class StatisticsService {
 
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
-
 
         try {
             PersonQuery personQuery = this.getQuery(request);
@@ -117,7 +123,7 @@ public abstract class StatisticsService {
     protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
 
     protected Filter getFilter(HttpServletRequest request) {
-        return new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
+        return new Filter(request);
     }
 
 
@@ -136,12 +142,14 @@ public abstract class StatisticsService {
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
 
     public static final String REGISTRATION_AFTER = "registrationAfter";
+    public static final String REGISTRATION_BEFORE = "registrationBefore";
 
     //Column names for person
     public static final String PNR = "Pnr";
     public static final String BIRTHDAY_YEAR = "FoedAar";
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
-    public static final String BIRTH_AUTHORITY_TEXT = "FoedMynKodTxt";
+    public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
+    public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
     public static final String FIRST_NAME = "Fornavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
@@ -242,9 +250,6 @@ public abstract class StatisticsService {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
                 String formatDateTime = now.format(formatter);
-
-                // boolean b = Files.isDirectory(Paths.get(PATH_FILE));
-                // if(b){
                 if (PATH_FILE != null) {
                     System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
@@ -321,6 +326,20 @@ public abstract class StatisticsService {
             throw (e);
         }
     }
+
+    public class EffectComparator<T extends Effect> implements Comparator<T> {
+        @Override
+        public int compare(T o1, T o2) {
+            int c = o1.compareTo(o2);
+            if (c == 0) {
+                c = o1.getRegistration().compareTo(o2.getRegistration());
+            }
+            return c;
+        }
+    }
+
+    public final EffectComparator<PersonEffect> personComparator = new EffectComparator<PersonEffect>();
+
 }
 
 
