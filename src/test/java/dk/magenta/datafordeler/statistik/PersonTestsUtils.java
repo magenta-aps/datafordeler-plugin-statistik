@@ -34,6 +34,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -52,6 +53,9 @@ public class PersonTestsUtils {
     private PersonEntityManager personEntityManager;
 
     @Autowired
+    private RoadEntityManager roadEntityManager;
+
+    @Autowired
     private GladdrregPlugin gladdrregPlugin;
 
     @SpyBean
@@ -65,15 +69,34 @@ public class PersonTestsUtils {
         this.personEntityManager = personEntityManager;
     }
 
+    public void loadPersonData(File source) throws Exception {
+        loadPersonData(new FileInputStream(source));
+    }
+
     public void loadPersonData(String resource) throws Exception {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/" + resource);
+        loadPersonData(PersonTestsUtils.class.getResourceAsStream("/" + resource));
+    }
+
+
+
+    public void loadRoadData(File source) throws Exception {
+        loadRoadData(new FileInputStream(source));
+    }
+
+    public void loadRoadData(InputStream testData) throws Exception {
         ImportMetadata importMetadata = new ImportMetadata();
         Session session = sessionManager.getSessionFactory().openSession();
         importMetadata.setSession(session);
-        Transaction transaction = session.beginTransaction();
-        importMetadata.setTransactionInProgress(true);
+        roadEntityManager.parseData(testData, importMetadata);
+        session.close();
+        testData.close();
+    }
+
+    public void loadPersonData(InputStream testData) throws Exception {
+        ImportMetadata importMetadata = new ImportMetadata();
+        Session session = sessionManager.getSessionFactory().openSession();
+        importMetadata.setSession(session);
         personEntityManager.parseData(testData, importMetadata);
-        transaction.commit();
         session.close();
         testData.close();
     }

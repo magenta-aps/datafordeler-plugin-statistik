@@ -1,12 +1,12 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.core.util.OffsetDateTimeAdapter;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -51,9 +51,6 @@ public class MovementDataService extends StatisticsService {
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
-    //This function should have the following inputs:
-    //movement date
-
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getMovement(HttpServletRequest request, HttpServletResponse response)
@@ -92,36 +89,17 @@ public class MovementDataService extends StatisticsService {
         return this.log;
     }
 
-    @Override
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        PersonMoveQuery personMoveQuery = new PersonMoveQuery();
-        OffsetDateTime moveAfterDate = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
-        if (moveAfterDate != null) {
-            personMoveQuery.setMoveDateTimeAfter(moveAfterDate);
-        }
-        OffsetDateTime moveBeforeDate = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
-        if (moveBeforeDate != null) {
-            personMoveQuery.setMoveDateTimeBefore(moveBeforeDate);
-        }
-        String pnr = request.getParameter("pnr");
-        if (pnr != null) {
-            personMoveQuery.setPersonnummer(pnr);
-        }
-        personMoveQuery.setPageSize(1000000);
-        return personMoveQuery;
+    protected String[] requiredParameters() {
+        return new String[]{"registrationAfter"};
     }
 
-
-    protected Filter getFilter(HttpServletRequest request) {
-        Filter filter = new Filter(Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER)));
-        filter.after = Query.parseDateTime(request.getParameter(AFTER_DATE_PARAMETER));
-        filter.before = Query.parseDateTime(request.getParameter(BEFORE_DATE_PARAMETER));
-        return filter;
+    @Override
+    protected PersonQuery getQuery(HttpServletRequest request) {
+        return new PersonMoveQuery(request);
     }
 
     @Override
     public List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
-
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, AuthorityDetailData> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
@@ -129,6 +107,9 @@ public class MovementDataService extends StatisticsService {
 
         for (PersonRegistration registration: person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
+                if (effect.getEffectFrom() != null && Objects.equals(effect.getEffectFrom(), effect.getEffectTo())) {
+                    continue;  // Ignore effects with zero length
+                }
                 OffsetDateTime effectTime = effect.getEffectFrom();
                 for (PersonBaseData data : effect.getDataItems()) {
                     boolean found = false;
@@ -137,9 +118,16 @@ public class MovementDataService extends StatisticsService {
                         addresses.put(effectTime, addressData);
                         found = true;
                     }
+                    /*
                     PersonForeignAddressData foreignAddressData = data.getForeignAddress();
                     if (foreignAddressData != null) {
                         addresses.put(effectTime, foreignAddressData);
+                        found = true;
+                    }
+                    */
+                    PersonEmigrationData emigrationData = data.getMigration();
+                    if (emigrationData != null) {
+                        addresses.put(effectTime, emigrationData);
                         found = true;
                     }
                     if (found) {
@@ -162,20 +150,28 @@ public class MovementDataService extends StatisticsService {
         for (int i=0; i<=last; i++) {
             OffsetDateTime previous = i > 0 ? addressTimes.get(i-1) : null;
             OffsetDateTime current = addressTimes.get(i);
+            OffsetDateTime currentRegistrationTime = registrations.get(current);
 
-            //if ((current == null || !current.isAfter(filter.effectAt)) && (next == null || next.isAfter(filter.effectAt))) {
-            if (current != null && current.isAfter(filter.after) && current.isBefore(filter.before)) {
+            if (current != null && currentRegistrationTime != null && (
+                    (filter.after == null || current.isAfter(filter.after)) &&
+                    (filter.before == null || current.isBefore(filter.before)) &&
+                    (filter.registrationAfter == null || !currentRegistrationTime.isBefore(filter.registrationAfter))
+            )) {
                 AuthorityDetailData currentAddress = addresses.get(current);
                 AuthorityDetailData previousAddress = addresses.get(previous);
+
+                if (previousAddress == null || !isInGreenland(previousAddress) && !isInGreenland(currentAddress)) {
+                    continue;
+                }
 
                 HashMap<String, String> item = new HashMap<>();
                 item.put(PNR, person.getPersonnummer());
 
                 if (previousAddress != null) {
+
                     if (previousAddress instanceof PersonAddressData) {
                         PersonAddressData previousDomesticAddress = (PersonAddressData) previousAddress;
                         item.put(ORIGIN_MUNICIPALITY_CODE, Integer.toString(previousDomesticAddress.getMunicipalityCode()));
-                        //item.put("origin_locality_name", null);
                         item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousDomesticAddress.getRoadCode()));
                         item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousDomesticAddress.getHouseNumber()));
                         item.put(ORIGIN_FLOOR, previousDomesticAddress.getFloor());
@@ -184,9 +180,18 @@ public class MovementDataService extends StatisticsService {
                         Lookup lookup = lookupService.doLookup(previousDomesticAddress.getMunicipalityCode(), previousDomesticAddress.getRoadCode());
                         item.put(ORIGIN_LOCALITY_NAME, lookup.localityAbbrev);
                     }
-                    if (previousAddress instanceof PersonForeignAddressData) {
+                    /*if (previousAddress instanceof PersonForeignAddressData) {
                         PersonForeignAddressData previousForeignAddress = (PersonForeignAddressData) previousAddress;
+                        try {
+                            System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(previousForeignAddress));
+                        } catch (JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
                         item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousForeignAddress.getAuthority()));
+                    }*/
+                    if (previousAddress instanceof PersonEmigrationData) {
+                        PersonEmigrationData previousMigration = (PersonEmigrationData) previousAddress;
+                        item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousMigration.getCountryCode()));
                     }
                 }
                 if (currentAddress != null) {
@@ -205,9 +210,17 @@ public class MovementDataService extends StatisticsService {
                         Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
                         item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
                     }
-                    if (currentAddress instanceof PersonForeignAddressData) {
+                    /*if (currentAddress instanceof PersonForeignAddressData) {
                         PersonForeignAddressData currentForeignAddress = (PersonForeignAddressData) currentAddress;
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentForeignAddress.getAuthority()));
+                        item.put(MOVE_DATE, current.format(dmyFormatter));
+                        if (registrations.containsKey(current)) {
+                            item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
+                        }
+                    }*/
+                    if (currentAddress instanceof PersonEmigrationData) {
+                        PersonEmigrationData currentMigration = (PersonEmigrationData) currentAddress;
+                        item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getCountryCode()));
                         item.put(MOVE_DATE, current.format(dmyFormatter));
                         if (registrations.containsKey(current)) {
                             item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
@@ -217,8 +230,10 @@ public class MovementDataService extends StatisticsService {
                 moves.put(current, item);
             }
         }
+
+
         if (moves.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
 
@@ -277,5 +292,18 @@ public class MovementDataService extends StatisticsService {
             }
         }
         return new ArrayList<>(moves.values());
+    }
+
+    private static boolean isInGreenland(AuthorityDetailData addressData) {
+        boolean glFound = false;
+        if (addressData != null) {
+            if (addressData instanceof PersonAddressData) {
+                PersonAddressData previousDomesticAddress = (PersonAddressData) addressData;
+                if (previousDomesticAddress.getMunicipalityCode() > 900) {
+                    glFound = true;
+                }
+            }
+        }
+        return glFound;
     }
 }
