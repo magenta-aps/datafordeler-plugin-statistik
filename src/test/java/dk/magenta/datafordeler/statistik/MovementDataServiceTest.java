@@ -46,17 +46,14 @@ public class MovementDataServiceTest {
 
     @Before
     public void initialize() throws Exception {
+        testsUtils.setPath();
         testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
-
-        //Use this code block when temp directories need to be created
-        Path path = Files.createTempDirectory("statistik");
-        StatisticsService.PATH_FILE = String.valueOf(path);
     }
 
     @After
     public void cleanup() {
-        testsUtils.deleteFiles(StatisticsService.PATH_FILE);
+        testsUtils.clearPath();
         testsUtils.deleteAll();
     }
 
