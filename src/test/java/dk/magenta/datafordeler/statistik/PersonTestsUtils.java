@@ -37,9 +37,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 import static org.mockito.Mockito.when;
 
@@ -67,6 +70,20 @@ public class PersonTestsUtils {
                             PersonEntityManager personEntityManager){
         this.sessionManager = sessionManager;
         this.personEntityManager = personEntityManager;
+    }
+
+    private String oldPath;
+    public void setPath() throws IOException {
+        //Use this code block when temp directories need to be created
+        Path path = Files.createTempDirectory("statistik");
+        this.oldPath = StatisticsService.PATH_FILE;
+        StatisticsService.PATH_FILE = String.valueOf(path);
+    }
+
+    public void clearPath() {
+        if (!Objects.equals(StatisticsService.PATH_FILE, this.oldPath)) {
+            this.deleteFiles(StatisticsService.PATH_FILE);
+        }
     }
 
     public void loadPersonData(File source) throws Exception {

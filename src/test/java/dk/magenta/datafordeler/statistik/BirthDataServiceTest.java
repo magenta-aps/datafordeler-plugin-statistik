@@ -41,22 +41,19 @@ public class BirthDataServiceTest {
     private PersonTestsUtils testsUtils;
 
     TestUserDetails testUserDetails;
-/*
+
     @Before
     public void initialize() throws Exception {
+        testsUtils.setPath();
         testsUtils.loadPersonData("bornperson.txt");
         testsUtils.loadGladdrregData();
-
-        //Use this code block when temp directories need to be created
-        Path path = Files.createTempDirectory("statistik");
-        StatisticsService.PATH_FILE = String.valueOf(path);
     }
 
     @After
     public void cleanup() {
-        testsUtils.deleteFiles(StatisticsService.PATH_FILE);
+        testsUtils.clearPath();
         testsUtils.deleteAll();
-    }*/
+    }
 
     @Test
     public void testService() {
