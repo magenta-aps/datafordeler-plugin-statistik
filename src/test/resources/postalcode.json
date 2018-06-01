@@ -1,0 +1,32 @@
+{
+  "f089ac30fce753dd20eff2c0f7a5d35877fbab6a60bd9394119e2dfadc2396ae": {
+    "virkninger": [
+      {
+        "data": [
+          {
+            "sumiffiik": "{04855190-a78c-47f0-82f7-5f0cf43c9a68}",
+            "note": "3982 omfatter Mestersvig",
+            "state": {
+              "uuid": "3a205cdf-f044-4853-a613-a156471e7c72",
+              "domaene": "https://data.gl/gladdreg/state/1/rest/"
+            },
+            "code": 3982,
+            "registration_user": null,
+            "name": "Mestersvig",
+            "sumiffiik_domain": "https://data.gl/najugaq/postalcode",
+            "active": true
+          }
+        ],
+        "virkningTil": null,
+        "virkningFra": "2017-09-19T10:45:03.959Z"
+      }
+    ],
+    "checksum": "f089ac30fce753dd20eff2c0f7a5d35877fbab6a60bd9394119e2dfadc2396ae",
+    "entity": {
+      "uuid": "a0c543c9-5588-42ef-9497-ab765fa3f8c0",
+      "domaene": "https://data.gl/gladdreg/postalcode/1/rest/"
+    },
+    "registreringTil": null,
+    "registreringFra": "2017-09-19T10:45:03.959Z"
+  }
+}
