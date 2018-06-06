@@ -151,6 +151,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
     public static final String FIRST_NAME = "Fornavn";
+    public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
     public static final String STATUS_CODE = "Status";
@@ -166,6 +167,7 @@ public abstract class StatisticsService {
     public static final String LOCALITY_CODE = "LokKode";
     public static final String LOCALITY_ABBREVIATION = "LokKortNavn";
     public static final String ROAD_CODE = "VejKod";
+    public static final String ROAD_NAME = "VejNavn";
     public static final String HOUSE_NUMBER = "HusNr";
     public static final String DOOR_NUMBER = "SideDoer";
     public static final String FLOOR_NUMBER = "Etage";
@@ -173,6 +175,7 @@ public abstract class StatisticsService {
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
     public static final String POST_CODE = "Postnr";
+    public static final String POST_DISTRICT = "PostDistrikt";
     public static final String CHURCH = "Kirke";
 
 
