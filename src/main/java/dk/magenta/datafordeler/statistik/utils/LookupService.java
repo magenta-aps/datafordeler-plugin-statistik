@@ -183,11 +183,13 @@ public class LookupService {
 
     private String getRoadNameDK(dk.magenta.datafordeler.cpr.data.road.RoadEntity roadEntity) {
         OffsetDateTime now = OffsetDateTime.now();
-        for (dk.magenta.datafordeler.cpr.data.road.RoadEffect roadEffect : roadEntity.getRegistrationAt(now).getEffectsAt(now)) {
-            for (RoadBaseData roadData : roadEffect.getDataItems()) {
-                RoadCoreData coreData = roadData.getCoreData();
-                if (coreData != null) {
-                    return coreData.getName();
+        for (dk.magenta.datafordeler.cpr.data.road.RoadRegistration roadRegistration : roadEntity.getRegistrations()) {
+            for (dk.magenta.datafordeler.cpr.data.road.RoadEffect roadEffect : roadRegistration.getEffectsAt(now)) {
+                for (RoadBaseData roadData : roadEffect.getDataItems()) {
+                    RoadCoreData coreData = roadData.getCoreData();
+                    if (coreData != null) {
+                        return coreData.getName();
+                    }
                 }
             }
         }
@@ -196,41 +198,43 @@ public class LookupService {
 
     private PostCode getRoadPostalCodeDK(dk.magenta.datafordeler.cpr.data.road.RoadEntity roadEntity, String houseNumber) {
         OffsetDateTime now = OffsetDateTime.now();
-        for (dk.magenta.datafordeler.cpr.data.road.RoadEffect roadEffect : roadEntity.getRegistrationAt(now).getEffectsAt(now)) {
-            for (RoadBaseData roadData : roadEffect.getDataItems()) {
-                if (houseNumber != null) {
-                    Matcher m = houseNumberPattern.matcher(houseNumber);
-                    if (m.find()) {
-                        int numberPart = Integer.parseInt(m.group(1));
-                        String letterPart = m.group(2).toLowerCase();
-                        Set<RoadPostcodeData> postcodeData = roadData.getPostcodeData();
-                        if (postcodeData != null && !postcodeData.isEmpty()) {
-                            for (RoadPostcodeData postcode : postcodeData) {
-                                if (postcode.getPostCode() != null) {
-                                    Matcher from = houseNumberPattern.matcher(postcode.getHouseNumberFrom());
-                                    Matcher to = houseNumberPattern.matcher(postcode.getHouseNumberTo());
-                                    if (from.find() && to.find()) {
-                                        int fromNumber = Integer.parseInt(from.group(1));
-                                        int toNumber = Integer.parseInt(to.group(1));
-                                        if (fromNumber < numberPart && numberPart < toNumber) {
-                                            return postcode.getPostCode();
-                                        } else if (fromNumber == numberPart || numberPart == toNumber) {
-                                            String fromLetter = from.group(2).toLowerCase();
-                                            String toLetter = from.group(2).toLowerCase();
-                                            if ((fromNumber < numberPart || fromLetter.isEmpty() || fromLetter.compareTo(letterPart) <= 0) && (numberPart < toNumber || toLetter.isEmpty() || letterPart.compareTo(toLetter) < 0)) {
+        for (dk.magenta.datafordeler.cpr.data.road.RoadRegistration roadRegistration : roadEntity.getRegistrations()) {
+            for (dk.magenta.datafordeler.cpr.data.road.RoadEffect roadEffect : roadRegistration.getEffectsAt(now)) {
+                for (RoadBaseData roadData : roadEffect.getDataItems()) {
+                    if (houseNumber != null) {
+                        Matcher m = houseNumberPattern.matcher(houseNumber);
+                        if (m.find()) {
+                            int numberPart = Integer.parseInt(m.group(1));
+                            String letterPart = m.group(2).toLowerCase();
+                            Set<RoadPostcodeData> postcodeData = roadData.getPostcodeData();
+                            if (postcodeData != null && !postcodeData.isEmpty()) {
+                                for (RoadPostcodeData postcode : postcodeData) {
+                                    if (postcode.getPostCode() != null) {
+                                        Matcher from = houseNumberPattern.matcher(postcode.getHouseNumberFrom());
+                                        Matcher to = houseNumberPattern.matcher(postcode.getHouseNumberTo());
+                                        if (from.find() && to.find()) {
+                                            int fromNumber = Integer.parseInt(from.group(1));
+                                            int toNumber = Integer.parseInt(to.group(1));
+                                            if (fromNumber < numberPart && numberPart < toNumber) {
                                                 return postcode.getPostCode();
+                                            } else if (fromNumber == numberPart || numberPart == toNumber) {
+                                                String fromLetter = from.group(2).toLowerCase();
+                                                String toLetter = from.group(2).toLowerCase();
+                                                if ((fromNumber < numberPart || fromLetter.isEmpty() || fromLetter.compareTo(letterPart) <= 0) && (numberPart < toNumber || toLetter.isEmpty() || letterPart.compareTo(toLetter) < 0)) {
+                                                    return postcode.getPostCode();
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                    } else {
-                        Set<RoadPostcodeData> postcodeData = roadData.getPostcodeData();
-                        if (postcodeData != null && !postcodeData.isEmpty()) {
-                            for (RoadPostcodeData postcode : postcodeData) {
-                                if (postcode.getPostCode() != null) {
-                                    return postcode.getPostCode();
+                        } else {
+                            Set<RoadPostcodeData> postcodeData = roadData.getPostcodeData();
+                            if (postcodeData != null && !postcodeData.isEmpty()) {
+                                for (RoadPostcodeData postcode : postcodeData) {
+                                    if (postcode.getPostCode() != null) {
+                                        return postcode.getPostCode();
+                                    }
                                 }
                             }
                         }
