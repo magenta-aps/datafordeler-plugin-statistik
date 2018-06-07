@@ -70,7 +70,7 @@ public abstract class StatisticsService {
 
 
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+          DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);

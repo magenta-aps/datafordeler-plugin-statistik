@@ -57,8 +57,8 @@ public class AddressDataService extends StatisticsService{
     @Autowired
     private CsvMapper csvMapper;
 
-    //@Autowired
-    //private DafoUserManager dafoUserManager;
+    @Autowired
+    private DafoUserManager dafoUserManager;
 
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
@@ -72,33 +72,43 @@ public class AddressDataService extends StatisticsService{
 
     @Override
     protected List<String> getColumnNames() {
-        return null;
+       return  Arrays.asList(new String[]{
+               PNR, FIRST_NAME, MIDDLE_NAME, LAST_NAME, BNR, ROAD_NAME, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, POST_CODE, POST_DISTRICT
+       });
     }
 
     @Override
     protected SessionManager getSessionManager() {
-        return null;
+        return this.sessionManager;
     }
 
     @Override
     protected CsvMapper getCsvMapper() {
-        return null;
+        return this.csvMapper;
     }
 
     @Override
     protected DafoUserManager getDafoUserManager() {
-        return null;
+        return this.dafoUserManager;
     }
 
     @Override
     protected Logger getLogger() {
-        return null;
+        return this.log;
     }
 
 
-    @Override
+
+  /*  @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        HashMap<String, String> item = new HashMap<>();
+        return null;
+    }*/
+
+   // protected Map<String, String> formatSinglePerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+   @Override
+   protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+
+       HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
         for (PersonRegistration registration : person.getRegistrations()) {
@@ -135,11 +145,12 @@ public class AddressDataService extends StatisticsService{
                 }
             }
         }
-        return Collections.singletonList(item);
+        //return Collections.singletonList(item);
+        return item;
     }
 
 
-    public void run() throws IOException {
+    /*public void run() throws IOException {
         String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(inFile))) {
@@ -179,7 +190,7 @@ public class AddressDataService extends StatisticsService{
                 List<PersonEntity> personEntities = QueryManager.getAllEntities(session, query, PersonEntity.class);
 
                 for (PersonEntity personEntity : personEntities) {
-                    items.add(this.formatPerson(personEntity, lookupSession, lookupService, filter));
+                    items.add((Map<String, String>) this.formatPerson(personEntity, lookupSession, lookupService, filter));
                 }
             }
         } finally {
@@ -210,25 +221,18 @@ public class AddressDataService extends StatisticsService{
         SequenceWriter writer = null;
 
         String outputDescription = "";
-        //if (isFileOn) {
-        //Get current date time
+
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
         String formatDateTime = now.format(formatter);
 
         if (PATH_FILE != null) {
             System.out.println(PATH_FILE);
-            File file = new File(PATH_FILE, /*serviceName.name().toLowerCase()*/ "foo" + "_" + formatDateTime.toString() + ".csv");
+            File file = new File(PATH_FILE, "foo" + "_" + formatDateTime.toString() + ".csv");
             file.createNewFile();
             writer = writerobj.writeValues(file);
             outputDescription = "Written to file " + file.getCanonicalPath();
         }
-
-        //} else {
-        //writer = writerobj.writeValues(response.getOutputStream());
-        //outputDescription = "Written to response";
-        //}
-
 
         for (Map<String, String> item : items) {
             if (item != null) {
@@ -238,7 +242,7 @@ public class AddressDataService extends StatisticsService{
         writer.close();
 
         System.out.println(outputDescription);
-    }
+    }*/
 
 
 }
