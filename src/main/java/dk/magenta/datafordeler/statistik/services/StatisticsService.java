@@ -131,7 +131,8 @@ public abstract class StatisticsService {
         BIRTH,
         DEATH,
         MOVEMENT,
-        STATUS;
+        STATUS,
+        ADDRESS;
     }
 
     public static boolean isFileOn = true;

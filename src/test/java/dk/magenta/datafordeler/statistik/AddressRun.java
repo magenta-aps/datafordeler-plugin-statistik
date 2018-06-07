@@ -55,7 +55,7 @@ public class AddressRun {
     private CsvMapper csvMapper;
 
     @Test
-    public void run() throws IOException {
+    public void writeToFile() throws IOException {
         String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(inFile))) {
