@@ -56,9 +56,10 @@ public class AddressRun {
 
     @Test
     public void run() throws IOException {
-        String inFile = "/home/lars/tmp/foo.txt";
+        //String inFile = "/home/lars/tmp/foo.txt";
+        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
         ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile))) {
+        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
             stream.forEach(pnrs::add);
         }
         System.out.println(pnrs.size() + " pnrs loaded");
