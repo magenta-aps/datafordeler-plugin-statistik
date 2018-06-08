@@ -145,104 +145,10 @@ public class AddressDataService extends StatisticsService{
                 }
             }
         }
-        //return Collections.singletonList(item);
-        return item;
+        return Collections.singletonList(item);
+        //return item;
     }
 
-
-    /*public void run() throws IOException {
-        String inFile = "/home/lars/tmp/foo.txt";
-        ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile))) {
-            stream.forEach(pnrs::add);
-        }
-        System.out.println(pnrs.size() + " pnrs loaded");
-
-        int count = 0;
-        ArrayList<PersonQuery> queries = new ArrayList<>();
-        PersonQuery personQuery = new PersonQuery();
-        for (String pnr : pnrs) {
-            count++;
-            personQuery.addPersonnummer(pnr);
-            if (count >= 1000) {
-                queries.add(personQuery);
-                personQuery = new PersonQuery();
-                count = 0;
-            }
-        }
-        if (count > 0) {
-            queries.add(personQuery);
-        }
-
-
-        Session session = sessionManager.getSessionFactory().openSession();
-        Session lookupSession = sessionManager.getSessionFactory().openSession();
-        LookupService lookupService = new LookupService(lookupSession);
-
-        session.setDefaultReadOnly(true);
-        OffsetDateTime time = OffsetDateTime.now();
-        ArrayList<Map<String, String>> items = new ArrayList<>();
-        Filter filter = new Filter();
-        filter.effectAt = OffsetDateTime.now();
-        try {
-            for (PersonQuery query : queries) {
-                query.setPageSize(1000);
-                List<PersonEntity> personEntities = QueryManager.getAllEntities(session, query, PersonEntity.class);
-
-                for (PersonEntity personEntity : personEntities) {
-                    items.add((Map<String, String>) this.formatPerson(personEntity, lookupSession, lookupService, filter));
-                }
-            }
-        } finally {
-            session.close();
-        }
-
-        CsvSchema.Builder builder = new CsvSchema.Builder();
-        builder.setColumnSeparator(';');
-
-        CsvMapper mapper = this.csvMapper;
-        mapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-        mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_STRINGS, true);
-        mapper.configure(CsvGenerator.Feature.ALWAYS_QUOTE_EMPTY_STRINGS, true);
-
-
-        List<String> keys = Arrays.asList(new String[]{
-                PNR, FIRST_NAME, MIDDLE_NAME, LAST_NAME, BNR, ROAD_NAME, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, POST_CODE, POST_DISTRICT
-        });
-        for (int i = 0; i < keys.size(); i++) {
-            builder.addColumn(new CsvSchema.Column(
-                    i, keys.get(i),
-                    CsvSchema.ColumnType.STRING
-            ));
-        }
-        CsvSchema schema = builder.build().withHeader();
-
-        ObjectWriter writerobj = mapper.writer(schema);
-        SequenceWriter writer = null;
-
-        String outputDescription = "";
-
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-        String formatDateTime = now.format(formatter);
-
-        if (PATH_FILE != null) {
-            System.out.println(PATH_FILE);
-            File file = new File(PATH_FILE, "foo" + "_" + formatDateTime.toString() + ".csv");
-            file.createNewFile();
-            writer = writerobj.writeValues(file);
-            outputDescription = "Written to file " + file.getCanonicalPath();
-        }
-
-        for (Map<String, String> item : items) {
-            if (item != null) {
-                writer.write(item);
-            }
-        }
-        writer.close();
-
-        System.out.println(outputDescription);
-    }*/
 
 
 }

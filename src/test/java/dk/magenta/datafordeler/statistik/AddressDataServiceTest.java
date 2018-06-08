@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik;
 
 
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,9 +40,21 @@ public class AddressDataServiceTest {
     @Test
     public void testService() {
         StatisticsService.isFileOn = true;
+        StatisticsService.isFileUploaded = true;
 
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/address_data/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
-        //Assert.assertEquals(500, response.getStatusCodeValue());
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+
+        Assert.assertEquals(403, response.getStatusCodeValue());
+
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+
+        response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        Assert.assertNull(response.getBody());
+
         System.out.println("Response is: "+response.toString());
 
     }

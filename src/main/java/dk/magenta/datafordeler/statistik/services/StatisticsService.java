@@ -36,10 +36,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -136,6 +133,7 @@ public abstract class StatisticsService {
     }
 
     public static boolean isFileOn = true;
+    public static boolean isFileUploaded = false;
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -258,6 +256,80 @@ public abstract class StatisticsService {
                     System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
+
+                            //-------------New code--------------------------
+                            //-----------------------------------------------
+                                if(isFileUploaded){
+                                    //The name or path of the file must be here
+                                    File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+                                    //String inFile = "/home/lars/tmp/foo.txt";
+                                    ArrayList<String> pnrs = new ArrayList<>();
+                                    try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
+                                        stream.forEach(pnrs::add);
+                                    }
+                                    System.out.println(pnrs.size() + " pnrs loaded");
+
+                                    int count = 0;
+                                    ArrayList<PersonQuery> queries = new ArrayList<>();
+                                    PersonQuery personQuery = new PersonQuery();
+                                    for (String pnr : pnrs) {
+                                        count++;
+                                        personQuery.addPersonnummer(pnr);
+                                        if (count >= 1000) {
+                                            queries.add(personQuery);
+                                            personQuery = new PersonQuery();
+                                            count = 0;
+                                        }
+                                    }
+                                    if (count > 0) {
+                                        queries.add(personQuery);
+                                    }
+
+
+                                    Session session = this.getSessionManager().getSessionFactory().openSession();
+                                    Session lookupSession = this.getSessionManager().getSessionFactory().openSession();
+                                    LookupService lookupService = new LookupService(lookupSession);
+
+                                    session.setDefaultReadOnly(true);
+                                    OffsetDateTime time = OffsetDateTime.now();
+                                    ArrayList<Map<String, String>> items_ = new ArrayList<>();
+                                    Filter filter = new Filter();
+                                    filter.effectAt = OffsetDateTime.now();
+                                    try {
+                                        for (PersonQuery query : queries) {
+                                            query.setPageSize(1000);
+                                            List<PersonEntity> personEntities = QueryManager.getAllEntities(session, query, PersonEntity.class);
+
+                                            for (PersonEntity personEntity : personEntities) {
+                                                items_.add((Map<String, String>) this.formatPerson(personEntity, lookupSession, lookupService, filter));
+                                            }
+                                        }
+                                    } finally {
+                                        session.close();
+                                    }
+
+
+
+                                    writer = writerobj.writeValues(file);
+                                    outputDescription = "Written to file " + file.getCanonicalPath();
+
+                                    for (Map<String, String> item : items_) {
+                                        if (item != null) {
+                                            writer.write(item);
+                                        }
+                                    }
+                                    writer.close();
+
+                                    System.out.println(outputDescription);
+
+                                }
+
+
+
+                                //-----------------------------------------------
+                                //-------------End New code----------------------
+
+
                     writer = writerobj.writeValues(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
                 }
