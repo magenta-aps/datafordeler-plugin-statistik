@@ -82,7 +82,24 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
+        //New code-------------
+        List<PersonQuery> queries;
         try {
+           queries = this.getQueryList(request);
+            for (PersonQuery query : queries) {
+                //here the stream should be placed
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            primarySession.close();
+            secondarySession.close();
+        }
+
+        //New code end-------------
+
+
+       /* try {
             PersonQuery personQuery = this.getQuery(request);
             personQuery.applyFilters(primarySession);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
@@ -104,7 +121,7 @@ public abstract class StatisticsService {
         } finally {
             primarySession.close();
             secondarySession.close();
-        }
+        }*/
     }
 
     protected abstract List<String> getColumnNames();
@@ -291,31 +308,6 @@ public abstract class StatisticsService {
                             //-------------New code--------------------------
                             //-----------------------------------------------
                                 if(isFileUploaded){
-                                    //The name or path of the file must be here
-                                    File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
-                                    //String inFile = "/home/lars/tmp/foo.txt";
-                                    ArrayList<String> pnrs = new ArrayList<>();
-                                    try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
-                                        stream.forEach(pnrs::add);
-                                    }
-                                    System.out.println(pnrs.size() + " pnrs loaded");
-
-                                    int count = 0;
-                                    ArrayList<PersonQuery> queries = new ArrayList<>();
-                                    PersonQuery personQuery = new PersonQuery();
-                                    for (String pnr : pnrs) {
-                                        count++;
-                                        personQuery.addPersonnummer(pnr);
-                                        if (count >= 1000) {
-                                            queries.add(personQuery);
-                                            personQuery = new PersonQuery();
-                                            count = 0;
-                                        }
-                                    }
-                                    if (count > 0) {
-                                        queries.add(personQuery);
-                                    }
-
 
                                     Session session = this.getSessionManager().getSessionFactory().openSession();
                                     Session lookupSession = this.getSessionManager().getSessionFactory().openSession();
@@ -339,23 +331,7 @@ public abstract class StatisticsService {
                                         session.close();
                                     }
 
-
-
-                                    writer = writerobj.writeValues(file);
-                                    outputDescription = "Written to file " + file.getCanonicalPath();
-
-                                    for (Map<String, String> item : items_) {
-                                        if (item != null) {
-                                            writer.write(item);
-                                        }
-                                    }
-                                    writer.close();
-
-                                    System.out.println(outputDescription);
-
                                 }
-
-
 
                                 //-----------------------------------------------
                                 //-------------End New code----------------------
