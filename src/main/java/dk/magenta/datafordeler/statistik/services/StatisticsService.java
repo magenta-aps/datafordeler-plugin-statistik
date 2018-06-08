@@ -219,6 +219,37 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
+    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
+        //The name or path of the file must be here
+        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+        //String inFile = "/home/lars/tmp/foo.txt";
+        ArrayList<String> pnrs = new ArrayList<>();
+        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
+            stream.forEach(pnrs::add);
+        }
+        System.out.println(pnrs.size() + " pnrs loaded");
+
+        int count = 0;
+        ArrayList<PersonQuery> queries = new ArrayList<>();
+        PersonQuery personQuery = new PersonQuery();
+        for (String pnr : pnrs) {
+            count++;
+            personQuery.addPersonnummer(pnr);
+            if (count >= 1000) {
+                queries.add(personQuery);
+                personQuery = new PersonQuery();
+                count = 0;
+            }
+        }
+        if (count > 0) {
+            queries.add(personQuery);
+        }
+
+        return queries;
+    }
+
+
+
     protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
