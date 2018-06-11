@@ -25,10 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 
 /*Created by Efrin 06-04-2018*/
@@ -101,6 +105,48 @@ public class BirthDataService extends StatisticsService {
     protected PersonQuery getQuery(HttpServletRequest request) {
         return new PersonBirthQuery(request);
     }
+
+
+
+/*
+    //---
+    @Override
+    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
+        //The name or path of the file must be here
+        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+        //String inFile = "/home/lars/tmp/foo.txt";
+        ArrayList<String> pnrs = new ArrayList<>();
+        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
+            stream.forEach(pnrs::add);
+        }
+        System.out.println(pnrs.size() + " pnrs loaded");
+
+        int count = 0;
+        ArrayList<PersonQuery> queries = new ArrayList<>();
+        PersonQuery personQuery = new PersonQuery();
+        for (String pnr : pnrs) {
+            count++;
+            personQuery.addPersonnummer(pnr);
+            //TODO: What's the rationale behind this if condition? the 1000 is related to ?
+            if (count >= 1000) {
+                queries.add(personQuery);
+                personQuery = new PersonQuery();
+                count = 0;
+            }
+
+        }
+        if (count > 0) {
+            queries.add(personQuery);
+        }
+
+        return queries;
+    }
+
+*/
+
+
+    //---
+
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {

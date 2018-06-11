@@ -86,28 +86,35 @@ public abstract class StatisticsService {
         List<PersonQuery> queries;
         try {
            queries = this.getQueryList(request);
+           Stream concatenation = null;
             Stream<PersonEntity> personEntities = null;
-            Stream<PersonEntity> concatenation = null;
+
             for (PersonQuery query : queries) {
                 //here the stream should be placed
                   personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                System.out.println("Content of personEntities: "+personEntities.toArray().length);
-                  //There most be a concatenation mechanism
+                   //There most be a concatenation mechanism
 
             }
+            if (concatenation == null) {
+                concatenation = personEntities;
+            } else {
+                concatenation = Stream.concat(concatenation, personEntities);
+            }
+           // concatenation = (null) ? personEntities : Stream.concat(concatenation, personEntities);
 
-           /* final Counter counter = new Counter();
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
-                counter.count++;
-                if (counter.count > 100) {
-                    primarySession.clear();
-                    secondarySession.clear();
-                    counter.count = 0;
-                }
-            });
-            if (written == 0) {
-                response.sendError(HttpStatus.NO_CONTENT.value());
-            }*/
+            if (concatenation != null) { final Counter counter = new Counter();
+                int written = this.writeItems(this.formatItems(concatenation, secondarySession, filter), response, serviceName, item -> {
+                    counter.count++;
+                    if (counter.count > 100) {
+                        primarySession.clear();
+                        secondarySession.clear();
+                        counter.count = 0;
+                    }
+                });
+                if (written == 0) {
+                    response.sendError(HttpStatus.NO_CONTENT.value());
+                }}
+
 
 
         } catch (Exception e) {
@@ -145,7 +152,9 @@ public abstract class StatisticsService {
     }
 
     public static boolean isFileOn = true;
-    public static boolean isFileUploaded = false;
+   //TODO: is the person living in Greenland?
+    //TODO: how can control the deletion of the file? could it be with an expiration date flag?
+    //TODO: Can limit the IP address in order to access the endpoints?
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -232,35 +241,8 @@ public abstract class StatisticsService {
     }
 
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
-        //The name or path of the file must be here
-        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
-        //String inFile = "/home/lars/tmp/foo.txt";
-        ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
-            stream.forEach(pnrs::add);
-        }
-        System.out.println(pnrs.size() + " pnrs loaded");
-
-        int count = 0;
-        ArrayList<PersonQuery> queries = new ArrayList<>();
-        PersonQuery personQuery = new PersonQuery();
-        for (String pnr : pnrs) {
-            count++;
-            personQuery.addPersonnummer(pnr);
-            if (count >= 1000) {
-                queries.add(personQuery);
-                personQuery = new PersonQuery();
-                count = 0;
-            }
-        }
-        if (count > 0) {
-            queries.add(personQuery);
-        }
-
-        return queries;
+        return Collections.singletonList(this.getQuery(request));
     }
-
-
 
     protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
