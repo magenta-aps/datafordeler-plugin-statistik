@@ -98,13 +98,6 @@ public class AddressDataService extends StatisticsService{
     }
 
 
-
-  /*  @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        return null;
-    }*/
-
-   // protected Map<String, String> formatSinglePerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
    @Override
    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
 
@@ -146,7 +139,6 @@ public class AddressDataService extends StatisticsService{
             }
         }
         return Collections.singletonList(item);
-        //return item;
     }
 
 

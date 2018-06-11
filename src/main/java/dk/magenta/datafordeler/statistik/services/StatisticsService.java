@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -91,31 +91,12 @@ public abstract class StatisticsService {
             for (PersonQuery query : queries) {
                 //here the stream should be placed
                   personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                System.out.println("Count entities : "+personEntities.count());
+                System.out.println("Content of personEntities: "+personEntities.toArray().length);
                   //There most be a concatenation mechanism
-
 
             }
 
-            personEntities.forEach(System.out::println);
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            primarySession.close();
-            secondarySession.close();
-        }
-
-        //New code end-------------
-
-
-       /* try {
-            PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primarySession);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
-
-            final Counter counter = new Counter();
+           /* final Counter counter = new Counter();
             int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
                 counter.count++;
                 if (counter.count > 100) {
@@ -126,13 +107,16 @@ public abstract class StatisticsService {
             });
             if (written == 0) {
                 response.sendError(HttpStatus.NO_CONTENT.value());
-            }
+            }*/
+
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             primarySession.close();
             secondarySession.close();
-        }*/
+        }
+
     }
 
     protected abstract List<String> getColumnNames();
@@ -315,39 +299,6 @@ public abstract class StatisticsService {
                     System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
-
-                            //-------------New code--------------------------
-                            //-----------------------------------------------
-  /*                              if(isFileUploaded){
-
-                                    Session session = this.getSessionManager().getSessionFactory().openSession();
-                                    Session lookupSession = this.getSessionManager().getSessionFactory().openSession();
-                                    LookupService lookupService = new LookupService(lookupSession);
-
-                                    session.setDefaultReadOnly(true);
-                                    OffsetDateTime time = OffsetDateTime.now();
-                                    ArrayList<Map<String, String>> items_ = new ArrayList<>();
-                                    Filter filter = new Filter();
-                                    filter.effectAt = OffsetDateTime.now();
-                                    try {
-                                        for (PersonQuery query : queries) {
-                                            query.setPageSize(1000);
-                                            List<PersonEntity> personEntities = QueryManager.getAllEntities(session, query, PersonEntity.class);
-
-                                            for (PersonEntity personEntity : personEntities) {
-                                                items_.add((Map<String, String>) this.formatPerson(personEntity, lookupSession, lookupService, filter));
-                                            }
-                                        }
-                                    } finally {
-                                        session.close();
-                                    }
-
-                                }
-*/
-                                //-----------------------------------------------
-                                //-------------End New code----------------------
-
-
                     writer = writerobj.writeValues(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
                 }
