@@ -86,9 +86,20 @@ public abstract class StatisticsService {
         List<PersonQuery> queries;
         try {
            queries = this.getQueryList(request);
+            Stream<PersonEntity> personEntities = null;
+            Stream<PersonEntity> concatenation = null;
             for (PersonQuery query : queries) {
                 //here the stream should be placed
+                  personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                System.out.println("Count entities : "+personEntities.count());
+                  //There most be a concatenation mechanism
+
+
             }
+
+            personEntities.forEach(System.out::println);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -307,7 +318,7 @@ public abstract class StatisticsService {
 
                             //-------------New code--------------------------
                             //-----------------------------------------------
-                                if(isFileUploaded){
+  /*                              if(isFileUploaded){
 
                                     Session session = this.getSessionManager().getSessionFactory().openSession();
                                     Session lookupSession = this.getSessionManager().getSessionFactory().openSession();
@@ -332,7 +343,7 @@ public abstract class StatisticsService {
                                     }
 
                                 }
-
+*/
                                 //-----------------------------------------------
                                 //-------------End New code----------------------
 
