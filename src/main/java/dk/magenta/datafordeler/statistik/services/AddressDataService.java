@@ -1,14 +1,8 @@
 package dk.magenta.datafordeler.statistik.services;
 
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SequenceWriter;
-import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
@@ -33,11 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -62,10 +52,10 @@ public class AddressDataService extends StatisticsService{
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
-    @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response)
+    @RequestMapping(method = RequestMethod.POST, path = "/")
+    public void handleRequest(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-        super.get(request, response, ServiceName.ADDRESS);
+        super.handleRequest(request, response, ServiceName.ADDRESS);
     }
 
 
@@ -99,12 +89,15 @@ public class AddressDataService extends StatisticsService{
 
     @Override
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
-        //The name or path of the file must be here
-        //File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+
         String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
         InputStream testInput = AddressDataService.class.getResourceAsStream("/addressInput.csv");
         Stream<String> stream = new BufferedReader(new InputStreamReader(testInput)).lines();
+
+        // TODO: Replace the above with obtaining input from an uploaded file in the POST request
+        // This means obtaining a Part from the request object (looping through request.getParts()),
+        // finding the correct one (likely based on name), and reading the part.getInputStream() into our stream object
 
         try {
             stream.forEach(pnrs::add);
@@ -120,15 +113,14 @@ public class AddressDataService extends StatisticsService{
         for (String pnr : pnrs) {
             count++;
             personQuery.addPersonnummer(pnr);
-            //TODO: What's the rationale behind this if condition? the 1000 is related to ?
+            // The database complains when there's more that 2100 values in a comparison list,
+            // so split the query into chucks of a reasonable size. 1000 is chosen.
             if (count >= 1000) {
                 queries.add(personQuery);
                 personQuery = new PersonQuery();
                 count = 0;
             }
-
         }
-
         if (count > 0) {
             queries.add(personQuery);
         }

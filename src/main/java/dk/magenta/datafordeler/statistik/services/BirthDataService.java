@@ -25,14 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Stream;
 
 
 /*Created by Efrin 06-04-2018*/
@@ -60,9 +56,9 @@ public class BirthDataService extends StatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
+    public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-        super.get(request, response, ServiceName.BIRTH);
+        super.handleRequest(request, response, ServiceName.BIRTH);
     }
 
     private static final String OWN_PREFIX = "B_";
@@ -116,7 +112,7 @@ public class BirthDataService extends StatisticsService {
         File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
         //String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
+        try (Stream<String> stream = Files.lines(Paths.handleRequest(inFile.toString()))) {
             stream.forEach(pnrs::add);
         }
         System.out.println(pnrs.size() + " pnrs loaded");

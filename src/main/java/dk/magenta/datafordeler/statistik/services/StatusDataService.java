@@ -1,6 +1,5 @@
 package dk.magenta.datafordeler.statistik.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -53,9 +52,9 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
+    public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response, ServiceName.STATUS);
+        super.handleRequest(request, response, ServiceName.STATUS);
     }
 
     @Override

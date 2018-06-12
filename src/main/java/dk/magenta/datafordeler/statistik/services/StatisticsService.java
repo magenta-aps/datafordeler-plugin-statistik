@@ -63,7 +63,7 @@ public abstract class StatisticsService {
     }
 
 
-    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
