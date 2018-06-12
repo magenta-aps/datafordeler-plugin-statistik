@@ -92,18 +92,16 @@ public abstract class StatisticsService {
             for (PersonQuery query : queries) {
                 //here the stream should be placed
                   personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                   //There most be a concatenation mechanism
-
-            }
-            if (concatenation == null) {
+                 /*   if (concatenation == null) {
                 concatenation = personEntities;
             } else {
                 concatenation = Stream.concat(concatenation, personEntities);
+            }*/
+                // concatenation = (null) ? personEntities : Stream.concat(concatenation, personEntities);
             }
-           // concatenation = (null) ? personEntities : Stream.concat(concatenation, personEntities);
 
-            if (concatenation != null) { final Counter counter = new Counter();
-                int written = this.writeItems(this.formatItems(concatenation, secondarySession, filter), response, serviceName, item -> {
+            if (personEntities != null) { final Counter counter = new Counter();
+                int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
                     counter.count++;
                     if (counter.count > 100) {
                         primarySession.clear();

@@ -101,7 +101,8 @@ public class AddressDataService extends StatisticsService{
     @Override
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
         //The name or path of the file must be here
-        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+        //File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Documents\\GitHub\\datafordeler\\plugin\\statistik\\src\\test\\resources\\bornperson.txt");
         //String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
         try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
@@ -123,6 +124,7 @@ public class AddressDataService extends StatisticsService{
             }
 
         }
+
         if (count > 0) {
             queries.add(personQuery);
         }
