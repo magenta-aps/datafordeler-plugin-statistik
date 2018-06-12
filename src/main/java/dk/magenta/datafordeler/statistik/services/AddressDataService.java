@@ -32,8 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -102,11 +101,16 @@ public class AddressDataService extends StatisticsService{
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
         //The name or path of the file must be here
         //File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
-        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Documents\\GitHub\\datafordeler\\plugin\\statistik\\src\\test\\resources\\bornperson.txt");
-        //String inFile = "/home/lars/tmp/foo.txt";
+        String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
+        InputStream testInput = AddressDataService.class.getResourceAsStream("/addressInput.csv");
+        Stream<String> stream = new BufferedReader(new InputStreamReader(testInput)).lines();
+
+        try {
             stream.forEach(pnrs::add);
+        } finally {
+            stream.close();
+            testInput.close();
         }
         System.out.println(pnrs.size() + " pnrs loaded");
 
@@ -142,9 +146,10 @@ public class AddressDataService extends StatisticsService{
 
        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
+        OffsetDateTime effectTime = filter.effectAt;
 
         for (PersonRegistration registration : person.getRegistrations()) {
-            for (PersonEffect effect : registration.getEffectsAt(filter.effectAt)) {
+            for (PersonEffect effect : effectTime != null ? registration.getEffectsAt(effectTime) : registration.getEffects()) {
                 for (PersonBaseData baseData : effect.getDataItems()) {
                     PersonAddressData addressData = baseData.getAddress();
                     if (addressData != null) {
@@ -180,6 +185,12 @@ public class AddressDataService extends StatisticsService{
         return Collections.singletonList(item);
     }
 
+    @Override
+    protected Filter getFilter(HttpServletRequest request) {
+        Filter filter = super.getFilter(request);
+        filter.effectAt = OffsetDateTime.now();
+        return filter;
+    }
 
 
 }

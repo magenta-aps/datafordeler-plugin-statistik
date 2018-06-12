@@ -65,9 +65,8 @@ public abstract class StatisticsService {
 
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
-
         // Check that the user has access to CPR data
-          DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
@@ -82,7 +81,6 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
-        //New code-------------
         List<PersonQuery> queries;
         try {
            queries = this.getQueryList(request);
@@ -90,17 +88,12 @@ public abstract class StatisticsService {
             Stream<PersonEntity> personEntities = null;
 
             for (PersonQuery query : queries) {
-                //here the stream should be placed
-                  personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                 /*   if (concatenation == null) {
-                concatenation = personEntities;
-            } else {
-                concatenation = Stream.concat(concatenation, personEntities);
-            }*/
-                // concatenation = (null) ? personEntities : Stream.concat(concatenation, personEntities);
+                personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                concatenation = (concatenation == null) ? personEntities : Stream.concat(concatenation, personEntities);
             }
 
-            if (personEntities != null) { final Counter counter = new Counter();
+            if (personEntities != null) {
+                final Counter counter = new Counter();
                 int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
                     counter.count++;
                     if (counter.count > 100) {
@@ -111,9 +104,8 @@ public abstract class StatisticsService {
                 });
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
-                }}
-
-
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
