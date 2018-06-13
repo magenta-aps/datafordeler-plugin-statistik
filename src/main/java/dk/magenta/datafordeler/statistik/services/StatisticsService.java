@@ -6,14 +6,19 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.arearestriction.AreaRestriction;
+import dk.magenta.datafordeler.core.arearestriction.AreaRestrictionType;
 import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.core.plugin.AreaRestrictionDefinition;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprAreaRestrictionDefinition;
+import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -33,10 +38,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -61,6 +63,8 @@ public abstract class StatisticsService {
     protected String[] requiredParameters() {
         return new String[]{};
     }
+    
+    protected abstract CprPlugin getCprPlugin();
 
     protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
@@ -82,6 +86,7 @@ public abstract class StatisticsService {
 
         try {
             PersonQuery personQuery = this.getQuery(request);
+            this.applyAreaRestrictionsToQuery(personQuery, user);
             personQuery.applyFilters(primarySession);
             Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
 
@@ -339,6 +344,17 @@ public abstract class StatisticsService {
     }
 
     public final EffectComparator<PersonEffect> personComparator = new EffectComparator<PersonEffect>();
+
+    protected void applyAreaRestrictionsToQuery(PersonQuery query, DafoUserDetails user) throws InvalidClientInputException {
+        Collection<AreaRestriction> restrictions = user.getAreaRestrictionsForRole(CprRolesDefinition.READ_CPR_ROLE);
+        AreaRestrictionDefinition areaRestrictionDefinition = this.getCprPlugin().getAreaRestrictionDefinition();
+        AreaRestrictionType municipalityType = areaRestrictionDefinition.getAreaRestrictionTypeByName(CprAreaRestrictionDefinition.RESTRICTIONTYPE_KOMMUNEKODER);
+        for (AreaRestriction restriction : restrictions) {
+            if (restriction.getType() == municipalityType) {
+                query.addKommunekodeRestriction(restriction.getValue());
+            }
+        }
+    }
 
 }
 
