@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.ListHashMap;
+import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -49,7 +50,15 @@ public class StatusDataService extends StatisticsService {
     @Autowired
     private DafoUserManager dafoUserManager;
 
+    @Autowired
+    private CprPlugin cprPlugin;
+
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
+
+    @Override
+    protected CprPlugin getCprPlugin() {
+        return this.cprPlugin;
+    }
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
