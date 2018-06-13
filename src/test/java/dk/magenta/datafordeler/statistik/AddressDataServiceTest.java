@@ -50,14 +50,10 @@ public class AddressDataServiceTest {
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        MultiValueMap<String,Object> form=new LinkedMultiValueMap<String,Object>();
+        MultiValueMap<String,Object> form = new LinkedMultiValueMap<String,Object>();
         form.add("file", new InputStreamResource(AddressDataServiceTest.class.getResourceAsStream("/addressInput.csv")));
-        HttpEntity requestEntity = new HttpEntity(form, new HttpHeaders());
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
         Assert.assertNull(response.getBody());
-
-        System.out.println("Response is: "+response.toString());
-
     }
 }
