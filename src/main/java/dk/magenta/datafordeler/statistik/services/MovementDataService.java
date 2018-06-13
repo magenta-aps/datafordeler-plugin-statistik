@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -48,6 +49,9 @@ public class MovementDataService extends StatisticsService {
 
     @Autowired
     private DafoUserManager dafoUserManager;
+
+    @Autowired
+    private CprPlugin cprPlugin;
 
     private Logger log = LoggerFactory.getLogger(DeathDataService.class);
 
@@ -91,6 +95,11 @@ public class MovementDataService extends StatisticsService {
 
     protected String[] requiredParameters() {
         return new String[]{"registrationAfter"};
+    }
+
+    @Override
+    protected CprPlugin getCprPlugin() {
+        return this.cprPlugin;
     }
 
     @Override
