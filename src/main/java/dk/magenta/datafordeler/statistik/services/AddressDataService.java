@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
@@ -49,6 +50,9 @@ public class AddressDataService extends StatisticsService{
     @Autowired
     private DafoUserManager dafoUserManager;
 
+    @Autowired
+    private CprPlugin cprPlugin;
+
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
@@ -58,6 +62,11 @@ public class AddressDataService extends StatisticsService{
         super.handleRequest(request, response, ServiceName.ADDRESS);
     }
 
+
+    @Override
+    protected CprPlugin getCprPlugin() {
+        return this.cprPlugin;
+    }
 
     @Override
     protected List<String> getColumnNames() {
