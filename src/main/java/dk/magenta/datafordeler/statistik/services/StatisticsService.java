@@ -256,7 +256,6 @@ public abstract class StatisticsService {
                 String formatDateTime = now.format(formatter);
 
                 if (PATH_FILE != null) {
-                    System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
                     writer = writerobj.writeValues(file);

@@ -113,7 +113,6 @@ public class BirthDataService extends StatisticsService {
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        System.out.println("formatPerson");
 
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
@@ -143,7 +142,6 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-        System.out.println("earliestProdDate: "+earliestProdDate);
         if (
                 earliestProdDate == null ||
                 (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
