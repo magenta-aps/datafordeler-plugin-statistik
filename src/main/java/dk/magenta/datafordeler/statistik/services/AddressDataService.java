@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
@@ -17,6 +18,7 @@ import dk.magenta.datafordeler.cpr.data.person.data.PersonNameData;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
+import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +58,28 @@ public class AddressDataService extends StatisticsService{
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
+    @Override
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+        String formToken = request.getParameter("token");
+        if (formToken != null) {
+            return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+        }
+        return super.getUser(request);
+    }
+
     @RequestMapping(method = RequestMethod.POST, path = "/")
-    public void handleRequest(HttpServletRequest request, HttpServletResponse response)
+    public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         super.handleRequest(request, response, ServiceName.ADDRESS);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void handleGet(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+        IOUtils.copy(
+                AddressDataService.class.getResourceAsStream("/addressServiceForm.html"),
+                response.getWriter()
+        );
     }
 
 
@@ -95,11 +115,9 @@ public class AddressDataService extends StatisticsService{
         return this.log;
     }
 
-
     @Override
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
 
-        String inFile = "/home/lars/tmp/foo.txt";
         ArrayList<String> pnrs = new ArrayList<>();
         InputStream testInput = AddressDataService.class.getResourceAsStream("/addressInput.csv");
         Stream<String> stream = new BufferedReader(new InputStreamReader(testInput)).lines();

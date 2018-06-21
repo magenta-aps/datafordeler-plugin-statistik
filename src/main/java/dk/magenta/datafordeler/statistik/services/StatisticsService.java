@@ -28,6 +28,7 @@ import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,10 +67,14 @@ public abstract class StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+        return this.getDafoUserManager().getUserFromRequest(request);
+    }
+
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
