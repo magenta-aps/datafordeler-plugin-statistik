@@ -57,6 +57,11 @@ public class StatusDataService extends StatisticsService {
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);
 
     @Override
+    protected String[] requiredParameters() {
+        return new String[]{StatisticsService.EFFECT_DATE_PARAMETER};
+    }
+
+    @Override
     protected CprPlugin getCprPlugin() {
         return this.cprPlugin;
     }
