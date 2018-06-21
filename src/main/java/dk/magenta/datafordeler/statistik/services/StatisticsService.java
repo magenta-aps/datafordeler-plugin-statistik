@@ -252,7 +252,6 @@ public abstract class StatisticsService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
                 String formatDateTime = now.format(formatter);
                 if (PATH_FILE != null) {
-                    System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
                     writer = writerobj.writeValues(file);

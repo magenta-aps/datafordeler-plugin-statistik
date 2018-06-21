@@ -2,16 +2,9 @@ package dk.magenta.datafordeler.statistik.queries;
 
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
-import dk.magenta.datafordeler.core.database.Registration;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonBirthData;
 
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-
-import static dk.magenta.datafordeler.statistik.services.StatisticsService.cprDataOffset;
 
 public class PersonBirthQuery extends PersonStatisticsQuery {
 
