@@ -127,7 +127,7 @@ public class AddressRun {
         SequenceWriter writer = null;
 
         String outputDescription = "";
-        //if (isFileOn) {
+        //if (getWriteToLocalFile) {
             //Get current date time
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");

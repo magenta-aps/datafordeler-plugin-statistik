@@ -13,7 +13,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +34,9 @@ public class AddressDataServiceTest {
     @Autowired
     private PersonTestsUtils testsUtils;
 
+    @Autowired
+    private AddressDataService addressDataService;
+
     TestUserDetails testUserDetails;
     @Before
     public void initialize() throws Exception {
@@ -45,7 +47,7 @@ public class AddressDataServiceTest {
 
     @Test
     public void testService() {
-        StatisticsService.isFileOn = true;
+        addressDataService.setWriteToLocalFile(false);
 
         testUserDetails = new TestUserDetails();
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
@@ -58,6 +60,7 @@ public class AddressDataServiceTest {
         form.add("file", new InputStreamResource(AddressDataServiceTest.class.getResourceAsStream("/addressInput.csv")));
 
         response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
-        Assert.assertNull(response.getBody());
+        Assert.assertEquals("\"Pnr\";\"Fornavn\";\"Mellemnavn\";\"Efternavn\";\"Bnr\";\"VejNavn\";\"HusNr\";\"Etage\";\"SideDoer\";\"Postnr\";\"PostDistrikt\"\n" +
+                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";;\"5\";\"1\";\"tv\";\"0\";\n", response.getBody());
     }
 }
