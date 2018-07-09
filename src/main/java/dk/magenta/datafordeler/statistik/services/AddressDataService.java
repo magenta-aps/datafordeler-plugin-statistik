@@ -27,11 +27,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 import java.io.*;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @RestController
@@ -115,41 +118,54 @@ public class AddressDataService extends StatisticsService{
         return this.log;
     }
 
+    private static Pattern numeric = Pattern.compile("\\d+");
+
     @Override
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
 
-        ArrayList<String> pnrs = new ArrayList<>();
-        InputStream testInput = AddressDataService.class.getResourceAsStream("/addressInput.csv");
-        Stream<String> stream = new BufferedReader(new InputStreamReader(testInput)).lines();
-
-        // TODO: Replace the above with obtaining input from an uploaded file in the POST request
-        // This means obtaining a Part from the request object (looping through request.getParts()),
-        // finding the correct one (likely based on name), and reading the part.getInputStream() into our stream object
-
-        try {
-            stream.forEach(pnrs::add);
-        } finally {
-            stream.close();
-            testInput.close();
-        }
-        System.out.println(pnrs.size() + " pnrs loaded");
-
-        int count = 0;
+        InputStream inputStream = null;
         ArrayList<PersonQuery> queries = new ArrayList<>();
-        PersonQuery personQuery = new PersonQuery();
-        for (String pnr : pnrs) {
-            count++;
-            personQuery.addPersonnummer(pnr);
-            // The database complains when there's more that 2100 values in a comparison list,
-            // so split the query into chucks of a reasonable size. 1000 is chosen.
-            if (count >= 1000) {
-                queries.add(personQuery);
-                personQuery = new PersonQuery();
-                count = 0;
+
+        String fieldName = "file"; // Matches the file field in addressServiceForm.html
+        try {
+            Part filePart = request.getPart(fieldName);
+            if (filePart != null) {
+                inputStream = filePart.getInputStream();
             }
+        } catch (ServletException e) {
+            e.printStackTrace();
         }
-        if (count > 0) {
-            queries.add(personQuery);
+        if (inputStream != null) {
+
+            ArrayList<String> pnrs = new ArrayList<>();
+            Stream<String> stream = new BufferedReader(new InputStreamReader(inputStream)).lines();
+
+            try {
+                stream.forEach(pnrs::add);
+            } finally {
+                stream.close();
+                inputStream.close();
+            }
+
+            int count = 0;
+            PersonQuery personQuery = new PersonQuery();
+            for (String pnr : pnrs) {
+                if (count == 0 && !numeric.matcher(pnr).matches()) {
+                    continue;
+                }
+                count++;
+                personQuery.addPersonnummer(pnr);
+                // The database complains when there's more that 2100 values in a comparison list,
+                // so split the query into chucks of a reasonable size. 1000 is chosen.
+                if (count >= 1000) {
+                    queries.add(personQuery);
+                    personQuery = new PersonQuery();
+                    count = 0;
+                }
+            }
+            if (count > 0) {
+                queries.add(personQuery);
+            }
         }
 
         return queries;
