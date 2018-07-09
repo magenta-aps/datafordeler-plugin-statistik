@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -57,6 +58,11 @@ public class AddressDataService extends StatisticsService{
 
     @Autowired
     private CprPlugin cprPlugin;
+
+    @PostConstruct
+    public void init() {
+        this.setWriteToLocalFile(false);
+    }
 
 
     private Logger log = LoggerFactory.getLogger(BirthDataService.class);

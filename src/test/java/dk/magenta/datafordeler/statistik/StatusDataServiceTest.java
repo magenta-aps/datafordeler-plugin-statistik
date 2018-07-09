@@ -4,7 +4,7 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
-import org.apache.commons.io.FilenameUtils;
+import dk.magenta.datafordeler.statistik.services.StatusDataService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,11 +22,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -38,6 +34,9 @@ public class StatusDataServiceTest {
 
     @Autowired
     private PersonTestsUtils testsUtils;
+
+    @Autowired
+    private StatusDataService statusDataService;
 
     TestUserDetails testUserDetails;
 
@@ -56,7 +55,7 @@ public class StatusDataServiceTest {
 
     @Test
     public void testStatusDataService() {
-        StatisticsService.isFileOn = false;
+        statusDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-16", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
@@ -76,7 +75,7 @@ public class StatusDataServiceTest {
 
     @Test
     public void testFileOutput() throws IOException {
-        StatisticsService.isFileOn = true;
+        statusDataService.setWriteToLocalFile(true);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-05-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());

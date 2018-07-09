@@ -22,10 +22,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -37,6 +34,9 @@ public class MovementDataServiceTest {
 
     @Autowired
     private PersonTestsUtils testsUtils;
+
+    @Autowired
+    private MovementDataService movementDataService;
 
     /*@Before
     public void initialize() throws Exception {
@@ -59,7 +59,7 @@ public class MovementDataServiceTest {
 
     @Test
     public void testService() throws Exception {
-        StatisticsService.isFileOn = false;
+        movementDataService.setWriteToLocalFile(false);
         TestUserDetails testUserDetails = new TestUserDetails();
 
         HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
@@ -83,7 +83,7 @@ public class MovementDataServiceTest {
 
     @Test
     public void testFileOutput() throws IOException {
-        StatisticsService.isFileOn = true;
+        movementDataService.setWriteToLocalFile(true);
 
         TestUserDetails testUserDetails = new TestUserDetails();
 

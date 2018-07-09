@@ -28,7 +28,6 @@ import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -147,8 +146,16 @@ public abstract class StatisticsService {
         ADDRESS;
     }
 
-    public static boolean isFileOn = true;
-   //TODO: is the person living in Greenland?
+    private boolean writeToLocalFile = true;
+
+    public void setWriteToLocalFile(boolean writeToLocalFile) {
+        this.writeToLocalFile = writeToLocalFile;
+    }
+
+    public boolean getWriteToLocalFile() {
+        return this.writeToLocalFile;
+    }
+    //TODO: is the person living in Greenland?
     //TODO: how can control the deletion of the file? could it be with an expiration date flag?
     //TODO: Can limit the IP address in order to access the endpoints?
 
@@ -273,7 +280,7 @@ public abstract class StatisticsService {
              * ../statistik/status/status_timestamp.csv
              * ../statistik/movement/movement_timestamp.csv  */
 
-            if (isFileOn) {
+            if (this.getWriteToLocalFile()) {
                 //Get current date time
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
