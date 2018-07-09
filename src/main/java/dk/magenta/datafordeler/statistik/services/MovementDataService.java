@@ -1,11 +1,9 @@
 package dk.magenta.datafordeler.statistik.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
@@ -59,7 +57,7 @@ public class MovementDataService extends StatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getMovement(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
-        super.get(request, response, ServiceName.MOVEMENT);
+        super.handleRequest(request, response, ServiceName.MOVEMENT);
     }
 
     @Override
@@ -224,7 +222,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentForeignAddress.getAuthority()));
                         item.put(MOVE_DATE, current.format(dmyFormatter));
                         if (registrations.containsKey(current)) {
-                            item.put(PROD_DATE, registrations.get(current).format(dmyFormatter));
+                            item.put(PROD_DATE, registrations.handleRequest(current).format(dmyFormatter));
                         }
                     }*/
                     if (currentAddress instanceof PersonEmigrationData) {

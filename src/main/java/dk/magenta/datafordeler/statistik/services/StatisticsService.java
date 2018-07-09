@@ -28,6 +28,7 @@ import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,10 +67,13 @@ public abstract class StatisticsService {
     
     protected abstract CprPlugin getCprPlugin();
 
-    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+        return this.getDafoUserManager().getUserFromRequest(request);
+    }
+    
+    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
@@ -84,30 +88,40 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
+        List<PersonQuery> queries;
         try {
-            PersonQuery personQuery = this.getQuery(request);
-            this.applyAreaRestrictionsToQuery(personQuery, user);
-            personQuery.applyFilters(primarySession);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
+           queries = this.getQueryList(request);
+           Stream concatenation = null;
+            Stream<PersonEntity> personEntities = null;
 
-            final Counter counter = new Counter();
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
-                counter.count++;
-                if (counter.count > 100) {
-                    primarySession.clear();
-                    secondarySession.clear();
-                    counter.count = 0;
-                }
-            });
-            if (written == 0) {
-                response.sendError(HttpStatus.NO_CONTENT.value());
+            for (PersonQuery query : queries) {
+                this.applyAreaRestrictionsToQuery(query, user);
+                personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                concatenation = (concatenation == null) ? personEntities : Stream.concat(concatenation, personEntities);
             }
+
+            if (personEntities != null) {
+                final Counter counter = new Counter();
+                int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
+                    counter.count++;
+                    if (counter.count > 100) {
+                        primarySession.clear();
+                        secondarySession.clear();
+                        counter.count = 0;
+                    }
+                });
+                if (written == 0) {
+                    response.sendError(HttpStatus.NO_CONTENT.value());
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             primarySession.close();
             secondarySession.close();
         }
+
     }
 
     protected abstract List<String> getColumnNames();
@@ -130,10 +144,14 @@ public abstract class StatisticsService {
         BIRTH,
         DEATH,
         MOVEMENT,
-        STATUS;
+        STATUS,
+        ADDRESS;
     }
 
     public static boolean isFileOn = true;
+   //TODO: is the person living in Greenland?
+    //TODO: how can control the deletion of the file? could it be with an expiration date flag?
+    //TODO: Can limit the IP address in order to access the endpoints?
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -150,6 +168,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
     public static final String FIRST_NAME = "Fornavn";
+    public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
     public static final String STATUS_CODE = "Status";
@@ -165,6 +184,7 @@ public abstract class StatisticsService {
     public static final String LOCALITY_CODE = "LokKode";
     public static final String LOCALITY_ABBREVIATION = "LokKortNavn";
     public static final String ROAD_CODE = "VejKod";
+    public static final String ROAD_NAME = "VejNavn";
     public static final String HOUSE_NUMBER = "HusNr";
     public static final String DOOR_NUMBER = "SideDoer";
     public static final String FLOOR_NUMBER = "Etage";
@@ -172,6 +192,7 @@ public abstract class StatisticsService {
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
     public static final String POST_CODE = "Postnr";
+    public static final String POST_DISTRICT = "PostDistrikt";
     public static final String CHURCH = "Kirke";
 
     public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
@@ -213,6 +234,10 @@ public abstract class StatisticsService {
             personQuery.setEffectTo(livingInGreenlandAtDate);
         }
         return personQuery;
+    }
+
+    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
+        return Collections.singletonList(this.getQuery(request));
     }
 
     protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
