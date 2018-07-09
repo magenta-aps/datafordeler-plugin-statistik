@@ -105,11 +105,7 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
-        try {
-            System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(person));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+
         item.put(PNR, person.getPersonnummer());
 
         OffsetDateTime earliestProdDate = null;

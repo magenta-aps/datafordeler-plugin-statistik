@@ -130,8 +130,9 @@ public class BirthDataService extends StatisticsService {
                     PersonBirthData birthData = data.getBirth();
                     if (birthData != null) {
                         if (birthData.getBirthDatetime() != null) {
-                            if (effect.getEffectFrom() != null && (earliestBirthTime == null || effect.getEffectFrom().isBefore(earliestBirthTime))) {
-                                earliestBirthTime = effect.getEffectFrom();
+                            OffsetDateTime birthDateTime = birthData.getBirthDatetime().atZone(cprDataOffset).toOffsetDateTime();
+                            if (earliestBirthTime == null || birthDateTime.isBefore(earliestBirthTime)) {
+                                earliestBirthTime = birthDateTime;
                             }
                             if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
                                 earliestProdDate = registration.getRegistrationFrom();
@@ -144,7 +145,8 @@ public class BirthDataService extends StatisticsService {
 
         if (
                 earliestProdDate == null ||
-                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
+                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter)) ||
+                (filter.after != null && earliestBirthTime.isBefore(filter.after))
         ) {
             return Collections.emptyList();
         }
