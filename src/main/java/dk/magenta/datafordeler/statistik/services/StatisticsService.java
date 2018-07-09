@@ -91,19 +91,18 @@ public abstract class StatisticsService {
 
         List<PersonQuery> queries;
         try {
-           queries = this.getQueryList(request);
-           Stream concatenation = null;
-            Stream<PersonEntity> personEntities = null;
+            queries = this.getQueryList(request);
+            Stream<PersonEntity> concatenation = null;
 
             for (PersonQuery query : queries) {
                 this.applyAreaRestrictionsToQuery(query, user);
-                personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 concatenation = (concatenation == null) ? personEntities : Stream.concat(concatenation, personEntities);
             }
 
-            if (personEntities != null) {
+            if (concatenation != null) {
                 final Counter counter = new Counter();
-                int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
+                int written = this.writeItems(this.formatItems(concatenation, secondarySession, filter), response, serviceName, item -> {
                     counter.count++;
                     if (counter.count > 100) {
                         primarySession.clear();
