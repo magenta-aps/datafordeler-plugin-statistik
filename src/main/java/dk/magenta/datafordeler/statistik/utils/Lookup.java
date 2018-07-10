@@ -8,4 +8,5 @@ public class Lookup {
     public String localityName = null;
     public int postalCode = 0;
     public String postalDistrict = null;
+    public String bNumber = null;
 }

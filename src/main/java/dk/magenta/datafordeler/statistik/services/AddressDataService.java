@@ -204,7 +204,11 @@ public class AddressDataService extends StatisticsService{
                         item.put(DOOR_NUMBER, addressData.getDoor());
                         item.put(POST_CODE, Integer.toString(lookup.postalCode));
                         item.put(POST_DISTRICT, lookup.postalDistrict);
-                        item.put(BNR, addressData.getBuildingNumber());
+                        String bnr = addressData.getBuildingNumber();
+                        if (bnr == null || bnr.isEmpty()) {
+                            bnr = lookup.bNumber;
+                        }
+                        item.put(BNR, bnr);
 
                         if (lookup.postalCode == 0) {
                             System.out.println("Failed to lookup postalcode on "+addressData.getMunicipalityCode()+"|"+addressData.getRoadCode()+" ("+lookup.roadName+")");
