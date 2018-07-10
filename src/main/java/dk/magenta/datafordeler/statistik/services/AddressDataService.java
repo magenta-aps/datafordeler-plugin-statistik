@@ -125,6 +125,7 @@ public class AddressDataService extends StatisticsService{
     }
 
     private static Pattern numeric = Pattern.compile("\\d+");
+    private static int limit = 1000;
 
     @Override
     protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
@@ -155,6 +156,7 @@ public class AddressDataService extends StatisticsService{
 
             int count = 0;
             PersonQuery personQuery = new PersonQuery();
+            personQuery.setPageSize(limit);
             for (String pnr : pnrs) {
                 if (count == 0 && !numeric.matcher(pnr).matches()) {
                     continue;
@@ -162,10 +164,11 @@ public class AddressDataService extends StatisticsService{
                 count++;
                 personQuery.addPersonnummer(pnr);
                 // The database complains when there's more that 2100 values in a comparison list,
-                // so split the query into chucks of a reasonable size. 1000 is chosen.
-                if (count >= 1000) {
+                // so split the query into chunks of a reasonable size. <limit> is chosen.
+                if (count >= limit) {
                     queries.add(personQuery);
                     personQuery = new PersonQuery();
+                    personQuery.setPageSize(limit);
                     count = 0;
                 }
             }
