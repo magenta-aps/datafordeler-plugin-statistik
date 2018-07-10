@@ -8,6 +8,14 @@ import dk.magenta.datafordeler.cpr.data.road.data.RoadCoreData;
 import dk.magenta.datafordeler.cpr.data.road.data.RoadPostcodeData;
 import dk.magenta.datafordeler.cpr.data.unversioned.PostCode;
 import dk.magenta.datafordeler.cvr.data.unversioned.Municipality;
+import dk.magenta.datafordeler.gladdrreg.data.address.AddressData;
+import dk.magenta.datafordeler.gladdrreg.data.address.AddressEffect;
+import dk.magenta.datafordeler.gladdrreg.data.address.AddressEntity;
+import dk.magenta.datafordeler.gladdrreg.data.address.AddressQuery;
+import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberData;
+import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberEffect;
+import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberEntity;
+import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberQuery;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityData;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEffect;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntity;
@@ -86,6 +94,22 @@ public class LookupService {
                                 }
                             }
                             if (lookup.roadName != null) break;
+                        }
+
+                        AddressEntity addressEntity = this.getAddressGR(session, roadEntity, houseNumber);
+                        if (addressEntity != null) {
+                            BNumberEntity bNumberEntity = this.getBNumberGR(session, addressEntity);
+                            if (bNumberEntity != null) {
+                                for (BNumberEffect bNumberEffect : bNumberEntity.getRegistrationAt(now).getEffectsAt(now)) {
+                                    for (BNumberData bNumberData : bNumberEffect.getDataItems()) {
+                                        if (bNumberData.getCode() != null) {
+                                            lookup.bNumber = bNumberData.getCode();
+                                            break;
+                                        }
+                                    }
+                                    if (lookup.bNumber != null) break;
+                                }
+                            }
                         }
 
                         LocalityEntity localityEntity = this.getLocalityGR(session, roadEntity);
@@ -284,6 +308,34 @@ public class LookupService {
             List<RoadEntity> roadEntities = QueryManager.getAllEntities(session, roadQuery, RoadEntity.class);
             return roadEntities.get(0);
         } catch (IndexOutOfBoundsException | NullPointerException e) {
+        }
+        return null;
+    }
+
+    private AddressEntity getAddressGR(Session session, RoadEntity roadEntity, String houseNumber) {
+        try {
+            AddressQuery addressQuery = new AddressQuery();
+            addressQuery.setRoad(roadEntity.getUUID().toString());
+            addressQuery.setHouseNumber(houseNumber);
+            List<AddressEntity> addressEntities = QueryManager.getAllEntities(session, addressQuery, AddressEntity.class);
+            return addressEntities.get(0);
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+        }
+        return null;
+    }
+
+    private BNumberEntity getBNumberGR(Session session, AddressEntity addressEntity) {
+        OffsetDateTime now = OffsetDateTime.now();
+        for (AddressEffect addressEffect : addressEntity.getRegistrationAt(now).getEffectsAt(now)) {
+            for (AddressData addressData : addressEffect.getDataItems()) {
+                Identification locationIdentification = addressData.getbNumber();
+                if (locationIdentification != null) {
+                    BNumberEntity bNumber = QueryManager.getEntity(session, locationIdentification, BNumberEntity.class);
+                    if (bNumber != null) {
+                        return bNumber;
+                    }
+                }
+            }
         }
         return null;
     }
