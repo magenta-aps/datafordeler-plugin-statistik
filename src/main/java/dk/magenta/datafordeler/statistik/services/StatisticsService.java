@@ -53,7 +53,8 @@ public abstract class StatisticsService {
     public static String PATH_FILE = null;
 
     static {
-        StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        //StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        StatisticsService.PATH_FILE = "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) {
             folder.mkdirs();
@@ -91,17 +92,18 @@ public abstract class StatisticsService {
         List<PersonQuery> queries;
         try {
             queries = this.getQueryList(request);
-            Stream<PersonEntity> concatenation = null;
+            Stream<Map<String, String>> concatenation = null;
 
             for (PersonQuery query : queries) {
                 this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                concatenation = (concatenation == null) ? personEntities : Stream.concat(concatenation, personEntities);
+                Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
+                concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
             }
 
             if (concatenation != null) {
                 final Counter counter = new Counter();
-                int written = this.writeItems(this.formatItems(concatenation, secondarySession, filter), response, serviceName, item -> {
+                int written = this.writeItems(concatenation.iterator(), response, serviceName, item -> {
                     counter.count++;
                     if (counter.count > 100) {
                         primarySession.clear();
@@ -113,6 +115,7 @@ public abstract class StatisticsService {
                     response.sendError(HttpStatus.NO_CONTENT.value());
                 }
             }
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -283,7 +286,6 @@ public abstract class StatisticsService {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
                 String formatDateTime = now.format(formatter);
                 if (PATH_FILE != null) {
-                    System.out.println(PATH_FILE);
                     File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
                     writer = writerobj.writeValues(file);
@@ -291,6 +293,7 @@ public abstract class StatisticsService {
                 }
 
             } else {
+                response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
                 writer = writerobj.writeValues(response.getOutputStream());
                 outputDescription = "Written to response";
             }
@@ -309,11 +312,11 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
+    public Stream<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
         LookupService lookupService = new LookupService(lookupSession);
         return personEntities.flatMap(
                 personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
-        ).iterator();
+        );
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
