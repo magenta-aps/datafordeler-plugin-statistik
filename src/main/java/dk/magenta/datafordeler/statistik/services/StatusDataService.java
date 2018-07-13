@@ -128,7 +128,9 @@ public class StatusDataService extends StatisticsService {
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
         for (PersonRegistration registration : person.getRegistrations()){
-            for (PersonEffect effect : registration.getEffectsAt(filter.effectAt)) {
+            List<PersonEffect> effects = registration.getEffectsAt(filter.effectAt);
+            effects.sort(this.personComparator);
+            for (PersonEffect effect : effects) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
                         PersonNameData nameData = data.getName();
