@@ -7,6 +7,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBirthData;
+import dk.magenta.datafordeler.cpr.records.person.data.BirthTimeDataRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.PersonStatusDataRecord;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -37,8 +39,20 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
                 Integer.class,
                 LookupDefinition.Operator.NE
         );*/
+        FieldDefinition fieldDefinition;
+        if (this.getEffectTimeAfter() == null) {
+            fieldDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME);
+        } else {
+            fieldDefinition = new FieldDefinition(
+                    PersonEntity.DB_FIELD_BIRTHTIME + LookupDefinition.separator + BirthTimeDataRecord.DB_FIELD_BIRTH_DATETIME,
+                    this.getEffectTimeAfter().toLocalDateTime(),
+                    LocalDateTime.class,
+                    LookupDefinition.Operator.GTE
+            );
+            this.applyRegistrationTimes(fieldDefinition);
+            this.applyEffectTimes(fieldDefinition);
+        }
 
-        FieldDefinition fieldDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME);
         lookupDefinition.put(fieldDefinition);
         return lookupDefinition;
     }

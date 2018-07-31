@@ -174,9 +174,11 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
 
 
     protected void applyEffectTimes(FieldDefinition fieldDefinition) {
+        String path = cutPath(fieldDefinition.path);
+        String effectTimePath = path + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_FROM;
         if (this.getEffectTimeAfter() != null) {
             fieldDefinition.and(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                    effectTimePath,
                     this.getEffectTimeAfter(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.GTE
@@ -184,14 +186,14 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
         }
         if (this.getEffectTimeBefore() != null) {
             FieldDefinition beforeDefinition = new FieldDefinition(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                    effectTimePath,
                     this.getEffectTimeBefore(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.LTE
             );
             if (this.getEffectTimeAfter() == null) {
                 beforeDefinition.or(new FieldDefinition(
-                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                        effectTimePath,
                         null,
                         OffsetDateTime.class
                 ));
