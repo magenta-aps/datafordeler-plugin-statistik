@@ -67,7 +67,7 @@ public class DeathDataService extends StatisticsService {
                 STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
                 EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
-                LOCALITY_NAME, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
+                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
     @Override
@@ -104,22 +104,23 @@ public class DeathDataService extends StatisticsService {
         return new PersonDeathQuery(request);
     }
 
+
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>(this.formatPersonByRecord(person, session, lookupService, filter));
+        if (item.isEmpty()) {
+            return Collections.emptyList();
+        }
+        item.put(PNR, person.getPersonnummer());
+        return Collections.singletonList(item);
+    }
+
+    protected List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
 
         OffsetDateTime earliestProdDate = null;
         OffsetDateTime earliestDeathTime = null;
-
-        Map<String, String> recordItem = this.formatPersonByRecord(person, session, lookupService, filter);
-        for (String key : recordItem.keySet()) {
-            item.put("record_"+key, recordItem.get(key));
-        }
-
-
-
-
 
 
         for (PersonRegistration registration: person.getRegistrations()) {
@@ -195,6 +196,7 @@ public class DeathDataService extends StatisticsService {
                         );
                         if (lookup != null) {
                             item.put(LOCALITY_NAME, lookup.localityName);
+                            item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                             item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                         }
                     }
@@ -313,7 +315,10 @@ public class DeathDataService extends StatisticsService {
                     item.put(LOCALITY_NAME, lookup.localityName);
                 }
                 if (lookup.localityAbbrev != null) {
-                    item.put(LOCALITY_CODE, lookup.localityAbbrev);
+                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                }
+                if (lookup.localityCode != 0) {
+                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 }
             }
         }

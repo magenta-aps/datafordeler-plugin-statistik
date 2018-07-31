@@ -1,6 +1,5 @@
 package dk.magenta.datafordeler.statistik.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.QueryManager;
@@ -155,6 +154,18 @@ public class BirthDataService extends StatisticsService {
     //---
 
 
+
+    @Override
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>(this.formatPersonByRecord(person, session, lookupService, filter));
+        if (item.isEmpty()) {
+            return Collections.emptyList();
+        }
+        item.put(OWN_PREFIX + PNR, person.getPersonnummer());
+        return Collections.singletonList(item);
+    }
+
+
     protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
@@ -258,20 +269,10 @@ public class BirthDataService extends StatisticsService {
         return item;
     }
 
-    @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected Map<String, String> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
 
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
-
-
-
-        ///////
-        Map<String, String> recordItem = this.formatPersonByRecord(person, session, lookupService, filter);
-        for (String key : recordItem.keySet()) {
-            item.put("record_"+key, recordItem.get(key));
-        }
-
 
 
         OffsetDateTime earliestProdDate = null;
@@ -303,7 +304,7 @@ public class BirthDataService extends StatisticsService {
                 earliestProdDate == null ||
                 (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
         ) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
 
         HashSet<PersonEffect> personEffects = new HashSet<>();
@@ -370,10 +371,10 @@ public class BirthDataService extends StatisticsService {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
             if (mother != null) {
                 try {
-                    item.putAll(this.formatParentPerson(mother, MOTHER_PREFIX, lookupService, parentFilter, true));
+                    item.putAll(this.formatParentPersonByRVD(mother, MOTHER_PREFIX, lookupService, parentFilter, true));
                 } catch (Exclude e) {
                     // Do not include births where the mother lives outside of Greenland at the time of birth
-                    return Collections.emptyList();
+                    return Collections.emptyMap();
                 }
             }
         }
@@ -383,14 +384,14 @@ public class BirthDataService extends StatisticsService {
             PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(fatherPnr), PersonEntity.class);
             if (father != null) {
                 try {
-                    item.putAll(this.formatParentPerson(father, FATHER_PREFIX, lookupService, parentFilter, false));
+                    item.putAll(this.formatParentPersonByRVD(father, FATHER_PREFIX, lookupService, parentFilter, false));
                 } catch (Exclude exclude) {
                     exclude.printStackTrace();
                 }
             }
         }
 
-        return Collections.singletonList(item);
+        return item;
     }
 
     private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
@@ -415,7 +416,10 @@ public class BirthDataService extends StatisticsService {
                 item.put(prefix + LOCALITY_NAME, lookup.localityName);
             }
             if (lookup.localityAbbrev != null) {
-                item.put(prefix + LOCALITY_CODE, lookup.localityAbbrev);
+                item.put(prefix + LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+            }
+            if (lookup.localityCode != 0) {
+                item.put(prefix + LOCALITY_CODE, Integer.toString(lookup.localityCode));
             }
         }
 
@@ -430,7 +434,7 @@ public class BirthDataService extends StatisticsService {
         return item;
     }
 
-    private Map<String, String> formatParentPerson(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
+    private Map<String, String> formatParentPersonByRVD(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
 
         HashMap<String, String> item = new HashMap<>();
         HashSet<PersonEffect> personEffects = new HashSet<>();

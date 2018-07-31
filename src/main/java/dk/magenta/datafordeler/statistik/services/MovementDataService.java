@@ -107,8 +107,14 @@ public class MovementDataService extends StatisticsService {
         return new PersonMoveQuery(request);
     }
 
+
     @Override
-    public List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        // Record lookup still has a few issues
+        return this.formatPersonByRVD(person, session, lookupService, filter);
+    }
+
+    public List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter){
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, AuthorityDetailData> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
@@ -396,7 +402,9 @@ public class MovementDataService extends StatisticsService {
                Map<String, String> item = moves.get(moveTime);
                // Important: Populate the appropriate map with data as is relevant at the time of moving
                for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(filterRecordsByEffect(person.getBirthTime(), moveTime))) {
-                   item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
+                   if (birthTimeDataRecord.getBirthDatetime() != null) {
+                       item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
+                   }
                }
                for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), moveTime))) {
                    item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));

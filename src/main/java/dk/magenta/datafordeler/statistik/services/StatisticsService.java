@@ -269,12 +269,7 @@ public abstract class StatisticsService {
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
             builder.addColumn(new CsvSchema.Column(
-                    i*2, keys.get(i),
-                    CsvSchema.ColumnType.STRING
-            ));
-
-            builder.addColumn(new CsvSchema.Column(
-                    i*2 + 1, "record_" + keys.get(i),
+                    i, keys.get(i),
                     CsvSchema.ColumnType.STRING
             ));
         }
