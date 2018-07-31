@@ -16,6 +16,8 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.plugin.AreaRestrictionDefinition;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.Bitemporality;
+import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprAreaRestrictionDefinition;
 import dk.magenta.datafordeler.cpr.CprPlugin;
@@ -23,6 +25,8 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
@@ -37,6 +41,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
@@ -95,6 +100,7 @@ public abstract class StatisticsService {
             Stream<Map<String, String>> concatenation = null;
 
             for (PersonQuery query : queries) {
+                System.out.println("Query: "+query);
                 this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
@@ -111,6 +117,7 @@ public abstract class StatisticsService {
                         counter.count = 0;
                     }
                 });
+                System.out.println("counter.count: "+counter.count);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
                 }
@@ -264,7 +271,12 @@ public abstract class StatisticsService {
         List<String> keys = this.getColumnNames();
         for (int i = 0; i < keys.size(); i++) {
             builder.addColumn(new CsvSchema.Column(
-                    i, keys.get(i),
+                    i*2, keys.get(i),
+                    CsvSchema.ColumnType.STRING
+            ));
+
+            builder.addColumn(new CsvSchema.Column(
+                    i*2 + 1, "record_" + keys.get(i),
                     CsvSchema.ColumnType.STRING
             ));
         }
@@ -384,6 +396,36 @@ public abstract class StatisticsService {
                 query.addKommunekodeRestriction(restriction.getValue());
             }
         }
+    }
+
+    public static <R extends CprBitemporalRecord> Set<R> filterRecordsByEffect(Collection<R> records, OffsetDateTime effectAt) {
+        HashSet<R> filtered = new HashSet<>();
+        for (R record : records) {
+            if (record.getBitemporality().containsEffect(effectAt, effectAt)) {
+                filtered.add(record);
+            }
+        }
+        return filtered;
+    }
+
+    public static <R extends CprBitemporalRecord> List<R> sortRecords(Collection<R> records) {
+        ArrayList<R> recordList = new ArrayList<>(records);
+        recordList.sort(Comparator.comparing(StatisticsService::getBitemporality, BitemporalityComparator.ALL));
+        return recordList;
+    }
+
+    public static CprBitemporality getBitemporality(CprBitemporalRecord record) {
+        return record.getBitemporality();
+    }
+
+    protected String formatTime(OffsetDateTime time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
+    }
+
+    protected String formatTime(ZonedDateTime time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
     }
 
 }

@@ -8,13 +8,11 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
-import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonNameData;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.AddressDataRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.NameDataRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
@@ -32,7 +30,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -154,6 +155,8 @@ public class AddressDataService extends StatisticsService{
                 inputStream.close();
             }
 
+            System.out.println("Got "+pnrs.size()+" lines");
+
             int count = 0;
             PersonQuery personQuery = new PersonQuery();
             personQuery.setPageSize(limit);
@@ -176,57 +179,50 @@ public class AddressDataService extends StatisticsService{
                 queries.add(personQuery);
             }
         }
-
         return queries;
     }
 
-
-
-
     //---
 
-   @Override
-   protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    @Override
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
 
-       HashMap<String, String> item = new HashMap<>();
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
         OffsetDateTime effectTime = filter.effectAt;
 
-        for (PersonRegistration registration : person.getRegistrations()) {
-            for (PersonEffect effect : effectTime != null ? registration.getEffectsAt(effectTime) : registration.getEffects()) {
-                for (PersonBaseData baseData : effect.getDataItems()) {
-                    PersonAddressData addressData = baseData.getAddress();
-                    if (addressData != null) {
-                        Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode(), addressData.getHouseNumber());
-                        item.put(ROAD_NAME, lookup.roadName);
-                        item.put(HOUSE_NUMBER, addressData.getHouseNumber());
-                        item.put(FLOOR_NUMBER, addressData.getFloor());
-                        item.put(DOOR_NUMBER, addressData.getDoor());
-                        item.put(POST_CODE, Integer.toString(lookup.postalCode));
-                        item.put(POST_DISTRICT, lookup.postalDistrict);
-                        String bnr = addressData.getBuildingNumber();
-                        if (bnr == null || bnr.isEmpty()) {
-                            bnr = lookup.bNumber;
-                        }
-                        item.put(BNR, bnr);
+        List<AddressDataRecord> records = sortRecords(person.getAddress());
+        for (AddressDataRecord addressData : records) {
+            if (addressData.getBitemporality().registrationTo == null && addressData.getBitemporality().containsEffect(effectTime, effectTime)) {
+                Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode(), addressData.getHouseNumber());
+                item.put(ROAD_NAME, lookup.roadName);
+                item.put(HOUSE_NUMBER, addressData.getHouseNumber());
+                item.put(FLOOR_NUMBER, addressData.getFloor());
+                item.put(DOOR_NUMBER, addressData.getDoor());
+                item.put(POST_CODE, Integer.toString(lookup.postalCode));
+                item.put(POST_DISTRICT, lookup.postalDistrict);
+                String bnr = addressData.getBuildingNumber();
+                if (bnr == null || bnr.isEmpty()) {
+                    bnr = lookup.bNumber;
+                }
+                item.put(BNR, bnr);
 
-                        if (lookup.postalCode == 0) {
-                            System.out.println("Failed to lookup postalcode on "+addressData.getMunicipalityCode()+"|"+addressData.getRoadCode()+" ("+lookup.roadName+")");
-                        }
-                    }
-
-                    PersonNameData nameData = baseData.getName();
-                    if (nameData != null) {
-                        if (nameData.getFirstNames() != null && !nameData.getFirstNames().isEmpty()) {
-                            item.put(FIRST_NAME, nameData.getFirstNames());
-                        }
-                        if (nameData.getMiddleName() != null && !nameData.getMiddleName().isEmpty()) {
-                            item.put(MIDDLE_NAME, nameData.getMiddleName());
-                        }
-                        if (nameData.getLastName() != null && !nameData.getLastName().isEmpty()) {
-                            item.put(LAST_NAME, nameData.getLastName());
-                        }
-                    }
+                if (lookup.postalCode == 0) {
+                    System.out.println("Failed to lookup postalcode on " + addressData.getMunicipalityCode() + "|" + addressData.getRoadCode() + " (" + lookup.roadName + ")");
+                }
+            }
+        }
+        Set<NameDataRecord> nameDataRecords = person.getName();
+        for (NameDataRecord nameDataRecord : nameDataRecords) {
+            if (nameDataRecord.getBitemporality().registrationTo == null && nameDataRecord.getBitemporality().containsEffect(effectTime, effectTime)) {
+                if (nameDataRecord.getFirstNames() != null && !nameDataRecord.getFirstNames().isEmpty()) {
+                    item.put(FIRST_NAME, nameDataRecord.getFirstNames());
+                }
+                if (nameDataRecord.getMiddleName() != null && !nameDataRecord.getMiddleName().isEmpty()) {
+                    item.put(MIDDLE_NAME, nameDataRecord.getMiddleName());
+                }
+                if (nameDataRecord.getLastName() != null && !nameDataRecord.getLastName().isEmpty()) {
+                    item.put(LAST_NAME, nameDataRecord.getLastName());
                 }
             }
         }

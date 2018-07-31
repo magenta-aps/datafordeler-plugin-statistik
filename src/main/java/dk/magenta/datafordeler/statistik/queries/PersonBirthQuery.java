@@ -3,6 +3,7 @@ package dk.magenta.datafordeler.statistik.queries;
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.database.Registration;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBirthData;
@@ -24,18 +25,21 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
         lookupDefinition.setMatchNulls(true);
 
-        FieldDefinition fieldDefinition = new FieldDefinition(
+        /*FieldDefinition fieldDefinition = new FieldDefinition(
+                LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME,
+                null,
+                Integer.class,
+                LookupDefinition.Operator.NE
+        );*/
+        /*FieldDefinition fieldDefinition = new FieldDefinition(
                 PersonBaseData.DB_FIELD_BIRTH,
                 null,
                 Integer.class,
                 LookupDefinition.Operator.NE
-        );
+        );*/
 
-        this.applyRegistrationTimes(fieldDefinition);
-        this.applyEffectTimes(fieldDefinition);
-
+        FieldDefinition fieldDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME);
         lookupDefinition.put(fieldDefinition);
-
         return lookupDefinition;
     }
 
