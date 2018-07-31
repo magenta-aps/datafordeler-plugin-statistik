@@ -88,7 +88,6 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
     protected void applyRegistrationTimes(FieldDefinition fieldDefinition) {
         // Omtænk denne
         String path = cutPath(fieldDefinition.path);
-        System.out.println("fieldDefinition.path: "+path);
         String registrationTimePath = path + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_REGISTRATION_FROM;
         if (this.getRegistrationTimeAfter() != null) {
             fieldDefinition.and(
@@ -203,7 +202,6 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
 
     protected FieldDefinition applyEffectTimes(String basePath) {
         FieldDefinition fieldDefinition = null;
-        System.out.println("basePath: "+basePath);
         String effectTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_FROM;
         if (this.getEffectTimeAfter() != null) {
             FieldDefinition afterDefinition = new FieldDefinition(

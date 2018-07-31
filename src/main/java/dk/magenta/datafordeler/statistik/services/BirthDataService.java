@@ -185,11 +185,6 @@ public class BirthDataService extends StatisticsService {
 
         ///////
         for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(person.getBirthPlace())) {
-            try {
-                System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(birthPlaceDataRecord));
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
             if (birthPlaceDataRecord.getBitemporality().registrationTo == null && birthPlaceDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
                 item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
                 item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());

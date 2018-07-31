@@ -100,7 +100,6 @@ public abstract class StatisticsService {
             Stream<Map<String, String>> concatenation = null;
 
             for (PersonQuery query : queries) {
-                System.out.println("Query: "+query);
                 this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
@@ -117,7 +116,6 @@ public abstract class StatisticsService {
                         counter.count = 0;
                     }
                 });
-                System.out.println("counter.count: "+counter.count);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
                 }
