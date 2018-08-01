@@ -66,7 +66,8 @@ public class PersonStatusQuery extends PersonRecordQuery {
                 fieldDefinition.and(
                         path + lookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_TO,
                         this.livingInGreenlandOn,
-                        OffsetDateTime.class
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.GTE
                 ).or(
                         path + lookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_TO,
                         null,
