@@ -112,15 +112,13 @@ public class StatusDataService extends StatisticsService {
         personStatusQuery.setPageSize(1000000);
         return personStatusQuery;
     }
-
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        HashMap<String, String> item = new HashMap<>();
+        return Collections.singletonList(this.formatPersonByRecord(person, session, lookupService, filter));
+    }
 
-        Map<String, String> recordItem = this.formatPersonByRecord(person, session, lookupService, filter);
-        for (String key : recordItem.keySet()) {
-            item.put("record_"+key, recordItem.get(key));
-        }
+    protected List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        HashMap<String, String> item = new HashMap<>();
 
         item.put(PNR, person.getPersonnummer());
 
@@ -283,7 +281,7 @@ public class StatusDataService extends StatisticsService {
 
     protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
-        item.put(PNR, person.getPersonnummer());
+        item.put(PNR, formatPnr(person.getPersonnummer()));
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
         for (NameDataRecord nameDataRecord : sortRecords(filterRecordsByEffect(person.getName(), filter.effectAt))) {
@@ -306,13 +304,13 @@ public class StatusDataService extends StatisticsService {
             item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
         for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getMother(), filter.effectAt))) {
-            item.put(MOTHER_PNR, parentDataRecord.getCprNumber());
+            item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
         }
         for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), filter.effectAt))) {
-            item.put(FATHER_PNR, parentDataRecord.getCprNumber());
+            item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
         }
         for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), filter.effectAt))) {
-            item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
+            item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
         }
         for (ChurchDataRecord churchDataRecord : sortRecords(filterRecordsByEffect(person.getChurchRelation(), filter.effectAt))) {
             item.put(CHURCH, churchDataRecord.getChurchRelation().toString());

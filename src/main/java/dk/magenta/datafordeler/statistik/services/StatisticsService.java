@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestriction;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestrictionType;
+import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -16,7 +17,6 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.plugin.AreaRestrictionDefinition;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.core.util.Bitemporality;
 import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprAreaRestrictionDefinition;
@@ -27,6 +27,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprBitemporality;
+import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
@@ -332,6 +333,13 @@ public abstract class StatisticsService {
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
+    protected String formatPnr(String pnr) {
+        if (pnr == null || pnr.isEmpty() || pnr.equals("0000000000")) {
+            return "";
+        }
+        return pnr;
+    }
+
     protected static String formatRoadCode(Integer roadCode) {
         return roadCode != null ? String.format("%04d", roadCode) : null;
     }
@@ -401,9 +409,13 @@ public abstract class StatisticsService {
         return filtered;
     }
 
+    private static Comparator bitemporalComparator = Comparator.comparing(StatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getDafoUpdated)
+            .thenComparing(DatabaseEntry::getId);
+
     public static <R extends CprBitemporalRecord> List<R> sortRecords(Collection<R> records) {
         ArrayList<R> recordList = new ArrayList<>(records);
-        recordList.sort(Comparator.comparing(StatisticsService::getBitemporality, BitemporalityComparator.ALL));
+        recordList.sort(bitemporalComparator);
         return recordList;
     }
 

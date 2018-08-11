@@ -22,8 +22,8 @@ public class PersonMoveQuery extends PersonStatisticsQuery {
         FieldDefinition addressDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_ADDRESS);
         FieldDefinition migrationDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_FOREIGN_ADDRESS_EMIGRATION);
 
-        lookupDefinition.put(addressDefinition);
         addressDefinition.or(migrationDefinition);
+        lookupDefinition.put(addressDefinition);
 
         return lookupDefinition;
     }

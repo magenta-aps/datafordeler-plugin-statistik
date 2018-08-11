@@ -110,8 +110,7 @@ public class MovementDataService extends StatisticsService {
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        // Record lookup still has a few issues
-        return this.formatPersonByRVD(person, session, lookupService, filter);
+        return this.formatPersonByRecord(person, session, lookupService, filter);
     }
 
     public List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter){
@@ -346,7 +345,7 @@ public class MovementDataService extends StatisticsService {
                 }
 
                 HashMap<String, String> item = new HashMap<>();
-                item.put(PNR, person.getPersonnummer());
+                item.put(PNR, formatPnr(person.getPersonnummer()));
 
                 if (previousAddress != null) {
 
@@ -363,7 +362,7 @@ public class MovementDataService extends StatisticsService {
                     }
                     if (previousAddress instanceof ForeignAddressEmigrationDataRecord) {
                         ForeignAddressEmigrationDataRecord previousMigration = (ForeignAddressEmigrationDataRecord) previousAddress;
-                        item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousMigration.getCountryCode()));
+                        item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousMigration.getImmigrationCountryCode()));
                     }
                 }
                 if (currentAddress != null) {
@@ -383,7 +382,7 @@ public class MovementDataService extends StatisticsService {
                     }
                     if (currentAddress instanceof ForeignAddressEmigrationDataRecord) {
                         ForeignAddressEmigrationDataRecord currentMigration = (ForeignAddressEmigrationDataRecord) currentAddress;
-                        item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getCountryCode()));
+                        item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getEmigrationCountryCode()));
                         item.put(MOVE_DATE, formatTime(current));
                         item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
                     }
@@ -398,36 +397,36 @@ public class MovementDataService extends StatisticsService {
         }
 
 
-           for (OffsetDateTime moveTime : moves.keySet()) {
-               Map<String, String> item = moves.get(moveTime);
-               // Important: Populate the appropriate map with data as is relevant at the time of moving
-               for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(filterRecordsByEffect(person.getBirthTime(), moveTime))) {
-                   if (birthTimeDataRecord.getBirthDatetime() != null) {
-                       item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
-                   }
-               }
-               for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), moveTime))) {
-                   item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
-               }
-               for (PersonStatusDataRecord statusDataRecord : sortRecords(filterRecordsByEffect(person.getStatus(), moveTime))) {
-                   item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
-               }
-               for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), moveTime))) {
-                   item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
-               }
-               for (PersonNumberDataRecord personNumberDataRecord : sortRecords(filterRecordsByEffect(person.getPersonNumber(), moveTime))) {
-                   item.put(EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
-               }
-               for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getMother(), moveTime))) {
-                   item.put(MOTHER_PNR, parentDataRecord.getCprNumber());
-               }
-               for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), moveTime))) {
-                   item.put(FATHER_PNR, parentDataRecord.getCprNumber());
-               }
-               for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), moveTime))) {
-                   item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
+        for (OffsetDateTime moveTime : moves.keySet()) {
+            Map<String, String> item = moves.get(moveTime);
+            // Important: Populate the appropriate map with data as is relevant at the time of moving
+            for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(filterRecordsByEffect(person.getBirthTime(), moveTime))) {
+               if (birthTimeDataRecord.getBirthDatetime() != null) {
+                   item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
                }
             }
+            for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), moveTime))) {
+               item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            }
+            for (PersonStatusDataRecord statusDataRecord : sortRecords(filterRecordsByEffect(person.getStatus(), moveTime))) {
+               item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
+            }
+            for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), moveTime))) {
+               item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+            }
+            for (PersonNumberDataRecord personNumberDataRecord : sortRecords(filterRecordsByEffect(person.getPersonNumber(), moveTime))) {
+               item.put(EFFECTIVE_PNR, formatPnr(personNumberDataRecord.getCprNumber()));
+            }
+            for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getMother(), moveTime))) {
+               item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+            }
+            for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), moveTime))) {
+               item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+            }
+            for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), moveTime))) {
+               item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
+            }
+        }
 
         return new ArrayList<>(moves.values());
     }
