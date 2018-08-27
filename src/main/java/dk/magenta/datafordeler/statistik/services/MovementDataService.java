@@ -11,6 +11,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
@@ -105,8 +107,13 @@ public class MovementDataService extends StatisticsService {
         return new PersonMoveQuery(request);
     }
 
+
     @Override
-    public List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter){
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        return this.formatPersonByRecord(person, session, lookupService, filter);
+    }
+
+    public List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter){
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, AuthorityDetailData> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
@@ -125,13 +132,6 @@ public class MovementDataService extends StatisticsService {
                         addresses.put(effectTime, addressData);
                         found = true;
                     }
-                    /*
-                    PersonForeignAddressData foreignAddressData = data.getForeignAddress();
-                    if (foreignAddressData != null) {
-                        addresses.put(effectTime, foreignAddressData);
-                        found = true;
-                    }
-                    */
                     PersonEmigrationData emigrationData = data.getMigration();
                     if (emigrationData != null) {
                         addresses.put(effectTime, emigrationData);
@@ -298,6 +298,136 @@ public class MovementDataService extends StatisticsService {
                 }
             }
         }
+        ArrayList<Map<String, String>> foo = new ArrayList<>(moves.values());
+        foo.addAll(this.formatPersonByRecord(person, session, lookupService, filter));
+        return foo;
+    }
+
+
+    public List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter){
+        // Map of effectTime to addresses (when address was moved into)
+        HashMap<OffsetDateTime, CprBitemporalRecord> addresses = new HashMap<>();
+        // Map of effectTime to registrationTime (when this move was first registered)
+
+        for (AddressDataRecord addressDataRecord : person.getAddress()) {
+            if (addressDataRecord.getEffectFrom() != null && Objects.equals(addressDataRecord.getEffectFrom(), addressDataRecord.getEffectTo())) {
+                continue;
+            }
+            addresses.put(addressDataRecord.getEffectFrom(), addressDataRecord);
+        }
+        for (ForeignAddressEmigrationDataRecord emigrationDataRecord : person.getEmigration()) {
+            if (emigrationDataRecord.getEffectFrom() != null && Objects.equals(emigrationDataRecord.getEffectFrom(), emigrationDataRecord.getEffectTo())) {
+                continue;
+            }
+            addresses.put(emigrationDataRecord.getEffectFrom(), emigrationDataRecord);
+        }
+
+
+        ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
+        HashMap<OffsetDateTime, Map<String, String>> moves = new HashMap<>();
+        addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
+
+        int last = addressTimes.size() - 1;
+        for (int i=0; i<=last; i++) {
+            OffsetDateTime previous = i > 0 ? addressTimes.get(i-1) : null;
+            OffsetDateTime current = addressTimes.get(i);
+            CprBitemporalRecord currentAddress = addresses.get(current);
+            CprBitemporalRecord previousAddress = addresses.get(previous);
+
+            if (current != null && currentAddress.getRegistrationFrom() != null && (
+                    (filter.after == null || current.isAfter(filter.after)) &&
+                            (filter.before == null || current.isBefore(filter.before)) &&
+                            (filter.registrationAfter == null || !currentAddress.getRegistrationFrom().isBefore(filter.registrationAfter))
+            )) {
+
+                if (previousAddress == null || !isInGreenland(previousAddress) && !isInGreenland(currentAddress)) {
+                    continue;
+                }
+
+                HashMap<String, String> item = new HashMap<>();
+                item.put(PNR, formatPnr(person.getPersonnummer()));
+
+                if (previousAddress != null) {
+
+                    if (previousAddress instanceof AddressDataRecord) {
+                        AddressDataRecord previousDomesticAddress = (AddressDataRecord) previousAddress;
+                        item.put(ORIGIN_MUNICIPALITY_CODE, Integer.toString(previousDomesticAddress.getMunicipalityCode()));
+                        item.put(ORIGIN_ROAD_CODE, formatRoadCode(previousDomesticAddress.getRoadCode()));
+                        item.put(ORIGIN_HOUSE_NUMBER, formatHouseNnr(previousDomesticAddress.getHouseNumber()));
+                        item.put(ORIGIN_FLOOR, previousDomesticAddress.getFloor());
+                        item.put(ORIGIN_DOOR_NUMBER, previousDomesticAddress.getDoor());
+                        item.put(ORIGIN_BNR, formatBnr(previousDomesticAddress.getBuildingNumber()));
+                        Lookup lookup = lookupService.doLookup(previousDomesticAddress.getMunicipalityCode(), previousDomesticAddress.getRoadCode());
+                        item.put(ORIGIN_LOCALITY_NAME, lookup.localityAbbrev);
+                    }
+                    if (previousAddress instanceof ForeignAddressEmigrationDataRecord) {
+                        ForeignAddressEmigrationDataRecord previousMigration = (ForeignAddressEmigrationDataRecord) previousAddress;
+                        item.put(ORIGIN_COUNTRY_CODE, Integer.toString(previousMigration.getImmigrationCountryCode()));
+                    }
+                }
+                if (currentAddress != null) {
+                    if (currentAddress instanceof AddressDataRecord) {
+                        AddressDataRecord currentDomesticAddress = (AddressDataRecord) currentAddress;
+                        item.put(DESTINATION_MUNICIPALITY_CODE, Integer.toString(currentDomesticAddress.getMunicipalityCode()));
+                        item.put(DESTINATION_ROAD_CODE, formatRoadCode(currentDomesticAddress.getRoadCode()));
+                        item.put(DESTINATION_HOUSE_NUMBER, formatHouseNnr(currentDomesticAddress.getHouseNumber()));
+                        item.put(DESTINATION_FLOOR, currentDomesticAddress.getFloor());
+                        item.put(DESTINATION_DOOR_NUMBER, currentDomesticAddress.getDoor());
+                        item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
+                        item.put(MOVE_DATE, formatTime(current));
+                        item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+
+                        Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
+                        item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
+                    }
+                    if (currentAddress instanceof ForeignAddressEmigrationDataRecord) {
+                        ForeignAddressEmigrationDataRecord currentMigration = (ForeignAddressEmigrationDataRecord) currentAddress;
+                        item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getEmigrationCountryCode()));
+                        item.put(MOVE_DATE, formatTime(current));
+                        item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+                    }
+                }
+                moves.put(current, item);
+            }
+        }
+
+
+        if (moves.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+
+        for (OffsetDateTime moveTime : moves.keySet()) {
+            Map<String, String> item = moves.get(moveTime);
+            // Important: Populate the appropriate map with data as is relevant at the time of moving
+            for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(filterRecordsByEffect(person.getBirthTime(), moveTime))) {
+               if (birthTimeDataRecord.getBirthDatetime() != null) {
+                   item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
+               }
+            }
+            for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), moveTime))) {
+               item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            }
+            for (PersonStatusDataRecord statusDataRecord : sortRecords(filterRecordsByEffect(person.getStatus(), moveTime))) {
+               item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
+            }
+            for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), moveTime))) {
+               item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+            }
+            for (PersonNumberDataRecord personNumberDataRecord : sortRecords(filterRecordsByEffect(person.getPersonNumber(), moveTime))) {
+               item.put(EFFECTIVE_PNR, formatPnr(personNumberDataRecord.getCprNumber()));
+            }
+            for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getMother(), moveTime))) {
+               item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+            }
+            for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), moveTime))) {
+               item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+            }
+            for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), moveTime))) {
+               item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
+            }
+        }
+
         return new ArrayList<>(moves.values());
     }
 
@@ -306,6 +436,19 @@ public class MovementDataService extends StatisticsService {
         if (addressData != null) {
             if (addressData instanceof PersonAddressData) {
                 PersonAddressData previousDomesticAddress = (PersonAddressData) addressData;
+                if (previousDomesticAddress.getMunicipalityCode() > 900) {
+                    glFound = true;
+                }
+            }
+        }
+        return glFound;
+    }
+
+    private static boolean isInGreenland(CprBitemporalRecord addressData) {
+        boolean glFound = false;
+        if (addressData != null) {
+            if (addressData instanceof AddressDataRecord) {
+                AddressDataRecord previousDomesticAddress = (AddressDataRecord) addressData;
                 if (previousDomesticAddress.getMunicipalityCode() > 900) {
                     glFound = true;
                 }

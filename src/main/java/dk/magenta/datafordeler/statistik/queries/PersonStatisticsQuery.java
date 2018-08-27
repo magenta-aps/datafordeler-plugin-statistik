@@ -5,13 +5,19 @@ import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.database.Registration;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.BirthTimeDataRecord;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.regex.Pattern;
 
-public class PersonStatisticsQuery extends PersonQuery {
+public class PersonStatisticsQuery extends PersonRecordQuery {
 
     public PersonStatisticsQuery(HttpServletRequest request) {
         this.setRegistrationTimeBefore(Query.parseDateTime(request.getParameter(StatisticsService.REGISTRATION_BEFORE)));
@@ -73,11 +79,19 @@ public class PersonStatisticsQuery extends PersonQuery {
         this.effectTimeBefore = effectTimeBefore;
     }
 
+    public static String cutPath(String path) {
+        int firstSepIndex = path.indexOf(LookupDefinition.separator);
+        return (firstSepIndex == -1) ? path : path.substring(0, firstSepIndex);
+    }
+
 
     protected void applyRegistrationTimes(FieldDefinition fieldDefinition) {
+        // Omtænk denne
+        String path = cutPath(fieldDefinition.path);
+        String registrationTimePath = path + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_REGISTRATION_FROM;
         if (this.getRegistrationTimeAfter() != null) {
             fieldDefinition.and(
-                    LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                    registrationTimePath,
                     this.getRegistrationTimeAfter(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.GTE
@@ -85,14 +99,14 @@ public class PersonStatisticsQuery extends PersonQuery {
         }
         if (this.getRegistrationTimeBefore() != null) {
             FieldDefinition beforeDefinition = new FieldDefinition(
-                    LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                    registrationTimePath,
                     this.getRegistrationTimeBefore(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.LTE
             );
             if (this.getRegistrationTimeAfter() == null) {
                 beforeDefinition.or(new FieldDefinition(
-                        LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        registrationTimePath,
                         null,
                         OffsetDateTime.class
                 ));
@@ -101,11 +115,70 @@ public class PersonStatisticsQuery extends PersonQuery {
         }
     }
 
+    protected FieldDefinition applyRegistrationTimes(String basePath) {
+        // Omtænk denne
+        String registrationTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_REGISTRATION_FROM;
+        FieldDefinition fieldDefinition = null;
+        if (this.getRegistrationTimeAfter() != null) {
+            /*fieldDefinition.and(
+                    LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                    this.getRegistrationTimeAfter(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.GTE
+            );*/
+            FieldDefinition afterDefinition = new FieldDefinition(
+                    registrationTimePath,
+                    this.getRegistrationTimeAfter(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.GTE
+            );
+            if (fieldDefinition == null) {
+                fieldDefinition = afterDefinition;
+            } else {
+                fieldDefinition.and(afterDefinition);
+            }
+        }
+        if (this.getRegistrationTimeBefore() != null) {
+            /*FieldDefinition beforeDefinition = new FieldDefinition(
+                    LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                    this.getRegistrationTimeBefore(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.LTE
+            );*/
+            FieldDefinition beforeDefinition = new FieldDefinition(
+                    registrationTimePath,
+                    this.getRegistrationTimeBefore(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.LTE
+            );
+            if (this.getRegistrationTimeAfter() == null) {
+                /*beforeDefinition.or(new FieldDefinition(
+                        LookupDefinition.registrationref + LookupDefinition.separator + Registration.DB_FIELD_REGISTRATION_FROM,
+                        null,
+                        OffsetDateTime.class
+                ));*/
+                beforeDefinition.or(new FieldDefinition(
+                        registrationTimePath,
+                        null,
+                        OffsetDateTime.class
+                ));
+            }
+            if (fieldDefinition == null) {
+                fieldDefinition = beforeDefinition;
+            } else {
+                fieldDefinition.and(beforeDefinition);
+            }
+        }
+        return fieldDefinition;
+    }
+
 
     protected void applyEffectTimes(FieldDefinition fieldDefinition) {
+        String path = cutPath(fieldDefinition.path);
+        String effectTimePath = path + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_FROM;
         if (this.getEffectTimeAfter() != null) {
             fieldDefinition.and(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                    effectTimePath,
                     this.getEffectTimeAfter(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.GTE
@@ -113,20 +186,71 @@ public class PersonStatisticsQuery extends PersonQuery {
         }
         if (this.getEffectTimeBefore() != null) {
             FieldDefinition beforeDefinition = new FieldDefinition(
-                    LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                    effectTimePath,
                     this.getEffectTimeBefore(),
                     OffsetDateTime.class,
                     LookupDefinition.Operator.LTE
             );
             if (this.getEffectTimeAfter() == null) {
                 beforeDefinition.or(new FieldDefinition(
-                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
+                        effectTimePath,
                         null,
                         OffsetDateTime.class
                 ));
             }
             fieldDefinition.and(beforeDefinition);
         }
+    }
+
+    protected FieldDefinition applyEffectTimes(String basePath) {
+        FieldDefinition fieldDefinition = null;
+        String effectTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_EFFECT_FROM;
+        if (this.getEffectTimeAfter() != null) {
+            FieldDefinition afterDefinition = new FieldDefinition(
+                    effectTimePath,
+                    this.getEffectTimeAfter(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.GTE
+            );
+            fieldDefinition = afterDefinition;
+        }
+        if (this.getEffectTimeBefore() != null) {
+            FieldDefinition beforeDefinition = new FieldDefinition(
+                    effectTimePath,
+                    this.getEffectTimeBefore(),
+                    OffsetDateTime.class,
+                    LookupDefinition.Operator.LTE
+            );
+            if (this.getEffectTimeAfter() == null) {
+                beforeDefinition.or(new FieldDefinition(
+                        effectTimePath,
+                        null,
+                        OffsetDateTime.class
+                ));
+            }
+            if (fieldDefinition == null) {
+                fieldDefinition = beforeDefinition;
+            } else {
+                fieldDefinition.and(beforeDefinition);
+            }
+        }
+        return fieldDefinition;
+    }
+
+    public static FieldDefinition and(FieldDefinition left, FieldDefinition right) {
+        if (right == null) return left;
+        if (left == null) return right;
+        left.and(right);
+        return left;
+    }
+
+    protected FieldDefinition fromPath(String basePath) {
+        FieldDefinition fieldDefinition = null;
+        FieldDefinition registrationDefinition = this.applyRegistrationTimes(basePath);
+        FieldDefinition effectDefiniton = this.applyEffectTimes(basePath);
+        fieldDefinition = PersonStatisticsQuery.and(fieldDefinition, registrationDefinition);
+        fieldDefinition = PersonStatisticsQuery.and(fieldDefinition, effectDefiniton);
+        return fieldDefinition;
     }
 
 }
