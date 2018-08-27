@@ -3,9 +3,8 @@ package dk.magenta.datafordeler.statistik;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.statistik.services.BirthDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,9 +21,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,6 +38,9 @@ public class BirthDataServiceTest {
 
     TestUserDetails testUserDetails;
 
+    @Autowired
+    private BirthDataService birthDataService;
+
     @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
@@ -57,7 +56,7 @@ public class BirthDataServiceTest {
 
     @Test
     public void testService() {
-        StatisticsService.isFileOn = false;
+        birthDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
@@ -66,7 +65,7 @@ public class BirthDataServiceTest {
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01&afterDate=1999-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
 
         Assert.assertNotNull("Response contains a body", response);
@@ -83,7 +82,7 @@ public class BirthDataServiceTest {
 
     @Test
     public void testFileOutput() throws IOException {
-        StatisticsService.isFileOn = true;
+        birthDataService.setWriteToLocalFile(true);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());

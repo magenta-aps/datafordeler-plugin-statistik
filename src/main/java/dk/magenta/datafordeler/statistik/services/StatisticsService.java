@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestriction;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestrictionType;
+import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -16,6 +17,7 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.plugin.AreaRestrictionDefinition;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprAreaRestrictionDefinition;
 import dk.magenta.datafordeler.cpr.CprPlugin;
@@ -23,6 +25,9 @@ import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.CprBitemporality;
+import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
@@ -37,6 +42,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
@@ -53,7 +59,8 @@ public abstract class StatisticsService {
     public static String PATH_FILE = null;
 
     static {
-        StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        //StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        StatisticsService.PATH_FILE = "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) {
             folder.mkdirs();
@@ -66,11 +73,14 @@ public abstract class StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+        return this.getDafoUserManager().getUserFromRequest(request);
+    }
 
+    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
@@ -85,30 +95,41 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
+        List<PersonQuery> queries;
         try {
-            PersonQuery personQuery = this.getQuery(request);
-            this.applyAreaRestrictionsToQuery(personQuery, user);
-            personQuery.applyFilters(primarySession);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
+            queries = this.getQueryList(request);
+            Stream<Map<String, String>> concatenation = null;
 
-            final Counter counter = new Counter();
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
-                counter.count++;
-                if (counter.count > 100) {
-                    primarySession.clear();
-                    secondarySession.clear();
-                    counter.count = 0;
-                }
-            });
-            if (written == 0) {
-                response.sendError(HttpStatus.NO_CONTENT.value());
+            for (PersonQuery query : queries) {
+                this.applyAreaRestrictionsToQuery(query, user);
+                Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
+                concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
             }
+
+            if (concatenation != null) {
+                final Counter counter = new Counter();
+                int written = this.writeItems(concatenation.iterator(), response, serviceName, item -> {
+                    counter.count++;
+                    if (counter.count > 100) {
+                        primarySession.clear();
+                        secondarySession.clear();
+                        counter.count = 0;
+                    }
+                });
+                if (written == 0) {
+                    response.sendError(HttpStatus.NO_CONTENT.value());
+                }
+            }
+
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             primarySession.close();
             secondarySession.close();
         }
+
     }
 
     protected abstract List<String> getColumnNames();
@@ -132,10 +153,22 @@ public abstract class StatisticsService {
         BIRTH,
         DEATH,
         MOVEMENT,
-        STATUS;
+        STATUS,
+        ADDRESS;
     }
 
-    public static boolean isFileOn = true;
+    private boolean writeToLocalFile = true;
+
+    public void setWriteToLocalFile(boolean writeToLocalFile) {
+        this.writeToLocalFile = writeToLocalFile;
+    }
+
+    public boolean getWriteToLocalFile() {
+        return this.writeToLocalFile;
+    }
+    //TODO: is the person living in Greenland?
+    //TODO: how can control the deletion of the file? could it be with an expiration date flag?
+    //TODO: Can limit the IP address in order to access the endpoints?
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
@@ -152,6 +185,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
     public static final String FIRST_NAME = "Fornavn";
+    public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
     public static final String STATUS_CODE = "Status";
@@ -167,6 +201,7 @@ public abstract class StatisticsService {
     public static final String LOCALITY_CODE = "LokKode";
     public static final String LOCALITY_ABBREVIATION = "LokKortNavn";
     public static final String ROAD_CODE = "VejKod";
+    public static final String ROAD_NAME = "VejNavn";
     public static final String HOUSE_NUMBER = "HusNr";
     public static final String DOOR_NUMBER = "SideDoer";
     public static final String FLOOR_NUMBER = "Etage";
@@ -174,6 +209,7 @@ public abstract class StatisticsService {
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
     public static final String POST_CODE = "Postnr";
+    public static final String POST_DISTRICT = "PostDistrikt";
     public static final String CHURCH = "Kirke";
 
 
@@ -218,6 +254,10 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
+    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
+        return Collections.singletonList(this.getQuery(request));
+    }
+
     protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
@@ -246,7 +286,7 @@ public abstract class StatisticsService {
             String outputDescription = null;
             
 
-            if (isFileOn) {
+            if (this.getWriteToLocalFile()) {
                 //Get current date time
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -259,6 +299,7 @@ public abstract class StatisticsService {
                 }
 
             } else {
+                response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
                 writer = writerobj.writeValues(response.getOutputStream());
                 outputDescription = "Written to response";
             }
@@ -277,11 +318,11 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
+    public Stream<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
         LookupService lookupService = new LookupService(lookupSession);
         return personEntities.flatMap(
                 personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
-        ).iterator();
+        );
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
@@ -291,6 +332,13 @@ public abstract class StatisticsService {
     }
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    protected String formatPnr(String pnr) {
+        if (pnr == null || pnr.isEmpty() || pnr.equals("0000000000")) {
+            return "";
+        }
+        return pnr;
+    }
 
     protected static String formatRoadCode(Integer roadCode) {
         return roadCode != null ? String.format("%04d", roadCode) : null;
@@ -349,6 +397,40 @@ public abstract class StatisticsService {
                 query.addKommunekodeRestriction(restriction.getValue());
             }
         }
+    }
+
+    public static <R extends CprBitemporalRecord> Set<R> filterRecordsByEffect(Collection<R> records, OffsetDateTime effectAt) {
+        HashSet<R> filtered = new HashSet<>();
+        for (R record : records) {
+            if (record.getBitemporality().containsEffect(effectAt, effectAt)) {
+                filtered.add(record);
+            }
+        }
+        return filtered;
+    }
+
+    private static Comparator bitemporalComparator = Comparator.comparing(StatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getDafoUpdated)
+            .thenComparing(DatabaseEntry::getId);
+
+    public static <R extends CprBitemporalRecord> List<R> sortRecords(Collection<R> records) {
+        ArrayList<R> recordList = new ArrayList<>(records);
+        recordList.sort(bitemporalComparator);
+        return recordList;
+    }
+
+    public static CprBitemporality getBitemporality(CprBitemporalRecord record) {
+        return record.getBitemporality();
+    }
+
+    protected String formatTime(OffsetDateTime time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
+    }
+
+    protected String formatTime(ZonedDateTime time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
     }
 
 }
