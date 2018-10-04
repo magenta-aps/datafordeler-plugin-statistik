@@ -108,8 +108,8 @@ public class BirthDataService extends StatisticsService {
     }
 
     @Override
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        return new PersonBirthQuery(request);
+    protected PersonQuery getQuery(Filter filter) {
+        return new PersonBirthQuery(filter);
     }
 
 

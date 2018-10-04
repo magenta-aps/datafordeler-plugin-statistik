@@ -4,6 +4,7 @@ import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.records.person.data.BirthTimeDataRecord;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -12,6 +13,10 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
 
     public PersonBirthQuery(HttpServletRequest request) {
         super(request);
+    }
+
+    public PersonBirthQuery(Filter filter) {
+        super(filter);
     }
 
     @Override

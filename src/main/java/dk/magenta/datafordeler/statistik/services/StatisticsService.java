@@ -13,7 +13,6 @@ import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.plugin.AreaRestrictionDefinition;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
@@ -38,7 +37,9 @@ import org.springframework.http.HttpStatus;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -76,6 +77,51 @@ public abstract class StatisticsService {
     protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
         return this.getDafoUserManager().getUserFromRequest(request);
     }
+
+
+    public int run(Filter filter, ServiceName serviceName, OutputStream outputStream) {
+
+        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
+        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
+
+        primarySession.setDefaultReadOnly(true);
+        secondarySession.setDefaultReadOnly(true);
+
+        try {
+            List<PersonQuery> queries = this.getQueryList(filter);
+            Stream<Map<String, String>> concatenation = null;
+
+            for (PersonQuery query : queries) {
+                //this.applyAreaRestrictionsToQuery(query, user);
+                List<PersonEntity> personEntitiesList = QueryManager.getAllEntities(primarySession, query, PersonEntity.class);
+                Stream<PersonEntity> personEntities = personEntitiesList.stream();
+                Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
+                concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
+            }
+
+            if (concatenation != null) {
+                final Counter counter = new Counter();
+                if (outputStream != null) {
+                    return this.writeItems(concatenation.iterator(), outputStream, item -> {
+                        counter.count++;
+                        if (counter.count > 100) {
+                            primarySession.clear();
+                            secondarySession.clear();
+                            counter.count = 0;
+                        }
+                    });
+                }
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            primarySession.close();
+            secondarySession.close();
+        }
+        return 0;
+    }
     
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
         // Check that the user has access to CPR data
@@ -94,33 +140,38 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
-        List<PersonQuery> queries;
         try {
-            queries = this.getQueryList(request);
-            Stream<Map<String, String>> concatenation = null;
+            response.setContentType("text/csv");
+            String outputDescription = null;
+            OutputStream outputStream = null;
 
-            for (PersonQuery query : queries) {
-                this.applyAreaRestrictionsToQuery(query, user);
-                Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
-                Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
-                concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
+            if (this.getWriteToLocalFile()) {
+                //Get current date time
+
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String formatDateTime = now.format(formatter);
+
+                if (PATH_FILE != null) {
+                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
+                    file.createNewFile();
+                    outputStream = new FileOutputStream(file);
+                    outputDescription = "Written to file " + file.getCanonicalPath();
+                }
+
+            } else {
+                response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
+                outputStream = response.getOutputStream();
+                outputDescription = "Written to response";
             }
 
-            if (concatenation != null) {
-                final Counter counter = new Counter();
-                int written = this.writeItems(concatenation.iterator(), response, serviceName, item -> {
-                    counter.count++;
-                    if (counter.count > 100) {
-                        primarySession.clear();
-                        secondarySession.clear();
-                        counter.count = 0;
-                    }
-                });
+            if (outputStream != null) {
+                int written = this.run(filter, serviceName, outputStream);
+                this.getLogger().info(outputDescription);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -241,21 +292,20 @@ public abstract class StatisticsService {
     public static final String SPOUSE_PNR = "AegtePnr";
 
 
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
+    protected PersonQuery getQuery(Filter filter) {
         PersonQuery personQuery = new PersonQuery();
-        if (livingInGreenlandAtDate != null) {
-            personQuery.setEffectFrom(livingInGreenlandAtDate);
-            personQuery.setEffectTo(livingInGreenlandAtDate);
+        if (filter.livingInGreenlandAtDate != null) {
+            personQuery.setEffectFrom(filter.livingInGreenlandAtDate);
+            personQuery.setEffectTo(filter.livingInGreenlandAtDate);
         }
         return personQuery;
     }
 
-    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
-        return Collections.singletonList(this.getQuery(request));
+    protected List<PersonQuery> getQueryList(Filter filter) throws IOException {
+        return Collections.singletonList(this.getQuery(filter));
     }
 
-    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, OutputStream outputStream, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
@@ -275,39 +325,9 @@ public abstract class StatisticsService {
         int written = 0;
 
         if (items.hasNext()) {
-            response.setContentType("text/csv");
-
-
-            SequenceWriter writer = null;
             ObjectWriter writerobj = mapper.writer(schema);
-            String outputDescription = null;
-            
-            /*TODO: Proposal for the sake of defining a better directory structure.
-             * For example:
-             * ../statistik/birth/birth_timestamp.csv
-             * ../statistik/death/death_timestamp.csv
-             * ../statistik/status/status_timestamp.csv
-             * ../statistik/movement/movement_timestamp.csv  */
 
-            if (this.getWriteToLocalFile()) {
-                //Get current date time
-                LocalDateTime now = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-                String formatDateTime = now.format(formatter);
-
-                if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
-                    file.createNewFile();
-                    writer = writerobj.writeValues(file);
-                    outputDescription = "Written to file " + file.getCanonicalPath();
-                }
-
-            } else {
-                response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
-                writer = writerobj.writeValues(response.getOutputStream());
-                outputDescription = "Written to response";
-            }
-
+            SequenceWriter writer = writerobj.writeValues(outputStream);
             for (written = 0; items.hasNext(); written++) {
                 Object item = items.next();
                 if (item != null) {
@@ -316,9 +336,7 @@ public abstract class StatisticsService {
                 afterEach.accept(item);
             }
             writer.close();
-            this.getLogger().info(outputDescription);
         }
-
         return written;
     }
 

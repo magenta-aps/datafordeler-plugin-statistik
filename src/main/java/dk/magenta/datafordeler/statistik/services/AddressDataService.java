@@ -129,31 +129,12 @@ public class AddressDataService extends StatisticsService{
     private static int limit = 1000;
 
     @Override
-    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
+    protected List<PersonQuery> getQueryList(Filter filter) throws IOException {
 
-        InputStream inputStream = null;
         ArrayList<PersonQuery> queries = new ArrayList<>();
 
-        String fieldName = "file"; // Matches the file field in addressServiceForm.html
-        try {
-            Part filePart = request.getPart(fieldName);
-            if (filePart != null) {
-                inputStream = filePart.getInputStream();
-            }
-        } catch (ServletException e) {
-            e.printStackTrace();
-        }
-        if (inputStream != null) {
-
-            ArrayList<String> pnrs = new ArrayList<>();
-            Stream<String> stream = new BufferedReader(new InputStreamReader(inputStream)).lines();
-
-            try {
-                stream.forEach(pnrs::add);
-            } finally {
-                stream.close();
-                inputStream.close();
-            }
+        if (filter.onlyPnr != null) {
+            List<String> pnrs = filter.onlyPnr;
 
             System.out.println("Got "+pnrs.size()+" lines");
 
@@ -231,7 +212,36 @@ public class AddressDataService extends StatisticsService{
 
     @Override
     protected Filter getFilter(HttpServletRequest request) {
-        Filter filter = super.getFilter(request);
+        Filter filter = new Filter();
+
+        InputStream inputStream = null;
+        String fieldName = "file"; // Matches the file field in addressServiceForm.html
+        try {
+            Part filePart = request.getPart(fieldName);
+            if (filePart != null) {
+                inputStream = filePart.getInputStream();
+            }
+        } catch (ServletException | IOException e) {
+            e.printStackTrace();
+        }
+        if (inputStream != null) {
+
+            ArrayList<String> pnrs = new ArrayList<>();
+            Stream<String> stream = new BufferedReader(new InputStreamReader(inputStream)).lines();
+
+            try {
+                stream.forEach(pnrs::add);
+            } finally {
+                stream.close();
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            filter.onlyPnr = pnrs;
+        }
+
         filter.effectAt = OffsetDateTime.now();
         return filter;
     }

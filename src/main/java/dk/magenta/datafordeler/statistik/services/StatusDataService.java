@@ -103,15 +103,16 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected PersonQuery getQuery(HttpServletRequest request) {
+    protected PersonQuery getQuery(Filter filter) {
         PersonStatusQuery personStatusQuery = new PersonStatusQuery();
-        OffsetDateTime livingInGreenlandOnDate = Query.parseDateTime(request.getParameter(EFFECT_DATE_PARAMETER));
+        OffsetDateTime livingInGreenlandOnDate = filter.effectAt;
         if (livingInGreenlandOnDate != null) {
             personStatusQuery.setLivingInGreenlandOn(livingInGreenlandOnDate);
         }
-        String pnr = request.getParameter("pnr");
-        if (pnr != null) {
-            personStatusQuery.setPersonnummer(pnr);
+        if (filter.onlyPnr != null) {
+            for (String pnr : filter.onlyPnr) {
+                personStatusQuery.addPersonnummer(pnr);
+            }
         }
         personStatusQuery.setPageSize(1000000);
         return personStatusQuery;

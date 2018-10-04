@@ -1,5 +1,7 @@
 package dk.magenta.datafordeler.statistik;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
@@ -41,6 +43,12 @@ public class DeathDataServiceTest {
     @Autowired
     private DeathDataService deathDataService;
 
+    @Autowired
+    private TestUtil testUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     TestUserDetails testUserDetails;
 
     @Before
@@ -57,7 +65,7 @@ public class DeathDataServiceTest {
     }
 
     @Test
-    public void testService() {
+    public void testService() throws JsonProcessingException {
         deathDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?registrationAfter=2017-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -70,10 +78,12 @@ public class DeathDataServiceTest {
         response = restTemplate.exchange("/statistik/death_data/?registrationAfter=2017-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
+        String expected = "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";;;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"";
+
         Assert.assertEquals(
-                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";;;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"",
-                response.getBody().trim()
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
         );
     }
 
@@ -102,10 +112,11 @@ public class DeathDataServiceTest {
         );
         fileInputStream.close();
 
+        String expected = "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";;;;\"9516\";\"\";\"955\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"";
         Assert.assertEquals(
-                "\"Status\";\"DoedDto\";\"ProdDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                        "\"90\";\"30-08-2017\";\"31-08-2017\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";;;\"9516\";\"0\";\"955\";\"Paamiut\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"",
-                contents.trim()
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(contents.trim())
         );
 
     }

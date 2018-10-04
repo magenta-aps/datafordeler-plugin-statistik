@@ -113,9 +113,11 @@ public class PersonTestsUtils {
         ImportMetadata importMetadata = new ImportMetadata();
         Session session = sessionManager.getSessionFactory().openSession();
         importMetadata.setSession(session);
+        Transaction transaction = session.beginTransaction();
+        importMetadata.setTransactionInProgress(true);
         personEntityManager.parseData(testData, importMetadata);
+        transaction.commit();
         session.close();
-        testData.close();
     }
 
     private void loadLocality(Session session) throws DataFordelerException, IOException {
@@ -123,7 +125,6 @@ public class PersonTestsUtils {
         try (InputStream testData = PersonTestsUtils.class.getResourceAsStream("/locality.json")) {
             LocalityEntityManager localityEntityManager = (LocalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema);
             regs = localityEntityManager.parseData(testData, new ImportMetadata());
-            testData.close();
         }
         for (Registration registration : regs) {
             LocalityRegistration localityRegistration = (LocalityRegistration) registration;

@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -103,13 +104,14 @@ public class MovementDataService extends StatisticsService {
     }
 
     @Override
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        return new PersonMoveQuery(request);
+    protected PersonQuery getQuery(Filter filter) {
+        return new PersonMoveQuery(filter);
     }
 
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+        System.out.println("-----------------------");
         return this.formatPersonByRecord(person, session, lookupService, filter);
     }
 
@@ -322,7 +324,6 @@ public class MovementDataService extends StatisticsService {
             addresses.put(emigrationDataRecord.getEffectFrom(), emigrationDataRecord);
         }
 
-
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
         HashMap<OffsetDateTime, Map<String, String>> moves = new HashMap<>();
         addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
@@ -421,7 +422,7 @@ public class MovementDataService extends StatisticsService {
                item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
             }
             for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), moveTime))) {
-               item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+                item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
             }
             for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), moveTime))) {
                item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
