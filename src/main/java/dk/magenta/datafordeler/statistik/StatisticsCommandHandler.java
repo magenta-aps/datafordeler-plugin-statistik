@@ -64,12 +64,14 @@ public class StatisticsCommandHandler extends CommandHandler {
 
         @Override
         public boolean containsAll(Map<String, Object> data) {
-            for (String key : data.keySet()) {
-                if (key.equals("type") && this.type != null && this.type.equals(data.get("type"))) {
-                    // Ok for now
-                } else {
-                    // This must not happen. It means there is an important difference between the incoming map and this object
-                    return false;
+            if (data != null) {
+                for (String key : data.keySet()) {
+                    if (key.equals("type") && this.type != null && this.type.equals(data.get("type"))) {
+                        // Ok for now
+                    } else {
+                        // This must not happen. It means there is an important difference between the incoming map and this object
+                        return false;
+                    }
                 }
             }
             return true;
