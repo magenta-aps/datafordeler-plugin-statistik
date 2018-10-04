@@ -1,10 +1,15 @@
 package dk.magenta.datafordeler.statistik;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.database.QueryManager;
+import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.statistik.services.MovementDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import org.hibernate.Session;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,6 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -38,6 +44,15 @@ public class MovementDataServiceTest {
     @Autowired
     private MovementDataService movementDataService;
 
+    @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
+    private TestUtil testUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     /*@Before
     public void initialize() throws Exception {
         //testsUtils.loadPersonData(new File("/home/lars/tmp/download/tmp.txt"));
@@ -47,14 +62,15 @@ public class MovementDataServiceTest {
     @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
-        testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
+        testsUtils.loadPersonData("movedperson.txt");
     }
 
     @After
     public void cleanup() {
+        System.out.println("Cleaning up");
         testsUtils.clearPath();
-        testsUtils.deleteAll();
+        //testsUtils.deleteAll();
     }
 
     @Test
@@ -74,10 +90,15 @@ public class MovementDataServiceTest {
 
         response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNotNull(response.getBody());
+
+        System.out.println(response.getBody());
+
         Assert.assertFalse(response.getBody().isEmpty());
-        Assert.assertEquals("\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
-                response.getBody().trim()
+        String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
         );
     }
 
@@ -97,7 +118,7 @@ public class MovementDataServiceTest {
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
-        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2016-01-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNull(response.getBody());
 
         Assert.assertEquals(200, response.getStatusCodeValue());
@@ -109,13 +130,12 @@ public class MovementDataServiceTest {
         String contents = InputStreamReader.readInputStream(
                 fileInputStream,"UTF-8"
         );
-        fileInputStream.close();
 
-
+        String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                        "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
         Assert.assertEquals(
-                "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                        "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
-                contents.trim()
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(contents.trim())
         );
     }
 

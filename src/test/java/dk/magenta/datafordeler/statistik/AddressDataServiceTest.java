@@ -1,6 +1,7 @@
 package dk.magenta.datafordeler.statistik;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
@@ -37,6 +38,9 @@ public class AddressDataServiceTest {
     @Autowired
     private AddressDataService addressDataService;
 
+    @Autowired
+    private TestUtil testUtil;
+
     TestUserDetails testUserDetails;
     @Before
     public void initialize() throws Exception {
@@ -46,7 +50,7 @@ public class AddressDataServiceTest {
     }
 
     @Test
-    public void testService() {
+    public void testService() throws JsonProcessingException {
         addressDataService.setWriteToLocalFile(false);
 
         testUserDetails = new TestUserDetails();
@@ -60,7 +64,12 @@ public class AddressDataServiceTest {
         form.add("file", new InputStreamResource(AddressDataServiceTest.class.getResourceAsStream("/addressInput.csv")));
 
         response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
-        Assert.assertEquals("\"Pnr\";\"Fornavn\";\"Mellemnavn\";\"Efternavn\";\"Bnr\";\"VejNavn\";\"HusNr\";\"Etage\";\"SideDoer\";\"Postnr\";\"PostDistrikt\"\n" +
-                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";;\"5\";\"1\";\"tv\";\"0\";\n", response.getBody());
+        String expected = "\"Pnr\";\"Fornavn\";\"Mellemnavn\";\"Efternavn\";\"Bnr\";\"VejNavn\";\"HusNr\";\"Etage\";\"SideDoer\";\"Postnr\";\"PostDistrikt\"\n" +
+                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";;\"5\";\"1\";\"tv\";\"0\";\n";
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
+        );
+
     }
 }

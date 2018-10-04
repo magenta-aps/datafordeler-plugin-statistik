@@ -11,6 +11,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.BirthTimeDataRecord;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +28,20 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
         String pnr = request.getParameter("pnr");
         if (pnr != null) {
             this.setPersonnummer(pnr);
+        }
+        this.setPageSize(1000000);
+    }
+
+
+    public PersonStatisticsQuery(Filter filter) {
+        this.setRegistrationTimeBefore(filter.registrationBefore);
+        this.setRegistrationTimeAfter(filter.registrationAfter);
+        this.setEffectTimeBefore(filter.before);
+        this.setEffectTimeAfter(filter.after);
+        if (filter.onlyPnr != null) {
+            for (String pnr : filter.onlyPnr) {
+                this.addPersonnummer(pnr);
+            }
         }
         this.setPageSize(1000000);
     }

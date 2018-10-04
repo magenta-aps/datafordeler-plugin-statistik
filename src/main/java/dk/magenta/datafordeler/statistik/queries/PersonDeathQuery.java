@@ -6,6 +6,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
 import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
 import dk.magenta.datafordeler.cpr.records.person.data.PersonStatusDataRecord;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -13,6 +14,10 @@ public class PersonDeathQuery extends PersonStatisticsQuery {
 
     public PersonDeathQuery(HttpServletRequest request) {
         super(request);
+    }
+
+    public PersonDeathQuery(Filter filter) {
+        super(filter);
     }
 
     @Override

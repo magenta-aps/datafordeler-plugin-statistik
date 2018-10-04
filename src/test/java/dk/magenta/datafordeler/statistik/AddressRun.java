@@ -28,8 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -57,11 +56,18 @@ public class AddressRun {
     @Test
     public void run() throws IOException {
         //String inFile = "/home/lars/tmp/foo.txt";
-        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
+        InputStream inData = AddressRun.class.getResourceAsStream("/addressInput.csv");
+        BufferedReader in = new BufferedReader(new InputStreamReader(inData));
+        String line = null;
         ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(inFile.toString()))) {
-            stream.forEach(pnrs::add);
+        while((line = in.readLine()) != null) {
+            try {
+                Integer.parseInt(line, 10);
+                pnrs.add(line);
+            } catch (NumberFormatException e) {
+            }
         }
+
         System.out.println(pnrs.size() + " pnrs loaded");
 
         int count = 0;

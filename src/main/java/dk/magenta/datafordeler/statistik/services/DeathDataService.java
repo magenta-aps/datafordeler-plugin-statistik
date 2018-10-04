@@ -100,8 +100,8 @@ public class DeathDataService extends StatisticsService {
     }
 
     @Override
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        return new PersonDeathQuery(request);
+    protected PersonQuery getQuery(Filter filter) {
+        return new PersonDeathQuery(filter);
     }
 
 
