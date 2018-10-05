@@ -11,8 +11,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.DataFordelerException;
 import dk.magenta.datafordeler.core.exception.DataStreamException;
 import dk.magenta.datafordeler.core.exception.InvalidClientInputException;
-import dk.magenta.datafordeler.statistik.services.BirthDataService;
-import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.services.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +38,12 @@ public class StatisticsCommandHandler extends CommandHandler {
 
     @Autowired
     private BirthDataService birthDataService;
+    @Autowired
+    private DeathDataService deathDataService;
+    @Autowired
+    private MovementDataService movementDataService;
+    @Autowired
+    private StatusDataService statusDataService;
 
     private static Logger log = LogManager.getLogger(StatisticsCommandHandler.class.getCanonicalName());
 
@@ -105,13 +110,21 @@ public class StatisticsCommandHandler extends CommandHandler {
                 try {
                     File file = new File(StatisticsService.PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
                     file.createNewFile();
-                    FileOutputStream outputStream = null;
-                        outputStream = new FileOutputStream(file);
+                    FileOutputStream outputStream = new FileOutputStream(file);
                     String outputDescription = "Written to file " + file.getCanonicalPath();
-
                     switch (this.serviceName) {
                         case BIRTH:
-                            StatisticsCommandHandler.this.birthDataService.run(filter, serviceName, outputStream);
+                            StatisticsCommandHandler.this.birthDataService.run(filter, outputStream);
+                            break;
+                        case DEATH:
+                            StatisticsCommandHandler.this.deathDataService.run(filter, outputStream);
+                            break;
+                        case MOVEMENT:
+                            StatisticsCommandHandler.this.movementDataService.run(filter, outputStream);
+                            break;
+                        case STATUS:
+                            StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
+                            break;
                     }
                     log.info(outputDescription);
                 } catch (IOException e) {
@@ -149,7 +162,7 @@ public class StatisticsCommandHandler extends CommandHandler {
             StatisticsCommandData commandData = this.getCommandData(command.getCommandBody());
 
             StatisticsWorker worker = new StatisticsWorker(
-                    StatisticsService.ServiceName.valueOf(commandData.type),
+                    StatisticsService.ServiceName.valueOf(commandData.type.toUpperCase()),
                     new Filter(commandData.getData())
             );
 
