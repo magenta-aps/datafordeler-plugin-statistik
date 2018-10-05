@@ -80,7 +80,7 @@ public abstract class StatisticsService {
     }
 
 
-    public int run(Filter filter, ServiceName serviceName, OutputStream outputStream) {
+    public int run(Filter filter, OutputStream outputStream) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
         final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
@@ -101,15 +101,15 @@ public abstract class StatisticsService {
             }
 
             if (concatenation != null) {
-                final Counter counter = new Counter();
+                //final Counter counter = new Counter();
                 if (outputStream != null) {
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
-                        counter.count++;
+                        /*counter.count++;
                         if (counter.count > 100) {
                             primarySession.clear();
                             secondarySession.clear();
                             counter.count = 0;
-                        }
+                        }*/
                     });
                 }
             }
@@ -167,7 +167,7 @@ public abstract class StatisticsService {
             }
 
             if (outputStream != null) {
-                int written = this.run(filter, serviceName, outputStream);
+                int written = this.run(filter, outputStream);
                 this.getLogger().info(outputDescription);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
