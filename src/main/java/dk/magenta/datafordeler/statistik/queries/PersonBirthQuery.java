@@ -50,6 +50,8 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
             this.applyEffectTimes(fieldDefinition);
         }
 
+        System.out.println(fieldDefinition.toString());
+
         lookupDefinition.put(fieldDefinition);
         return lookupDefinition;
     }

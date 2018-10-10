@@ -41,13 +41,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public abstract class StatisticsService {
@@ -95,6 +93,7 @@ public abstract class StatisticsService {
             for (PersonQuery query : queries) {
                 //this.applyAreaRestrictionsToQuery(query, user);
                 List<PersonEntity> personEntitiesList = QueryManager.getAllEntities(primarySession, query, PersonEntity.class);
+                System.out.println("Got "+personEntitiesList.size()+" entities");
                 Stream<PersonEntity> personEntities = personEntitiesList.stream();
                 Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
                 concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
@@ -247,6 +246,7 @@ public abstract class StatisticsService {
     public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
     public static final String PROD_DATE = "ProdDto";
+    public static final String FILE_DATE = "ProdFilDto";
     public static final String MOVE_PROD_DATE = "FlytProdDto";
     public static final String MUNICIPALITY_CODE = "KomKod";
     public static final String LOCALITY_NAME = "LokNavn";
@@ -456,6 +456,11 @@ public abstract class StatisticsService {
     }
 
     protected String formatTime(ZonedDateTime time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
+    }
+
+    protected String formatTime(LocalDate time) {
         if (time == null) return "";
         return time.format(dmyFormatter);
     }
