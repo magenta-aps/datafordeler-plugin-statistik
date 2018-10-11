@@ -67,7 +67,7 @@ public class MovementDataService extends StatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
                 PNR, BIRTHDAY_YEAR, EFFECTIVE_PNR, STATUS_CODE, BIRTH_AUTHORITY, CITIZENSHIP_CODE,
-                MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, PROD_DATE, MOVE_DATE,
+                MOTHER_PNR, FATHER_PNR, SPOUSE_PNR, PROD_DATE, FILE_DATE, MOVE_DATE,
                 ORIGIN_COUNTRY_CODE, ORIGIN_MUNICIPALITY_CODE, ORIGIN_LOCALITY_NAME, ORIGIN_ROAD_CODE, ORIGIN_HOUSE_NUMBER, ORIGIN_FLOOR, ORIGIN_DOOR_NUMBER, ORIGIN_BNR,
                 DESTINATION_COUNTRY_CODE, DESTINATION_MUNICIPALITY_CODE, DESTINATION_LOCALITY_NAME, DESTINATION_ROAD_CODE, DESTINATION_HOUSE_NUMBER, DESTINATION_FLOOR, DESTINATION_DOOR_NUMBER, DESTINATION_BNR
         });
@@ -377,6 +377,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, formatTime(current));
                         item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+                        item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
 
                         Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
                         item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
@@ -386,6 +387,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getEmigrationCountryCode()));
                         item.put(MOVE_DATE, formatTime(current));
                         item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+                        item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
                     }
                 }
                 moves.put(current, item);

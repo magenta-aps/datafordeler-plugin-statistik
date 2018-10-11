@@ -189,7 +189,7 @@ public class BirthDataService extends StatisticsService {
                     }
 
                     LocalDate thisBirthFileTime = birthTimeDataRecord.getOriginDate();
-                    if (birthFileTime == null || thisBirthFileTime == null || thisBirthFileTime.isBefore(birthFileTime)) {
+                    if (birthFileTime == null || thisBirthFileTime.isBefore(birthFileTime)) {
                         birthFileTime = thisBirthFileTime;
                     }
 

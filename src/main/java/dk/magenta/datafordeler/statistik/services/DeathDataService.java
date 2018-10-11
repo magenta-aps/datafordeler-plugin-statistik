@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -64,7 +65,7 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                STATUS_CODE , DEATH_DATE, PROD_DATE, PNR, BIRTHDAY_YEAR,
+                STATUS_CODE , DEATH_DATE, PROD_DATE, FILE_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
                 EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
                 LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
@@ -136,6 +137,7 @@ public class DeathDataService extends StatisticsService {
                             if (registration.getRegistrationFrom() != null && (earliestProdDate == null || registration.getRegistrationFrom().isBefore(earliestProdDate))) {
                                 earliestProdDate = registration.getRegistrationFrom();
                             }
+
                         }
                     }
                 }
@@ -238,6 +240,7 @@ public class DeathDataService extends StatisticsService {
         
         OffsetDateTime deathEffectTime = null;
         OffsetDateTime deathRegistrationTime = null;
+        LocalDate deathFileTime = null;
         for (PersonStatusDataRecord statusDataRecord : sortRecords(person.getStatus())) {
             if (statusDataRecord.getBitemporality().registrationTo == null) {
                 item.put(STATUS_CODE, Integer.toString(statusDataRecord.getStatus()));
@@ -249,6 +252,11 @@ public class DeathDataService extends StatisticsService {
                     OffsetDateTime thisDeathRegistrationTime = statusDataRecord.getRegistrationFrom();
                     if (deathRegistrationTime == null || thisDeathRegistrationTime == null || thisDeathRegistrationTime.isBefore(deathRegistrationTime)) {
                         deathRegistrationTime = thisDeathRegistrationTime;
+                    }
+
+                    LocalDate thisDeathFileTime = statusDataRecord.getOriginDate();
+                    if (deathFileTime == null || thisDeathFileTime.isBefore(deathFileTime)) {
+                        deathFileTime = thisDeathFileTime;
                     }
                 }
             }
@@ -267,6 +275,9 @@ public class DeathDataService extends StatisticsService {
         }
         if (deathRegistrationTime != null) {
             item.put(PROD_DATE, formatTime(deathRegistrationTime.atZoneSameInstant(cprDataOffset)));
+        }
+        if (deathFileTime != null) {
+            item.put(FILE_DATE, formatTime(deathFileTime));
         }
 
 
