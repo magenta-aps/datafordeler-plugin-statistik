@@ -377,6 +377,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, formatTime(current));
                         item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+                        item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
 
                         Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
                         item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
@@ -386,6 +387,7 @@ public class MovementDataService extends StatisticsService {
                         item.put(DESTINATION_COUNTRY_CODE, Integer.toString(currentMigration.getEmigrationCountryCode()));
                         item.put(MOVE_DATE, formatTime(current));
                         item.put(PROD_DATE, formatTime(currentAddress.getRegistrationFrom()));
+                        item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
                     }
                 }
                 moves.put(current, item);
