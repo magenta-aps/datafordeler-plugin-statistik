@@ -16,6 +16,7 @@ import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.regex.Pattern;
 
@@ -145,8 +146,8 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
             );*/
             FieldDefinition afterDefinition = new FieldDefinition(
                     registrationTimePath,
-                    this.getRegistrationTimeAfter(),
-                    OffsetDateTime.class,
+                    StatisticsService.convertDate(this.getRegistrationTimeAfter()),
+                    LocalDate.class,
                     LookupDefinition.Operator.GTE
             );
             if (fieldDefinition == null) {
@@ -164,8 +165,8 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
             );*/
             FieldDefinition beforeDefinition = new FieldDefinition(
                     registrationTimePath,
-                    this.getRegistrationTimeBefore(),
-                    OffsetDateTime.class,
+                    StatisticsService.convertDate(this.getRegistrationTimeBefore()),
+                    LocalDate.class,
                     LookupDefinition.Operator.LTE
             );
             if (this.getRegistrationTimeAfter() == null) {
@@ -177,7 +178,7 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
                 beforeDefinition.or(new FieldDefinition(
                         registrationTimePath,
                         null,
-                        OffsetDateTime.class
+                        LocalDate.class
                 ));
             }
             if (fieldDefinition == null) {
