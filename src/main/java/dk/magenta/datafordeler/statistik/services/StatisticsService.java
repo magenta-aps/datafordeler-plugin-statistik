@@ -467,4 +467,11 @@ public abstract class StatisticsService {
         return time.format(dmyFormatter);
     }
 
+    public static LocalDate convertDate(OffsetDateTime date) {
+        if (date != null) {
+            return date.atZoneSameInstant(timezone).toLocalDate();
+        }
+        return null;
+    }
+
 }
