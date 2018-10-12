@@ -227,6 +227,9 @@ public abstract class StatisticsService {
     public static final String REGISTRATION_AFTER = "registrationAfter";
     public static final String REGISTRATION_BEFORE = "registrationBefore";
 
+    public static final String ORIGIN_AFTER = "originAfter";
+    public static final String ORIGIN_BEFORE = "originBefore";
+
     //Column names for person
     public static final String PNR = "Pnr";
     public static final String BIRTHDAY_YEAR = "FoedAar";

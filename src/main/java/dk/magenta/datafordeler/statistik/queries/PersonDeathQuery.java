@@ -30,6 +30,7 @@ public class PersonDeathQuery extends PersonStatisticsQuery {
                 Integer.class
         );
 
+        this.applyOriginTimes(fieldDefinition);
         this.applyRegistrationTimes(fieldDefinition);
         this.applyEffectTimes(fieldDefinition);
 
