@@ -69,7 +69,7 @@ public class Filter {
         if (node.has(StatisticsService.ORIGIN_BEFORE)) {
             this.originBefore = LocalDate.parse(node.get(StatisticsService.ORIGIN_BEFORE).asText());
         }
-        if (node.has(StatisticsService.AFTER_DATE_PARAMETER)) {
+        if (node.has(StatisticsService.ORIGIN_AFTER)) {
             this.originAfter = LocalDate.parse(node.get(StatisticsService.ORIGIN_AFTER).asText());
         }
         if (node.has(StatisticsService.INCLUSION_DATE_PARAMETER)) {
