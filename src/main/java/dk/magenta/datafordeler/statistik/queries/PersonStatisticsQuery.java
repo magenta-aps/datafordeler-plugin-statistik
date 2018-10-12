@@ -9,6 +9,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.BirthTimeDataRecord;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -132,7 +133,8 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
 
     protected FieldDefinition applyRegistrationTimes(String basePath) {
         // Omtænk denne
-        String registrationTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_REGISTRATION_FROM;
+        //String registrationTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_REGISTRATION_FROM;
+        String registrationTimePath = basePath + LookupDefinition.separator + CprBitemporalRecord.DB_FIELD_ORIGIN_DATE;
         FieldDefinition fieldDefinition = null;
         if (this.getRegistrationTimeAfter() != null) {
             /*fieldDefinition.and(
