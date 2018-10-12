@@ -66,6 +66,12 @@ public class Filter {
         if (node.has(StatisticsService.AFTER_DATE_PARAMETER)) {
             this.after = Query.parseDateTime(node.get(StatisticsService.AFTER_DATE_PARAMETER).asText());
         }
+        if (node.has(StatisticsService.ORIGIN_BEFORE)) {
+            this.originBefore = LocalDate.parse(node.get(StatisticsService.ORIGIN_BEFORE).asText());
+        }
+        if (node.has(StatisticsService.AFTER_DATE_PARAMETER)) {
+            this.originAfter = LocalDate.parse(node.get(StatisticsService.ORIGIN_AFTER).asText());
+        }
         if (node.has(StatisticsService.INCLUSION_DATE_PARAMETER)) {
             this.livingInGreenlandAtDate = Query.parseDateTime(node.get(StatisticsService.INCLUSION_DATE_PARAMETER).asText());
         }
