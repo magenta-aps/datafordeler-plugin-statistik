@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -22,6 +23,10 @@ public class Filter {
 
     public OffsetDateTime registrationBefore;
 
+    public LocalDate originAfter;
+
+    public LocalDate originBefore;
+
     public OffsetDateTime livingInGreenlandAtDate;
 
     public List<String> onlyPnr;
@@ -36,6 +41,8 @@ public class Filter {
         this.effectAt = Query.parseDateTime(request.getParameter(StatisticsService.EFFECT_DATE_PARAMETER));
         this.before = Query.parseDateTime(request.getParameter(StatisticsService.BEFORE_DATE_PARAMETER));
         this.after = Query.parseDateTime(request.getParameter(StatisticsService.AFTER_DATE_PARAMETER));
+        this.originAfter = LocalDate.parse(request.getParameter(StatisticsService.ORIGIN_AFTER));
+        this.originBefore = LocalDate.parse(request.getParameter(StatisticsService.ORIGIN_BEFORE));
         this.livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(StatisticsService.INCLUSION_DATE_PARAMETER));
         String[] pnr = request.getParameterValues("pnr");
         if (pnr != null && pnr.length > 0) {

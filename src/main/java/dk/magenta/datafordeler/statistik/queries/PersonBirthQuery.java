@@ -23,19 +23,6 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
     public LookupDefinition getLookupDefinition() {
         LookupDefinition lookupDefinition = super.getLookupDefinition();
         lookupDefinition.setMatchNulls(true);
-
-        /*FieldDefinition fieldDefinition = new FieldDefinition(
-                LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME,
-                null,
-                Integer.class,
-                LookupDefinition.Operator.NE
-        );*/
-        /*FieldDefinition fieldDefinition = new FieldDefinition(
-                PersonBaseData.DB_FIELD_BIRTH,
-                null,
-                Integer.class,
-                LookupDefinition.Operator.NE
-        );*/
         FieldDefinition fieldDefinition;
         if (this.getEffectTimeAfter() == null) {
             fieldDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_BIRTHTIME);
@@ -46,12 +33,10 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
                     LocalDateTime.class,
                     LookupDefinition.Operator.GTE
             );
+            this.applyOriginTimes(fieldDefinition);
             this.applyRegistrationTimes(fieldDefinition);
             this.applyEffectTimes(fieldDefinition);
         }
-
-        System.out.println(fieldDefinition.toString());
-
         lookupDefinition.put(fieldDefinition);
         return lookupDefinition;
     }

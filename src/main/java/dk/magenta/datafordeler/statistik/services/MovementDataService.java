@@ -111,7 +111,6 @@ public class MovementDataService extends StatisticsService {
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        System.out.println("-----------------------");
         return this.formatPersonByRecord(person, session, lookupService, filter);
     }
 
@@ -312,16 +311,33 @@ public class MovementDataService extends StatisticsService {
         // Map of effectTime to registrationTime (when this move was first registered)
 
         for (AddressDataRecord addressDataRecord : person.getAddress()) {
-            if (addressDataRecord.getEffectFrom() != null && Objects.equals(addressDataRecord.getEffectFrom(), addressDataRecord.getEffectTo())) {
+            OffsetDateTime effectDate = addressDataRecord.getEffectFrom();
+            if (effectDate != null && Objects.equals(effectDate, addressDataRecord.getEffectTo())) {
                 continue;
             }
-            addresses.put(addressDataRecord.getEffectFrom(), addressDataRecord);
+            CprBitemporalRecord existing = addresses.get(effectDate);
+            if (existing == null || (addressDataRecord.getOriginDate() != null && !addressDataRecord.getOriginDate().isAfter(existing.getOriginDate()))) {
+                addresses.put(effectDate, addressDataRecord);
+            }
         }
         for (ForeignAddressEmigrationDataRecord emigrationDataRecord : person.getEmigration()) {
+            OffsetDateTime effectDate = emigrationDataRecord.getEffectFrom();
             if (emigrationDataRecord.getEffectFrom() != null && Objects.equals(emigrationDataRecord.getEffectFrom(), emigrationDataRecord.getEffectTo())) {
                 continue;
             }
-            addresses.put(emigrationDataRecord.getEffectFrom(), emigrationDataRecord);
+            CprBitemporalRecord existing = addresses.get(effectDate);
+            if (existing == null || (emigrationDataRecord.getOriginDate() != null && !emigrationDataRecord.getOriginDate().isAfter(existing.getOriginDate()))) {
+                addresses.put(effectDate, emigrationDataRecord);
+            }
+        }
+
+
+        if (person.getPersonnummer().equals("0104186823")) {
+            try {
+                System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(addresses.values()));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }
 
         ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
