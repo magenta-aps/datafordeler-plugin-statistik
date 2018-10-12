@@ -447,14 +447,16 @@ public abstract class StatisticsService {
         return record.getBitemporality();
     }
 
+    private static ZoneId timezone = ZoneId.of("Europe/Copenhagen");
+
     protected String formatTime(OffsetDateTime time) {
         if (time == null) return "";
-        return time.format(dmyFormatter);
+        return this.formatTime(time.atZoneSameInstant(timezone));
     }
 
     protected String formatTime(ZonedDateTime time) {
         if (time == null) return "";
-        return time.format(dmyFormatter);
+        return this.formatTime(time.toLocalDate());
     }
 
     protected String formatTime(LocalDate time) {
@@ -463,5 +465,3 @@ public abstract class StatisticsService {
     }
 
 }
-
-
