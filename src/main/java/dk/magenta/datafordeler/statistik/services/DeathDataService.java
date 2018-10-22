@@ -109,7 +109,7 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>(this.formatPersonByRecord(person, session, lookupService, filter));
-        if (item.isEmpty()) {
+        if (item == null || item.isEmpty()) {
             return Collections.emptyList();
         }
         item.put(PNR, person.getPersonnummer());
@@ -309,8 +309,10 @@ public class DeathDataService extends StatisticsService {
             }
         }
 
+        int municipalityCode = 0;
         for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-            item.put(MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+            municipalityCode = addressDataRecord.getMunicipalityCode();
+            item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
             item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
             item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
             item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
@@ -332,6 +334,9 @@ public class DeathDataService extends StatisticsService {
                     item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 }
             }
+        }
+        if (municipalityCode < 955 || municipalityCode > 961) {
+            return null;
         }
 
         for (ParentDataRecord motherRecord : sortRecords(person.getMother())) {

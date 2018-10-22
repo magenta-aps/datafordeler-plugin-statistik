@@ -114,46 +114,7 @@ public class BirthDataService extends StatisticsService {
     }
 
 
-
-/*
     //---
-    @Override
-    protected List<PersonQuery> getQueryList(HttpServletRequest request) throws IOException {
-        //The name or path of the file must be here
-        File inFile = new File("C:\\Users\\EFRIN.GONZALEZ\\Downloads\\inFile.csv");
-        //String inFile = "/home/lars/tmp/foo.txt";
-        ArrayList<String> pnrs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.handleRequest(inFile.toString()))) {
-            stream.forEach(pnrs::add);
-        }
-        System.out.println(pnrs.size() + " pnrs loaded");
-
-        int count = 0;
-        ArrayList<PersonQuery> queries = new ArrayList<>();
-        PersonQuery personQuery = new PersonQuery();
-        for (String pnr : pnrs) {
-            count++;
-            personQuery.addPersonnummer(pnr);
-            //TODO: What's the rationale behind this if condition? the 1000 is related to ?
-            if (count >= 1000) {
-                queries.add(personQuery);
-                personQuery = new PersonQuery();
-                count = 0;
-            }
-
-        }
-        if (count > 0) {
-            queries.add(personQuery);
-        }
-
-        return queries;
-    }
-
-*/
-
-
-    //---
-
 
 
     @Override
@@ -411,8 +372,12 @@ public class BirthDataService extends StatisticsService {
 
     private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
         HashMap<String, String> item = new HashMap<>();
-        for (AddressDataRecord addressDataRecord : sortRecords(filterRecordsByEffect(person.getAddress(), filter.effectAt))) {
-            if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 900) {
+        List<AddressDataRecord> addressDataRecords = sortRecords(filterRecordsByEffect(person.getAddress(), filter.effectAt));
+        if (excludeIfNonGreenlandic && addressDataRecords.isEmpty()) {
+            throw new Exclude();
+        }
+        for (AddressDataRecord addressDataRecord : addressDataRecords) {
+            if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 955) {
                 throw new Exclude();
             }
             Lookup lookup = lookupService.doLookup(

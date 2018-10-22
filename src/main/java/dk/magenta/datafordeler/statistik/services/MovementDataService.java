@@ -310,7 +310,7 @@ public class MovementDataService extends StatisticsService {
         HashMap<OffsetDateTime, CprBitemporalRecord> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
 
-        for (AddressDataRecord addressDataRecord : person.getAddress()) {
+        for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
             OffsetDateTime effectDate = addressDataRecord.getEffectFrom();
             if (effectDate != null && Objects.equals(effectDate, addressDataRecord.getEffectTo())) {
                 continue;
@@ -320,7 +320,8 @@ public class MovementDataService extends StatisticsService {
                 addresses.put(effectDate, addressDataRecord);
             }
         }
-        for (ForeignAddressEmigrationDataRecord emigrationDataRecord : person.getEmigration()) {
+
+        for (ForeignAddressEmigrationDataRecord emigrationDataRecord : sortRecords(person.getEmigration())) {
             OffsetDateTime effectDate = emigrationDataRecord.getEffectFrom();
             if (emigrationDataRecord.getEffectFrom() != null && Objects.equals(emigrationDataRecord.getEffectFrom(), emigrationDataRecord.getEffectTo())) {
                 continue;
@@ -328,15 +329,6 @@ public class MovementDataService extends StatisticsService {
             CprBitemporalRecord existing = addresses.get(effectDate);
             if (existing == null || (emigrationDataRecord.getOriginDate() != null && !emigrationDataRecord.getOriginDate().isAfter(existing.getOriginDate()))) {
                 addresses.put(effectDate, emigrationDataRecord);
-            }
-        }
-
-
-        if (person.getPersonnummer().equals("0104186823")) {
-            try {
-                System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(addresses.values()));
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
             }
         }
 
@@ -351,11 +343,15 @@ public class MovementDataService extends StatisticsService {
             CprBitemporalRecord currentAddress = addresses.get(current);
             CprBitemporalRecord previousAddress = addresses.get(previous);
 
-            if (current != null && currentAddress.getRegistrationFrom() != null && (
-                    (filter.after == null || current.isAfter(filter.after)) &&
-                            (filter.before == null || current.isBefore(filter.before)) &&
-                            (filter.registrationAfter == null || !currentAddress.getRegistrationFrom().isBefore(filter.registrationAfter))
-            )) {
+            if (
+                    (current != null && currentAddress.getRegistrationFrom() != null) &&
+                    (filter.after == null || !current.isBefore(filter.after)) &&
+                    (filter.before == null || !current.isAfter(filter.before)) &&
+                    (filter.registrationAfter == null || !currentAddress.getRegistrationFrom().isBefore(filter.registrationAfter)) &&
+                    (filter.registrationBefore == null || !currentAddress.getRegistrationFrom().isAfter(filter.registrationBefore)) &&
+                    (filter.originAfter == null || !currentAddress.getOriginDate().isBefore(filter.originAfter)) &&
+                    (filter.originBefore == null || !currentAddress.getOriginDate().isAfter(filter.originBefore))
+            ) {
 
                 if (previousAddress == null || !isInGreenland(previousAddress) && !isInGreenland(currentAddress)) {
                     continue;

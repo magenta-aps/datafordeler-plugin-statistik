@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dk.magenta.datafordeler.core.fapi.Query;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,13 +42,20 @@ public class Filter {
         this.effectAt = Query.parseDateTime(request.getParameter(StatisticsService.EFFECT_DATE_PARAMETER));
         this.before = Query.parseDateTime(request.getParameter(StatisticsService.BEFORE_DATE_PARAMETER));
         this.after = Query.parseDateTime(request.getParameter(StatisticsService.AFTER_DATE_PARAMETER));
-        this.originAfter = LocalDate.parse(request.getParameter(StatisticsService.ORIGIN_AFTER));
-        this.originBefore = LocalDate.parse(request.getParameter(StatisticsService.ORIGIN_BEFORE));
+        this.originAfter = parseLocaldate(request.getParameter(StatisticsService.ORIGIN_AFTER));
+        this.originBefore = parseLocaldate(request.getParameter(StatisticsService.ORIGIN_BEFORE));
         this.livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(StatisticsService.INCLUSION_DATE_PARAMETER));
         String[] pnr = request.getParameterValues("pnr");
         if (pnr != null && pnr.length > 0) {
             this.onlyPnr = Arrays.asList(pnr);
         }
+    }
+
+    private static LocalDate parseLocaldate(String localdate) {
+        if (localdate != null) {
+            return LocalDate.parse(localdate);
+        }
+        return null;
     }
 
     public Filter(ObjectNode node) {
@@ -98,5 +106,15 @@ public class Filter {
 
     public Filter(OffsetDateTime effectAt) {
         this.effectAt = effectAt;
+    }
+
+    public boolean accept(CprBitemporalRecord record) {
+        if (this.after != null && record.getEffectFrom() != null && record.getEffectFrom().isBefore(this.after)) return false;
+        if (this.before != null && record.getEffectFrom() != null && record.getEffectFrom().isAfter(this.before)) return false;
+        if (this.registrationAfter != null && record.getRegistrationFrom() != null && record.getRegistrationFrom().isBefore(this.registrationAfter)) return false;
+        if (this.registrationBefore != null && record.getRegistrationFrom() != null && record.getRegistrationFrom().isAfter(this.registrationBefore)) return false;
+        if (this.originAfter != null && record.getOriginDate() != null && record.getOriginDate().isBefore(this.originAfter)) return false;
+        if (this.originBefore != null && record.getOriginDate() != null && record.getOriginDate().isAfter(this.originBefore)) return false;
+        return true;
     }
 }
