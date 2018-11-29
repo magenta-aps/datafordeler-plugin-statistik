@@ -6,18 +6,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dk.magenta.datafordeler.core.PluginManager;
-import dk.magenta.datafordeler.core.command.*;
+import dk.magenta.datafordeler.core.command.Command;
+import dk.magenta.datafordeler.core.command.CommandData;
+import dk.magenta.datafordeler.core.command.CommandHandler;
+import dk.magenta.datafordeler.core.command.Worker;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.DataFordelerException;
 import dk.magenta.datafordeler.core.exception.DataStreamException;
 import dk.magenta.datafordeler.core.exception.InvalidClientInputException;
 import dk.magenta.datafordeler.statistik.services.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -173,13 +177,13 @@ public class StatisticsCommandHandler extends CommandHandler {
     }
 
     public StatisticsCommandData getCommandData(String commandBody)
-        throws DataStreamException, InvalidClientInputException {
+            throws DataStreamException, InvalidClientInputException {
         try {
             StatisticsCommandData commandData = this.objectMapper.readValue(commandBody, StatisticsCommandData.class);
             this.getLog().info("Command data parsed");
             return commandData;
         } catch (IOException e) {
-            InvalidClientInputException ex = new InvalidClientInputException("Unable to parse command data '"+commandBody+"'");
+            InvalidClientInputException ex = new InvalidClientInputException("Unable to parse command data '" + commandBody + "'");
             this.getLog().error(ex);
             throw ex;
         }

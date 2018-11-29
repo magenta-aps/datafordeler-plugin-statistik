@@ -1,6 +1,5 @@
 package dk.magenta.datafordeler.statistik.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -65,12 +64,13 @@ public class DeathDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                STATUS_CODE , DEATH_DATE, PROD_DATE, FILE_DATE, PNR, BIRTHDAY_YEAR,
+                STATUS_CODE, DEATH_DATE, PROD_DATE, FILE_DATE, PNR, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
                 EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
                 LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
         });
     }
+
     @Override
     protected SessionManager getSessionManager() {
         return this.sessionManager;
@@ -108,10 +108,11 @@ public class DeathDataService extends StatisticsService {
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        HashMap<String, String> item = new HashMap<>(this.formatPersonByRecord(person, session, lookupService, filter));
-        if (item == null || item.isEmpty()) {
+        Map<String, String> itemMap = this.formatPersonByRecord(person, session, lookupService, filter);
+        if (itemMap == null || itemMap.isEmpty()) {
             return Collections.emptyList();
         }
+        HashMap<String, String> item = new HashMap<>(itemMap);
         item.put(PNR, person.getPersonnummer());
         return Collections.singletonList(item);
     }
@@ -124,7 +125,7 @@ public class DeathDataService extends StatisticsService {
         OffsetDateTime earliestDeathTime = null;
 
 
-        for (PersonRegistration registration: person.getRegistrations()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonStatusData statusData = data.getStatus();
@@ -146,14 +147,14 @@ public class DeathDataService extends StatisticsService {
 
         if (
                 earliestDeathTime == null ||
-                (filter.after != null && earliestDeathTime.isBefore(filter.after)) ||
-                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
-        ) {
+                        (filter.after != null && earliestDeathTime.isBefore(filter.after)) ||
+                        (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter))
+                ) {
             return Collections.emptyList();
         }
 
-        for (PersonRegistration registration: person.getRegistrations()){
-            for (PersonEffect effect: registration.getEffects()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
+            for (PersonEffect effect : registration.getEffects()) {
                 //for (PersonEffect effect: registration.getEffectsAt(earliestDeathTime)) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
@@ -176,7 +177,6 @@ public class DeathDataService extends StatisticsService {
                             item.put(BIRTH_AUTHORITY_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                         }
                     }
-
 
 
                     PersonCitizenshipData citizenshipData = data.getCitizenship();
@@ -232,12 +232,11 @@ public class DeathDataService extends StatisticsService {
     }
 
 
-
     protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        HashMap<String, String> item = new HashMap<>();
 
+        HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
-        
+
         OffsetDateTime deathEffectTime = null;
         OffsetDateTime deathRegistrationTime = null;
         LocalDate deathFileTime = null;
@@ -261,7 +260,7 @@ public class DeathDataService extends StatisticsService {
                 }
             }
         }
-        
+
         if (
                 deathEffectTime == null ||
                         (filter.after != null && deathEffectTime.isBefore(filter.after)) ||
@@ -269,7 +268,7 @@ public class DeathDataService extends StatisticsService {
                 ) {
             return Collections.emptyMap();
         }
-        
+
         if (deathEffectTime != null) {
             item.put(DEATH_DATE, formatTime(deathEffectTime.atZoneSameInstant(cprDataOffset)));
         }
@@ -279,6 +278,8 @@ public class DeathDataService extends StatisticsService {
         if (deathFileTime != null) {
             item.put(FILE_DATE, formatTime(deathFileTime));
         }
+
+        filter.effectAt = deathEffectTime;
 
 
         for (PersonNumberDataRecord personNumberDataRecord : sortRecords(person.getPersonNumber())) {
@@ -302,7 +303,7 @@ public class DeathDataService extends StatisticsService {
                 }
             }
         }
-        
+
         for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(person.getCitizenship())) {
             if (citizenshipDataRecord.getBitemporality().registrationTo == null && citizenshipDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
                 item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
@@ -311,27 +312,29 @@ public class DeathDataService extends StatisticsService {
 
         int municipalityCode = 0;
         for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-            municipalityCode = addressDataRecord.getMunicipalityCode();
-            item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
-            item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
-            item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-            item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
-            item.put(DOOR_NUMBER, addressDataRecord.getDoor());
-            item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-            Lookup lookup = lookupService.doLookup(
-                    addressDataRecord.getMunicipalityCode(),
-                    addressDataRecord.getRoadCode(),
-                    addressDataRecord.getHouseNumber()
-            );
-            if (lookup != null) {
-                if (lookup.localityName != null) {
-                    item.put(LOCALITY_NAME, lookup.localityName);
-                }
-                if (lookup.localityAbbrev != null) {
-                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                }
-                if (lookup.localityCode != 0) {
-                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+            if (addressDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime) && addressDataRecord.getReplacedby() == null) {
+                municipalityCode = addressDataRecord.getMunicipalityCode();
+                item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
+                item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+                item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+                item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
+                item.put(DOOR_NUMBER, addressDataRecord.getDoor());
+                item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+                Lookup lookup = lookupService.doLookup(
+                        addressDataRecord.getMunicipalityCode(),
+                        addressDataRecord.getRoadCode(),
+                        addressDataRecord.getHouseNumber()
+                );
+                if (lookup != null) {
+                    if (lookup.localityName != null) {
+                        item.put(LOCALITY_NAME, lookup.localityName);
+                    }
+                    if (lookup.localityAbbrev != null) {
+                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                    }
+                    if (lookup.localityCode != 0) {
+                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+                    }
                 }
             }
         }

@@ -45,6 +45,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -92,11 +93,9 @@ public abstract class StatisticsService {
 
             for (PersonQuery query : queries) {
                 //this.applyAreaRestrictionsToQuery(query, user);
-                List<PersonEntity> personEntitiesList = QueryManager.getAllEntities(primarySession, query, PersonEntity.class);
-                System.out.println("Got "+personEntitiesList.size()+" entities");
-                Stream<PersonEntity> personEntities = personEntitiesList.stream();
-                Stream<Map<String, String>> formatted = this.formatItems(personEntities, secondarySession, filter);
-                concatenation = (concatenation==null) ? formatted : Stream.concat(concatenation, formatted);
+                Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
+                Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
+                concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
             }
 
             if (concatenation != null) {
@@ -225,9 +224,11 @@ public abstract class StatisticsService {
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
+    public static final String ONLY_PNR = "pnr";
 
     public static final String REGISTRATION_AFTER = "registrationAfter";
     public static final String REGISTRATION_BEFORE = "registrationBefore";
+    public static final String REGISTRATION_AT = "registrationAt";
 
     public static final String ORIGIN_AFTER = "originAfter";
     public static final String ORIGIN_BEFORE = "originBefore";
@@ -301,9 +302,14 @@ public abstract class StatisticsService {
 
     protected PersonQuery getQuery(Filter filter) {
         PersonQuery personQuery = new PersonQuery();
-        if (filter.livingInGreenlandAtDate != null) {
+        /*if (filter.livingInGreenlandAtDate != null) {
             personQuery.setEffectFrom(filter.livingInGreenlandAtDate);
             personQuery.setEffectTo(filter.livingInGreenlandAtDate);
+        }*/
+        if (filter.onlyPnr != null) {
+            for (String pnr : filter.onlyPnr) {
+                personQuery.addPersonnummer(pnr);
+            }
         }
         return personQuery;
     }
@@ -347,10 +353,14 @@ public abstract class StatisticsService {
         return written;
     }
 
-    public Stream<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
+    public Stream<Map<String, String>> formatItems(Session personSession, Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
         LookupService lookupService = new LookupService(lookupSession);
         return personEntities.flatMap(
-                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
+                personEntity -> {
+                    List<Map<String, String>> output = formatPerson(personEntity, lookupSession, lookupService, filter);
+                    personSession.evict(personEntity);
+                    return output.stream();
+                }
         );
     }
 
@@ -369,6 +379,10 @@ public abstract class StatisticsService {
         return pnr;
     }
 
+    protected static String formatMunicipalityCode(Integer municipalityCode) {
+        return municipalityCode != null ? String.format("%04d", municipalityCode) : null;
+    }
+
     protected static String formatRoadCode(Integer roadCode) {
         return roadCode != null ? String.format("%04d", roadCode) : null;
     }
@@ -382,13 +396,33 @@ public abstract class StatisticsService {
     }
 
     protected static String formatHouseNnr(String houseNr) {
-        if (houseNr == null || houseNr.equals("0")) return "";
+        if (houseNr == null || houseNr.isEmpty()) return "";
         return StringUtils.leftPad(houseNr, 4, '0');
     }
 
     protected static String formatLocalityCode(int localityCode) {
         if (localityCode == 0) return "";
         return String.format("%04d", localityCode);
+    }
+
+    private static Pattern onlyDigits = Pattern.compile("^\\s*[0-9]+$");
+
+    protected static String formatFloor(String floor) {
+        if (floor == null || floor.isEmpty()) return "";
+        Matcher m = onlyDigits.matcher(floor);
+        if (m.find()) {
+            return StringUtils.leftPad(floor, 2, '0');
+        }
+        return floor;
+    }
+
+    protected static String formatDoor(String door) {
+        if (door == null || door.isEmpty()) return "";
+        Matcher m = onlyDigits.matcher(door);
+        if (m.find()) {
+            return StringUtils.leftPad(door, 4, '0');
+        }
+        return door;
     }
 
     protected static String string(int value) {
@@ -433,6 +467,26 @@ public abstract class StatisticsService {
         HashSet<R> filtered = new HashSet<>();
         for (R record : records) {
             if (record.getBitemporality().containsEffect(effectAt, effectAt)) {
+                filtered.add(record);
+            }
+        }
+        return filtered;
+    }
+
+    public static <R extends CprBitemporalRecord> Set<R> filterRecordsByRegistration(Collection<R> records, OffsetDateTime registrationAt) {
+        HashSet<R> filtered = new HashSet<>();
+        for (R record : records) {
+            if (record.getBitemporality().containsRegistration(registrationAt, registrationAt)) {
+                filtered.add(record);
+            }
+        }
+        return filtered;
+    }
+
+    public static <R extends CprBitemporalRecord> Set<R> filterUndoneRecords(Collection<R> records) {
+        HashSet<R> filtered = new HashSet<>();
+        for (R record : records) {
+            if (!record.isUndone()) {
                 filtered.add(record);
             }
         }
