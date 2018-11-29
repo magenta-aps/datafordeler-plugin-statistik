@@ -68,8 +68,6 @@ public class AddressRun {
             }
         }
 
-        System.out.println(pnrs.size() + " pnrs loaded");
-
         int count = 0;
         ArrayList<PersonQuery> queries = new ArrayList<>();
         PersonQuery personQuery = new PersonQuery();
@@ -140,7 +138,6 @@ public class AddressRun {
             String formatDateTime = now.format(formatter);
 
             if (PATH_FILE != null) {
-                System.out.println(PATH_FILE);
                 File file = new File(PATH_FILE, /*serviceName.name().toLowerCase()*/ "foo" + "_" + formatDateTime.toString() + ".csv");
                 file.createNewFile();
                 writer = writerobj.writeValues(file);

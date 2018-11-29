@@ -12,7 +12,6 @@ import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.AddressDataRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.NameDataRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -43,8 +42,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/statistik/address_data")
-public class AddressDataService extends StatisticsService{
-
+public class AddressDataService extends StatisticsService {
 
 
     @Autowired
@@ -111,9 +109,9 @@ public class AddressDataService extends StatisticsService{
 
     @Override
     protected List<String> getColumnNames() {
-       return  Arrays.asList(new String[]{
-               PNR, FIRST_NAME, MIDDLE_NAME, LAST_NAME, BNR, ROAD_NAME, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, POST_CODE, POST_DISTRICT
-       });
+        return Arrays.asList(new String[]{
+                PNR, FIRST_NAME, MIDDLE_NAME, LAST_NAME, BNR, ROAD_NAME, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, POST_CODE, POST_DISTRICT
+        });
     }
 
     @Override
@@ -147,7 +145,7 @@ public class AddressDataService extends StatisticsService{
         if (filter.onlyPnr != null) {
             List<String> pnrs = filter.onlyPnr;
 
-            System.out.println("Got "+pnrs.size()+" lines");
+            System.out.println("Got " + pnrs.size() + " lines");
 
             int count = 0;
             PersonQuery personQuery = new PersonQuery();

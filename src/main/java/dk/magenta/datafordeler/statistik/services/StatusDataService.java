@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.ListHashMap;
 import dk.magenta.datafordeler.cpr.CprPlugin;
@@ -13,6 +12,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
 import dk.magenta.datafordeler.cpr.data.person.data.*;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -104,19 +105,9 @@ public class StatusDataService extends StatisticsService {
 
     @Override
     protected PersonQuery getQuery(Filter filter) {
-        PersonStatusQuery personStatusQuery = new PersonStatusQuery();
-        OffsetDateTime livingInGreenlandOnDate = filter.effectAt;
-        if (livingInGreenlandOnDate != null) {
-            personStatusQuery.setLivingInGreenlandOn(livingInGreenlandOnDate);
-        }
-        if (filter.onlyPnr != null) {
-            for (String pnr : filter.onlyPnr) {
-                personStatusQuery.addPersonnummer(pnr);
-            }
-        }
-        personStatusQuery.setPageSize(1000000);
-        return personStatusQuery;
+        return new PersonStatusQuery(filter);
     }
+
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         return Collections.singletonList(this.formatPersonByRecord(person, session, lookupService, filter));
@@ -133,45 +124,45 @@ public class StatusDataService extends StatisticsService {
         PersonAddressData latestAddress = null;
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
-        for (PersonRegistration registration : person.getRegistrations()){
+        for (PersonRegistration registration : person.getRegistrations()) {
             List<PersonEffect> effects = registration.getEffectsAt(filter.effectAt);
             effects.sort(this.personComparator);
             for (PersonEffect effect : effects) {
                 for (PersonBaseData data : effect.getDataItems()) {
 
-                        PersonNameData nameData = data.getName();
-                        if (nameData != null) {
-                            item.put(FIRST_NAME, nameData.getFirstNames());
-                            item.put(LAST_NAME, nameData.getLastName());
+                    PersonNameData nameData = data.getName();
+                    if (nameData != null) {
+                        item.put(FIRST_NAME, nameData.getFirstNames());
+                        item.put(LAST_NAME, nameData.getLastName());
+                    }
+
+                    PersonBirthData birthData = data.getBirth();
+                    if (birthData != null) {
+                        if (birthData.getBirthDatetime() != null) {
+                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
                         }
-
-                        PersonBirthData birthData = data.getBirth();
-                        if (birthData != null) {
-                            if (birthData.getBirthDatetime() != null) {
-                                item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
-                            }
-                            if (birthData.getBirthPlaceCode() != null) {
-                                item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
-                            }
-                            if (birthData.getBirthAuthorityText() != null) {
-                                item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
-                            }
-                            if (birthData.getBirthSupplementalText() != null) {
-                                item.put(BIRTH_AUTHORITY_TEXT, birthData.getBirthSupplementalText());
-                            }
+                        if (birthData.getBirthPlaceCode() != null) {
+                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
                         }
-
-
-                        PersonStatusData statusData = data.getStatus();
-                        if (statusData != null) {
-                            item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
+                        if (birthData.getBirthAuthorityText() != null) {
+                            item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
                         }
-
-
-                        PersonCitizenshipData citizenshipData = data.getCitizenship();
-                        if (citizenshipData != null) {
-                            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
+                        if (birthData.getBirthSupplementalText() != null) {
+                            item.put(BIRTH_AUTHORITY_TEXT, birthData.getBirthSupplementalText());
                         }
+                    }
+
+
+                    PersonStatusData statusData = data.getStatus();
+                    if (statusData != null) {
+                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
+                    }
+
+
+                    PersonCitizenshipData citizenshipData = data.getCitizenship();
+                    if (citizenshipData != null) {
+                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
+                    }
 
 
                     PersonAddressData addressData = data.getAddress();
@@ -183,16 +174,16 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                        PersonParentData personMotherData = data.getMother();
-                        if (personMotherData != null) {
-                            item.put(MOTHER_PNR, personMotherData.getCprNumber());
-                        }
+                    PersonParentData personMotherData = data.getMother();
+                    if (personMotherData != null) {
+                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
+                    }
 
 
-                        PersonParentData personFatherData = data.getFather();
-                        if (personFatherData != null) {
-                            item.put(FATHER_PNR, personFatherData.getCprNumber());
-                        }
+                    PersonParentData personFatherData = data.getFather();
+                    if (personFatherData != null) {
+                        item.put(FATHER_PNR, personFatherData.getCprNumber());
+                    }
 
 
                     // We can't skip this if it's already set; we need the registrationTime
@@ -205,16 +196,16 @@ public class StatusDataService extends StatisticsService {
                         }
                     }
 
-                        PersonCivilStatusData personSpouseData = data.getCivilStatus();
-                        if (personSpouseData != null) {
-                            item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
-                        }
+                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
+                    if (personSpouseData != null) {
+                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
+                    }
 
 
-                        PersonChurchData personChurchData = data.getChurch();
-                        if (personChurchData != null) {
-                            item.put(CHURCH, personChurchData.getChurchRelation().toString());
-                        }
+                    PersonChurchData personChurchData = data.getChurch();
+                    if (personChurchData != null) {
+                        item.put(CHURCH, personChurchData.getChurchRelation().toString());
+                    }
 
                 }
             }
@@ -233,7 +224,7 @@ public class StatusDataService extends StatisticsService {
             item.put(HOUSE_NUMBER, formatHouseNnr(latestAddress.getHouseNumber()));
             item.put(DOOR_NUMBER, latestAddress.getDoor());
             item.put(BNR, formatBnr(latestAddress.getBuildingNumber()));
-            item.put(FLOOR_NUMBER,latestAddress.getFloor());
+            item.put(FLOOR_NUMBER, latestAddress.getFloor());
 
             // Use the lookup service to extract locality & postcode data from a municipality code and road code
             Lookup lookup = lookupService.doLookup(
@@ -288,57 +279,60 @@ public class StatusDataService extends StatisticsService {
 
     protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
+
         item.put(PNR, formatPnr(person.getPersonnummer()));
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
-        for (NameDataRecord nameDataRecord : sortRecords(filterRecordsByEffect(person.getName(), filter.effectAt))) {
+        for (NameDataRecord nameDataRecord : filter(person.getName(), filter)) {
             item.put(FIRST_NAME, nameDataRecord.getFirstNames());
             item.put(LAST_NAME, nameDataRecord.getLastName());
         }
 
-        for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), filter.effectAt))) {
+        for (BirthPlaceDataRecord birthPlaceDataRecord : filter(person.getBirthPlace(), filter)) {
             item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(BIRTH_AUTHORITY_CODE_TEXT, birthPlaceDataRecord.getBirthPlaceName());
             item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
         }
-        for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(filterRecordsByEffect(person.getBirthTime(), filter.effectAt))) {
-            item.put(BIRTHDAY_YEAR, Integer.toString(birthTimeDataRecord.getBirthDatetime().getYear()));
+        for (BirthTimeDataRecord birthTimeDataRecord : filter(person.getBirthTime(), filter)) {
+            LocalDateTime birthTime = birthTimeDataRecord.getBirthDatetime();
+            if (birthTime != null) {
+                item.put(BIRTHDAY_YEAR, Integer.toString(birthTime.getYear()));
+            }
         }
-        for (PersonStatusDataRecord statusDataRecord : sortRecords(filterRecordsByEffect(person.getStatus(), filter.effectAt))) {
+        for (PersonStatusDataRecord statusDataRecord : filter(person.getStatus(), filter)) {
             item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
         }
-        for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), filter.effectAt))) {
+        for (CitizenshipDataRecord citizenshipDataRecord : filter(person.getCitizenship(), filter)) {
             item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
-        for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getMother(), filter.effectAt))) {
+        for (ParentDataRecord parentDataRecord : filter(person.getMother(), filter)) {
             item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
         }
-        for (ParentDataRecord parentDataRecord : sortRecords(filterRecordsByEffect(person.getFather(), filter.effectAt))) {
+        for (ParentDataRecord parentDataRecord : filter(person.getFather(), filter)) {
             item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
         }
-        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), filter.effectAt))) {
+        for (CivilStatusDataRecord civilStatusDataRecord : filter(person.getCivilstatus(), filter)) {
             item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
         }
-        for (ChurchDataRecord churchDataRecord : sortRecords(filterRecordsByEffect(person.getChurchRelation(), filter.effectAt))) {
+        for (ChurchDataRecord churchDataRecord : filter(person.getChurchRelation(), filter)) {
             item.put(CHURCH, churchDataRecord.getChurchRelation().toString());
         }
 
-        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), filter.effectAt))) {
+        for (CivilStatusDataRecord civilStatusDataRecord : filter(person.getCivilstatus(), filter)) {
             item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
             item.put(CIVIL_STATUS_DATE, formatTime(civilStatusDataRecord.getEffectFrom()));
             item.put(CIVIL_STATUS_PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom()));
         }
-
-        for (AddressDataRecord addressDataRecord : sortRecords(filterRecordsByEffect(person.getAddress(), filter.effectAt))) {
+        for (AddressDataRecord addressDataRecord : filter(person.getAddress(), filter)) {
             item.put(MOVING_IN_DATE, formatTime(addressDataRecord.getEffectFrom()));
             item.put(MOVE_PROD_DATE, formatTime(addressDataRecord.getRegistrationFrom()));
 
-            item.put(MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+            item.put(MUNICIPALITY_CODE, formatMunicipalityCode(addressDataRecord.getMunicipalityCode()));
             item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
             item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-            item.put(DOOR_NUMBER, addressDataRecord.getDoor());
+            item.put(DOOR_NUMBER, formatDoor(addressDataRecord.getDoor()));
             item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-            item.put(FLOOR_NUMBER,addressDataRecord.getFloor());
+            item.put(FLOOR_NUMBER, formatFloor(addressDataRecord.getFloor()));
 
             // Use the lookup service to extract locality & postcode data from a municipality code and road code
             Lookup lookup = lookupService.doLookup(
@@ -355,5 +349,9 @@ public class StatusDataService extends StatisticsService {
         }
 
         return item;
+    }
+
+    private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
+        return sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
     }
 }

@@ -15,7 +15,6 @@ import dk.magenta.datafordeler.gladdrreg.data.address.AddressQuery;
 import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberData;
 import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberEffect;
 import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberEntity;
-import dk.magenta.datafordeler.gladdrreg.data.bnumber.BNumberQuery;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityData;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEffect;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntity;

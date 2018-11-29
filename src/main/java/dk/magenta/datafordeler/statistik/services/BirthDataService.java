@@ -167,7 +167,6 @@ public class BirthDataService extends StatisticsService {
         }
 
 
-
         ///////
         for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(person.getBirthPlace())) {
             if (birthPlaceDataRecord.getBitemporality().registrationTo == null && birthPlaceDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
@@ -209,7 +208,7 @@ public class BirthDataService extends StatisticsService {
             }
         }
         item.put(MOTHER_PREFIX + PNR, motherPnr);
-        if (motherPnr != null) {
+        if (motherPnr != null && !motherPnr.isEmpty() && !motherPnr.equals("0000000000")) {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
             if (mother != null) {
                 try {
@@ -219,6 +218,8 @@ public class BirthDataService extends StatisticsService {
                     return Collections.emptyMap();
                 }
             }
+        } else {
+            return Collections.emptyMap();
         }
 
         String fatherPnr = null;
@@ -234,7 +235,6 @@ public class BirthDataService extends StatisticsService {
                 try {
                     item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, true));
                 } catch (Exclude e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -256,7 +256,7 @@ public class BirthDataService extends StatisticsService {
 
         OffsetDateTime earliestBirthTime = null;
 
-        for (PersonRegistration registration: person.getRegistrations()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
             for (PersonEffect effect : registration.getEffects()) {
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonBirthData birthData = data.getBirth();
@@ -277,21 +277,21 @@ public class BirthDataService extends StatisticsService {
 
         if (
                 earliestProdDate == null ||
-                (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter)) ||
-                (filter.after != null && earliestBirthTime.isBefore(filter.after))
-        ) {
+                        (filter.registrationAfter != null && earliestProdDate.isBefore(filter.registrationAfter)) ||
+                        (filter.after != null && earliestBirthTime.isBefore(filter.after))
+                ) {
             return Collections.emptyMap();
         }
 
         HashSet<PersonEffect> personEffects = new HashSet<>();
-        for (PersonRegistration registration: person.getRegistrations()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
             personEffects.addAll(registration.getEffectsAt(earliestBirthTime));
         }
 
         ArrayList<PersonEffect> effects = new ArrayList<>(personEffects);
         effects.sort(Comparator.nullsFirst(this.personComparator));
 
-        for (PersonEffect effect: effects) {
+        for (PersonEffect effect : effects) {
             for (PersonBaseData data : effect.getDataItems()) {
 
                 PersonCoreData coreData = data.getCoreData();
@@ -339,8 +339,8 @@ public class BirthDataService extends StatisticsService {
 
         Filter parentFilter = new Filter(
                 birthTime != null ?
-                birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime() :
-                earliestProdDate
+                        birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime() :
+                        earliestProdDate
         );
         item.put(MOTHER_PREFIX + PNR, motherPnr);
         if (motherPnr != null) {
@@ -418,7 +418,7 @@ public class BirthDataService extends StatisticsService {
 
         HashMap<String, String> item = new HashMap<>();
         HashSet<PersonEffect> personEffects = new HashSet<>();
-        for (PersonRegistration registration: person.getRegistrations()) {
+        for (PersonRegistration registration : person.getRegistrations()) {
             personEffects.addAll(registration.getEffectsAt(filter.effectAt));
         }
 
@@ -426,7 +426,7 @@ public class BirthDataService extends StatisticsService {
         effects.sort(Comparator.nullsFirst(this.personComparator));
 
         if (excludeIfNonGreenlandic) {
-            for (PersonEffect effect: effects) {
+            for (PersonEffect effect : effects) {
                 for (PersonBaseData data : effect.getDataItems()) {
                     PersonAddressData addressData = data.getAddress();
                     if (addressData != null) {
@@ -438,8 +438,8 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-        for (PersonEffect effect: effects) {
-            for (PersonBaseData data: effect.getDataItems()) {
+        for (PersonEffect effect : effects) {
+            for (PersonBaseData data : effect.getDataItems()) {
 
                 PersonAddressData addressData = data.getAddress();
                 if (addressData != null) {
