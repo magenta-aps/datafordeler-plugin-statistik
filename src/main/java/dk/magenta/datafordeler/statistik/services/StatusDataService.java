@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -18,9 +19,9 @@ import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -55,7 +56,7 @@ public class StatusDataService extends StatisticsService {
     @Autowired
     private CprPlugin cprPlugin;
 
-    private Logger log = LoggerFactory.getLogger(BirthDataService.class);
+    private Logger log = LogManager.getLogger(BirthDataService.class.getCanonicalName());
 
     @Override
     protected String[] requiredParameters() {
@@ -324,6 +325,7 @@ public class StatusDataService extends StatisticsService {
             item.put(CIVIL_STATUS_PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom()));
         }
         for (AddressDataRecord addressDataRecord : filter(person.getAddress(), filter)) {
+            if (addressDataRecord.getMunicipalityCode() < 900) return null;
             item.put(MOVING_IN_DATE, formatTime(addressDataRecord.getEffectFrom()));
             item.put(MOVE_PROD_DATE, formatTime(addressDataRecord.getRegistrationFrom()));
 
@@ -352,6 +354,8 @@ public class StatusDataService extends StatisticsService {
     }
 
     private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
-        return sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
+        List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
+        //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
+        return sorted;
     }
 }

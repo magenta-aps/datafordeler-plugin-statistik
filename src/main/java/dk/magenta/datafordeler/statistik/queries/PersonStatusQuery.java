@@ -9,6 +9,7 @@ import dk.magenta.datafordeler.statistik.utils.Filter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class PersonStatusQuery extends PersonStatisticsQuery {
 
@@ -43,7 +44,7 @@ public class PersonStatusQuery extends PersonStatisticsQuery {
 
         FieldDefinition statusDefinition = new FieldDefinition(
                 PersonEntity.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusDataRecord.DB_FIELD_STATUS,
-                90,
+                Arrays.asList(50, 60, 80, 90),
                 Integer.class,
                 LookupDefinition.Operator.NE
         );

@@ -31,8 +31,8 @@ import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
-import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
