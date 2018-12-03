@@ -18,9 +18,9 @@ import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -66,7 +66,7 @@ public class AddressDataService extends StatisticsService {
     }
 
 
-    private Logger log = LoggerFactory.getLogger(BirthDataService.class);
+    private Logger log = LogManager.getLogger(BirthDataService.class.getCanonicalName());
 
     @Override
     protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
