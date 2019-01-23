@@ -69,7 +69,7 @@ public class AddressDataService extends StatisticsService {
     private Logger log = LogManager.getLogger(BirthDataService.class.getCanonicalName());
 
     @Override
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
         String formToken = request.getParameter("token");
         if (formToken != null) {
             return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
@@ -88,7 +88,7 @@ public class AddressDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.POST, path = "/")
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.ADDRESS);
     }
 

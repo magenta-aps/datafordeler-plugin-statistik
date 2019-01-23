@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.queries;
 
+import dk.magenta.datafordeler.core.database.BaseLookupDefinition;
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.core.fapi.Query;
@@ -210,11 +211,14 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
 
 
     protected void applyRegistrationTimes(FieldDefinition fieldDefinition) {
-        fieldDefinition.and(
-                this.applyRegistrationTimes(
-                        cutPath(fieldDefinition.path)
-                )
+        FieldDefinition registrationDefinition = this.applyRegistrationTimes(
+                cutPath(fieldDefinition.path)
         );
+        if (registrationDefinition != null) {
+            fieldDefinition.and(
+                    registrationDefinition
+            );
+        }
     }
 
     protected FieldDefinition applyRegistrationTimes(String basePath) {
@@ -241,7 +245,8 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
                 beforeDefinition.or(new FieldDefinition(
                         registrationFromPath,
                         null,
-                        OffsetDateTime.class
+                        OffsetDateTime.class,
+                        LookupDefinition.Operator.EQ
                 ));
             }
             fieldDefinition = PersonStatisticsQuery.and(fieldDefinition, beforeDefinition);
@@ -283,11 +288,14 @@ public class PersonStatisticsQuery extends PersonRecordQuery {
 
 
     protected void applyEffectTimes(FieldDefinition fieldDefinition) {
-        fieldDefinition.and(
-                this.applyEffectTimes(
-                        cutPath(fieldDefinition.path)
-                )
+        FieldDefinition effectDefinition = this.applyEffectTimes(
+                cutPath(fieldDefinition.path)
         );
+        if (effectDefinition != null) {
+            fieldDefinition.and(
+                    effectDefinition
+            );
+        }
     }
 
     protected FieldDefinition applyEffectTimes(String basePath) {

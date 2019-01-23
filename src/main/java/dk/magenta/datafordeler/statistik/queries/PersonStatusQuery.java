@@ -41,7 +41,7 @@ public class PersonStatusQuery extends PersonStatisticsQuery {
 
         fieldDefinitions.add(addressDefinition);
 
-
+/*
         FieldDefinition statusDefinition = new FieldDefinition(
                 PersonEntity.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusDataRecord.DB_FIELD_STATUS,
                 Arrays.asList(50, 60, 80, 90),
@@ -49,7 +49,7 @@ public class PersonStatusQuery extends PersonStatisticsQuery {
                 LookupDefinition.Operator.NE
         );
         fieldDefinitions.add(statusDefinition);
-
+*/
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
             applyRegistrationTimes(fieldDefinition);
             applyEffectTimes(fieldDefinition);

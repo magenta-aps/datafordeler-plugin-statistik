@@ -7,7 +7,7 @@ import dk.magenta.datafordeler.cpr.data.road.data.RoadBaseData;
 import dk.magenta.datafordeler.cpr.data.road.data.RoadCoreData;
 import dk.magenta.datafordeler.cpr.data.road.data.RoadPostcodeData;
 import dk.magenta.datafordeler.cpr.data.unversioned.PostCode;
-import dk.magenta.datafordeler.cvr.data.unversioned.Municipality;
+import dk.magenta.datafordeler.cvr.records.unversioned.Municipality;
 import dk.magenta.datafordeler.gladdrreg.data.address.AddressData;
 import dk.magenta.datafordeler.gladdrreg.data.address.AddressEffect;
 import dk.magenta.datafordeler.gladdrreg.data.address.AddressEntity;

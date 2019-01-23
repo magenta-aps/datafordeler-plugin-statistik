@@ -70,7 +70,7 @@ public class StatusDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.STATUS);
     }
 
@@ -284,7 +284,7 @@ public class StatusDataService extends StatisticsService {
         item.put(PNR, formatPnr(person.getPersonnummer()));
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
-        for (NameDataRecord nameDataRecord : filter(person.getName(), filter)) {
+        for (NameDataRecord nameDataRecord : sort(person.getName())) {
             item.put(FIRST_NAME, nameDataRecord.getFirstNames());
             item.put(LAST_NAME, nameDataRecord.getLastName());
         }
@@ -299,6 +299,11 @@ public class StatusDataService extends StatisticsService {
             if (birthTime != null) {
                 item.put(BIRTHDAY_YEAR, Integer.toString(birthTime.getYear()));
             }
+        }
+        try {
+            System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(person.getStatus()));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
         for (PersonStatusDataRecord statusDataRecord : filter(person.getStatus(), filter)) {
             item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
@@ -350,12 +355,19 @@ public class StatusDataService extends StatisticsService {
             }
         }
 
+        replaceMapValues(item, null, "");
+
         return item;
     }
 
     private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
         List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
         //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
+        return sorted;
+    }
+
+    private static <R extends CprBitemporalRecord> List<R> sort(Collection<R> records) {
+        List<R> sorted = sortRecords(filterUndoneRecords(records));
         return sorted;
     }
 }

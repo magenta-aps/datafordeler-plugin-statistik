@@ -7,6 +7,8 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.statistik.services.MovementDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.hibernate.Session;
@@ -53,12 +55,6 @@ public class MovementDataServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    /*@Before
-    public void initialize() throws Exception {
-        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/tmp.txt"));
-        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/1608116792.txt"));
-    }*/
-
     @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
@@ -88,8 +84,9 @@ public class MovementDataServiceTest {
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 */
-        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-04-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=1900-01-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
         //response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2017-11-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
+        System.out.println(response.getStatusCodeValue());
         Assert.assertNotNull(response.getBody());
 
         System.out.println(testUtil.csvToJsonString(response.getBody().trim()));
