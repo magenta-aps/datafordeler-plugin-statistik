@@ -55,12 +55,12 @@ public class MovementDataService extends StatisticsService {
     @Autowired
     private CprPlugin cprPlugin;
 
-    private Logger log = LogManager.getLogger(MovementDataService.class);
+    private Logger log = LogManager.getLogger(MovementDataService.class.getCanonicalName());
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void getMovement(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.MOVEMENT);
     }
 
@@ -316,7 +316,7 @@ public class MovementDataService extends StatisticsService {
                 continue;
             }
             // Corrected records will be represented by their correctors
-            if (addressDataRecord.getCorrector() != null) {
+            if (addressDataRecord.getCorrectors().size() > 0) {
                 continue;
             }
 
@@ -478,6 +478,8 @@ public class MovementDataService extends StatisticsService {
             for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filterRecordsByEffect(person.getCivilstatus(), moveTime))) {
                 item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
             }
+
+            replaceMapValues(item, null, "");
         }
 
         return new ArrayList<>(moves.values());

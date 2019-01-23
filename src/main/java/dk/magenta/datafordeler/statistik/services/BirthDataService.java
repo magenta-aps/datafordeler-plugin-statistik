@@ -63,7 +63,7 @@ public class BirthDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.BIRTH);
     }
 
@@ -239,7 +239,7 @@ public class BirthDataService extends StatisticsService {
             }
         }
 
-
+        replaceMapValues(item, null, "");
         return item;
     }
 

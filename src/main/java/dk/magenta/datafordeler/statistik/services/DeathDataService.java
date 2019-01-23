@@ -57,7 +57,7 @@ public class DeathDataService extends StatisticsService {
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException {
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.DEATH);
     }
 
@@ -358,6 +358,7 @@ public class DeathDataService extends StatisticsService {
             }
         }
 
+        replaceMapValues(item, null, "");
         return item;
     }
 

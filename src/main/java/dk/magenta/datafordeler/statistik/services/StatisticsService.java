@@ -74,7 +74,7 @@ public abstract class StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException {
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
         return this.getDafoUserManager().getUserFromRequest(request);
     }
 
@@ -121,9 +121,8 @@ public abstract class StatisticsService {
         }
         return 0;
     }
-
-    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
-
+    
+    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         // Check that the user has access to CPR data
         DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
@@ -153,7 +152,7 @@ public abstract class StatisticsService {
                 String formatDateTime = now.format(formatter);
 
                 if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
+                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime + ".csv");
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
@@ -529,6 +528,14 @@ public abstract class StatisticsService {
             return date.atZoneSameInstant(timezone).toLocalDate();
         }
         return null;
+    }
+
+    protected static void replaceMapValues(Map<String, String> map, String search, String replace) {
+        for (String key : map.keySet()) {
+            if (Objects.equals(map.get(key), search)) {
+                map.put(key, replace);
+            }
+        }
     }
 
 }
