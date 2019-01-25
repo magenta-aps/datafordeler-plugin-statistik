@@ -1,5 +1,6 @@
 package dk.magenta.datafordeler.statistik.queries;
 
+import dk.magenta.datafordeler.core.database.BaseLookupDefinition;
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
@@ -20,8 +21,8 @@ public class PersonBirthQuery extends PersonStatisticsQuery {
     }
 
     @Override
-    public LookupDefinition getLookupDefinition() {
-        LookupDefinition lookupDefinition = super.getLookupDefinition();
+    public BaseLookupDefinition getLookupDefinition() {
+        BaseLookupDefinition lookupDefinition = super.getLookupDefinition();
         lookupDefinition.setMatchNulls(true);
         FieldDefinition fieldDefinition;
         if (this.getEffectTimeAfter() == null) {
