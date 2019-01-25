@@ -8,11 +8,8 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.ListHashMap;
 import dk.magenta.datafordeler.cpr.CprPlugin;
-import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.cpr.data.person.PersonRegistration;
-import dk.magenta.datafordeler.cpr.data.person.data.*;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
@@ -106,177 +103,13 @@ public class StatusDataService extends StatisticsService {
     }
 
     @Override
-    protected PersonQuery getQuery(Filter filter) {
+    protected PersonRecordQuery getQuery(Filter filter) {
         return new PersonStatusQuery(filter);
     }
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         return Collections.singletonList(this.formatPersonByRecord(person, session, lookupService, filter));
-    }
-
-    protected List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        HashMap<String, String> item = new HashMap<>();
-
-        item.put(PNR, person.getPersonnummer());
-
-        OffsetDateTime latestCivilStatusDate = null;
-        OffsetDateTime civilStatusRegistrationDate = null;
-        OffsetDateTime latestAddressTime = null;
-        PersonAddressData latestAddress = null;
-
-        // Loop over the list of registrations (which is already sorted (by time, ascending))
-        for (PersonRegistration registration : person.getRegistrations()) {
-            List<PersonEffect> effects = registration.getEffectsAt(filter.effectAt);
-            effects.sort(this.personComparator);
-            for (PersonEffect effect : effects) {
-                for (PersonBaseData data : effect.getDataItems()) {
-
-                    PersonNameData nameData = data.getName();
-                    if (nameData != null) {
-                        item.put(FIRST_NAME, nameData.getFirstNames());
-                        item.put(LAST_NAME, nameData.getLastName());
-                    }
-
-                    PersonBirthData birthData = data.getBirth();
-                    if (birthData != null) {
-                        if (birthData.getBirthDatetime() != null) {
-                            item.put(BIRTHDAY_YEAR, Integer.toString(birthData.getBirthDatetime().getYear()));
-                        }
-                        if (birthData.getBirthPlaceCode() != null) {
-                            item.put(BIRTH_AUTHORITY, Integer.toString(birthData.getBirthPlaceCode()));
-                        }
-                        if (birthData.getBirthAuthorityText() != null) {
-                            item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthData.getBirthAuthorityText()));
-                        }
-                        if (birthData.getBirthSupplementalText() != null) {
-                            item.put(BIRTH_AUTHORITY_TEXT, birthData.getBirthSupplementalText());
-                        }
-                    }
-
-
-                    PersonStatusData statusData = data.getStatus();
-                    if (statusData != null) {
-                        item.put(STATUS_CODE, formatStatusCode(statusData.getStatus()));
-                    }
-
-
-                    PersonCitizenshipData citizenshipData = data.getCitizenship();
-                    if (citizenshipData != null) {
-                        item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipData.getCountryCode()));
-                    }
-
-
-                    PersonAddressData addressData = data.getAddress();
-                    if (addressData != null && effect.getEffectFrom() != null) {
-                        if (latestAddressTime == null || latestAddressTime.isBefore(effect.getEffectFrom()) ||
-                                (latestAddressTime.isEqual(effect.getEffectFrom()) && (latestAddress == null || latestAddress.getId() < addressData.getId()))) {
-                            latestAddressTime = effect.getEffectFrom();
-                            latestAddress = addressData;
-                        }
-                    }
-
-                    PersonParentData personMotherData = data.getMother();
-                    if (personMotherData != null) {
-                        item.put(MOTHER_PNR, personMotherData.getCprNumber());
-                    }
-
-
-                    PersonParentData personFatherData = data.getFather();
-                    if (personFatherData != null) {
-                        item.put(FATHER_PNR, personFatherData.getCprNumber());
-                    }
-
-
-                    // We can't skip this if it's already set; we need the registrationTime
-                    PersonCivilStatusData personCivilStatus = data.getCivilStatus();
-                    if (personCivilStatus != null) {
-                        item.put(CIVIL_STATUS, personCivilStatus.getCivilStatus());
-                        if (effect.getEffectFrom() != null && (latestCivilStatusDate == null || effect.getEffectFrom().isAfter(latestCivilStatusDate))) {
-                            latestCivilStatusDate = effect.getEffectFrom();
-                            civilStatusRegistrationDate = registration.getRegistrationFrom();
-                        }
-                    }
-
-                    PersonCivilStatusData personSpouseData = data.getCivilStatus();
-                    if (personSpouseData != null) {
-                        item.put(SPOUSE_PNR, personSpouseData.getSpouseCpr());
-                    }
-
-
-                    PersonChurchData personChurchData = data.getChurch();
-                    if (personChurchData != null) {
-                        item.put(CHURCH, personChurchData.getChurchRelation().toString());
-                    }
-
-                }
-            }
-        }
-        if (latestCivilStatusDate != null) {
-            item.put(CIVIL_STATUS_DATE, latestCivilStatusDate.format(dmyFormatter));
-        }
-        if (civilStatusRegistrationDate != null) {
-            item.put(CIVIL_STATUS_PROD_DATE, civilStatusRegistrationDate.format(dmyFormatter));
-        }
-
-        if (latestAddress != null) {
-            item.put(POST_CODE, latestAddress.getPostalCode());
-            item.put(MUNICIPALITY_CODE, Integer.toString(latestAddress.getMunicipalityCode()));
-            item.put(ROAD_CODE, formatRoadCode(latestAddress.getRoadCode()));
-            item.put(HOUSE_NUMBER, formatHouseNnr(latestAddress.getHouseNumber()));
-            item.put(DOOR_NUMBER, latestAddress.getDoor());
-            item.put(BNR, formatBnr(latestAddress.getBuildingNumber()));
-            item.put(FLOOR_NUMBER, latestAddress.getFloor());
-
-            // Use the lookup service to extract locality & postcode data from a municipality code and road code
-            Lookup lookup = lookupService.doLookup(
-                    latestAddress.getMunicipalityCode(),
-                    latestAddress.getRoadCode(),
-                    latestAddress.getHouseNumber()
-            );
-            if (lookup != null) {
-                item.put(LOCALITY_NAME, lookup.localityName);
-                item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
-                item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                item.put(POST_CODE, Integer.toString(lookup.postalCode));
-            }
-
-            // We're looking for a persons newest address, as well as the time it was first registered
-            // So, populate these two structures:
-            // Map of effectTime to addresses (when address was moved into)
-            ListHashMap<OffsetDateTime, PersonAddressData> addresses = new ListHashMap<>();
-            // Map of effectTime to registrationTime (when this move was *first* registered)
-            HashMap<OffsetDateTime, OffsetDateTime> addressRegistrationTimes = new HashMap<>();
-
-            for (PersonRegistration registration : person.getRegistrations()) {
-                for (PersonEffect effect : registration.getEffects()) {
-                    OffsetDateTime effectTime = effect.getEffectFrom();
-                    for (PersonBaseData data : effect.getDataItems()) {
-                        PersonAddressData addressData = data.getAddress();
-                        if (addressData != null) {
-                            addresses.add(effectTime, addressData);
-                            if (!addressRegistrationTimes.containsKey(effectTime)) {
-                                OffsetDateTime oldTime = addressRegistrationTimes.get(effectTime);
-                                OffsetDateTime newTime = registration.getRegistrationFrom();
-                                if (newTime != null && (oldTime == null || newTime.isBefore(oldTime))) {
-                                    addressRegistrationTimes.put(effectTime, newTime);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            ArrayList<OffsetDateTime> addressTimes = new ArrayList<>(addresses.keySet());
-            addressTimes.sort(Comparator.nullsFirst(OffsetDateTime::compareTo));
-            for (OffsetDateTime addressTime : addressTimes) {
-                if (addresses.get(addressTime).contains(latestAddress)) {
-                    item.put(MOVING_IN_DATE, addressTime.format(dmyFormatter));
-                    item.put(MOVE_PROD_DATE, addressRegistrationTimes.get(addressTime) != null ? addressRegistrationTimes.get(addressTime).format(dmyFormatter) : null);
-                    break;
-                }
-            }
-        }
-        return Collections.singletonList(item);
     }
 
     protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {

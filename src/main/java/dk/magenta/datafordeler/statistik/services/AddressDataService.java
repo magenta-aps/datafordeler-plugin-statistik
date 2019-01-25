@@ -11,7 +11,7 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.person.data.AddressDataRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.NameDataRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -138,9 +138,9 @@ public class AddressDataService extends StatisticsService {
     private static int limit = 1000;
 
     @Override
-    protected List<PersonQuery> getQueryList(Filter filter) throws IOException {
+    protected List<PersonRecordQuery> getQueryList(Filter filter) throws IOException {
 
-        ArrayList<PersonQuery> queries = new ArrayList<>();
+        ArrayList<PersonRecordQuery> queries = new ArrayList<>();
 
         if (filter.onlyPnr != null) {
             List<String> pnrs = filter.onlyPnr;
@@ -148,7 +148,7 @@ public class AddressDataService extends StatisticsService {
             System.out.println("Got " + pnrs.size() + " lines");
 
             int count = 0;
-            PersonQuery personQuery = new PersonQuery();
+            PersonRecordQuery personQuery = new PersonRecordQuery();
             personQuery.setPageSize(limit);
             for (String pnr : pnrs) {
                 if (count == 0 && !numeric.matcher(pnr).matches()) {
@@ -160,7 +160,7 @@ public class AddressDataService extends StatisticsService {
                 // so split the query into chunks of a reasonable size. <limit> is chosen.
                 if (count >= limit) {
                     queries.add(personQuery);
-                    personQuery = new PersonQuery();
+                    personQuery = new PersonRecordQuery();
                     personQuery.setPageSize(limit);
                     count = 0;
                 }

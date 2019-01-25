@@ -1,9 +1,6 @@
 package dk.magenta.datafordeler.statistik;
 
-import dk.magenta.datafordeler.core.database.Entity;
-import dk.magenta.datafordeler.core.database.QueryManager;
-import dk.magenta.datafordeler.core.database.Registration;
-import dk.magenta.datafordeler.core.database.SessionManager;
+import dk.magenta.datafordeler.core.database.*;
 import dk.magenta.datafordeler.core.exception.DataFordelerException;
 import dk.magenta.datafordeler.core.io.ImportInputStream;
 import dk.magenta.datafordeler.core.io.ImportMetadata;
@@ -197,7 +194,7 @@ public class PersonTestsUtils {
         when(dafoUserManager.getFallbackUser()).thenReturn(testUserDetails);
     }
 
-    public <E extends Entity> void deleteAll(Class<E> eClass) {
+    public <E extends DatabaseEntry> void deleteAll(Class<E> eClass) {
         Session session = sessionManager.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
         Collection<E> entities = QueryManager.getAllEntities(session, eClass);

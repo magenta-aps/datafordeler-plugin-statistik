@@ -21,9 +21,8 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprAreaRestrictionDefinition;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
@@ -88,10 +87,10 @@ public abstract class StatisticsService {
         secondarySession.setDefaultReadOnly(true);
 
         try {
-            List<PersonQuery> queries = this.getQueryList(filter);
+            List<PersonRecordQuery> queries = this.getQueryList(filter);
             Stream<Map<String, String>> concatenation = null;
 
-            for (PersonQuery query : queries) {
+            for (PersonRecordQuery query : queries) {
                 //this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
@@ -299,8 +298,8 @@ public abstract class StatisticsService {
     public static final String SPOUSE_PNR = "AegtePnr";
 
 
-    protected PersonQuery getQuery(Filter filter) {
-        PersonQuery personQuery = new PersonQuery();
+    protected PersonRecordQuery getQuery(Filter filter) {
+        PersonRecordQuery personQuery = new PersonRecordQuery();
         /*if (filter.livingInGreenlandAtDate != null) {
             personQuery.setEffectFrom(filter.livingInGreenlandAtDate);
             personQuery.setEffectTo(filter.livingInGreenlandAtDate);
@@ -313,7 +312,7 @@ public abstract class StatisticsService {
         return personQuery;
     }
 
-    protected List<PersonQuery> getQueryList(Filter filter) throws IOException {
+    protected List<PersonRecordQuery> getQueryList(Filter filter) throws IOException {
         return Collections.singletonList(this.getQuery(filter));
     }
 
@@ -438,20 +437,7 @@ public abstract class StatisticsService {
         }
     }
 
-    public class EffectComparator<T extends Effect> implements Comparator<T> {
-        @Override
-        public int compare(T o1, T o2) {
-            int c = o1.compareTo(o2);
-            if (c == 0) {
-                c = o1.getRegistration().compareTo(o2.getRegistration());
-            }
-            return c;
-        }
-    }
-
-    public final EffectComparator<PersonEffect> personComparator = new EffectComparator<PersonEffect>();
-
-    protected void applyAreaRestrictionsToQuery(PersonQuery query, DafoUserDetails user) throws InvalidClientInputException {
+    protected void applyAreaRestrictionsToQuery(PersonRecordQuery query, DafoUserDetails user) throws InvalidClientInputException {
         Collection<AreaRestriction> restrictions = user.getAreaRestrictionsForRole(CprRolesDefinition.READ_CPR_ROLE);
         AreaRestrictionDefinition areaRestrictionDefinition = this.getCprPlugin().getAreaRestrictionDefinition();
         AreaRestrictionType municipalityType = areaRestrictionDefinition.getAreaRestrictionTypeByName(CprAreaRestrictionDefinition.RESTRICTIONTYPE_KOMMUNEKODER);
