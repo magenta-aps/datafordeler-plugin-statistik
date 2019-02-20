@@ -19,7 +19,6 @@ import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeEntity;
 import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeEntityManager;
 import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeRegistration;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadEntity;
-import dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadRegistration;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FileUtils;
@@ -51,7 +50,7 @@ public class PersonTestsUtils {
     private PersonEntityManager personEntityManager;
 
     @Autowired
-    private RoadEntityManager roadEntityManager;
+    private dk.magenta.datafordeler.cpr.data.road.RoadEntityManager cprRoadEntityManager;
 
     @Autowired
     private GladdrregPlugin gladdrregPlugin;
@@ -101,16 +100,27 @@ public class PersonTestsUtils {
     }
 
 
-
-    public void loadRoadData(File source) throws Exception {
-        loadRoadData(new FileInputStream(source));
+    public void loadRoadData(String resource) throws Exception {
+        loadRoadData(
+                new ImportInputStream(
+                        new LabeledSequenceInputStream(
+                                Collections.singletonList(
+                                        Pair.of(
+                                                resource,
+                                                PersonTestsUtils.class.getResourceAsStream("/" + resource)
+                                        )
+                                )
+                        )
+                )
+        );
     }
+
 
     public void loadRoadData(InputStream testData) throws Exception {
         ImportMetadata importMetadata = new ImportMetadata();
         Session session = sessionManager.getSessionFactory().openSession();
         importMetadata.setSession(session);
-        roadEntityManager.parseData(testData, importMetadata);
+        cprRoadEntityManager.parseData(testData, importMetadata);
         session.close();
         testData.close();
     }
@@ -141,7 +151,7 @@ public class PersonTestsUtils {
 
     private void loadRoad(Session session) throws DataFordelerException, IOException {
         InputStream testData = PersonTestsUtils.class.getResourceAsStream("/road.json");
-        RoadEntityManager roadEntityManager = (RoadEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(RoadEntity.schema);
+        dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager roadEntityManager = (dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(RoadEntity.schema);
         List<? extends Registration> regs = roadEntityManager.parseData(testData, new ImportMetadata());
         testData.close();
         for (Registration registration : regs) {

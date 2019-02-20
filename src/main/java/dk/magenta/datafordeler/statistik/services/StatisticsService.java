@@ -9,7 +9,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestriction;
 import dk.magenta.datafordeler.core.arearestriction.AreaRestrictionType;
 import dk.magenta.datafordeler.core.database.DatabaseEntry;
-import dk.magenta.datafordeler.core.database.Effect;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
@@ -51,10 +50,6 @@ import java.util.stream.Stream;
 public abstract class StatisticsService {
 
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
-
-    private class Counter {
-        public long count = 0;
-    }
 
     public static String PATH_FILE = null;
 
@@ -202,7 +197,8 @@ public abstract class StatisticsService {
         DEATH,
         MOVEMENT,
         STATUS,
-        ADDRESS;
+        ADDRESS,
+        ROAD;
     }
 
     private boolean writeToLocalFile = true;
@@ -265,6 +261,7 @@ public abstract class StatisticsService {
     public static final String POST_CODE = "Postnr";
     public static final String POST_DISTRICT = "PostDistrikt";
     public static final String CHURCH = "Kirke";
+    public static final String BYGDE = "Bygde";
 
 
     public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
