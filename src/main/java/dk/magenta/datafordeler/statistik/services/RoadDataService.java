@@ -17,6 +17,7 @@ import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.records.road.RoadRecordQuery;
+import dk.magenta.datafordeler.cpr.records.road.data.RoadCityBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.road.data.RoadEntity;
 import dk.magenta.datafordeler.cpr.records.road.data.RoadPostalcodeBitemporalRecord;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -225,7 +226,11 @@ public class RoadDataService extends StatisticsService {
             item.put(LOCALITY_CODE, "");
             item.put(ROAD_CODE, roadCode);
             item.put(ROAD_NAME, roadName);
-            item.put(BYGDE, "");
+
+            //new roadcode is expected to always mean new city, that is why there is only one
+            String cityName = road.getCity().size()>0 ? (road.getCity().stream().findFirst().get().getCityName()+"") : "";
+            item.put(BYGDE, cityName);
+
             item.put(POST_CODE, postalCode.getPostalCode()+"");
             item.put("Void", (road.getName().size()>1 ? (road.getName().size()+"") : ""));
             list.add(item);
