@@ -7,21 +7,17 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
-import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.records.road.RoadRecordQuery;
-import dk.magenta.datafordeler.cpr.records.road.data.RoadCityBitemporalRecord;
-import dk.magenta.datafordeler.cpr.records.road.data.RoadEntity;
-import dk.magenta.datafordeler.cpr.records.road.data.RoadPostalcodeBitemporalRecord;
+import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressEntity;
+import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressRoadRecord;
+import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
+import dk.magenta.datafordeler.geo.data.road.RoadEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -31,16 +27,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.ServletException;
+import org.hibernate.query.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.Part;
 import java.io.*;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/statistik/road_data")
@@ -54,9 +46,6 @@ public class RoadDataService extends StatisticsService {
 
     @Autowired
     private DafoUserManager dafoUserManager;
-
-    @Autowired
-    private CprPlugin cprPlugin;
 
     @PostConstruct
     public void init() {
@@ -90,12 +79,6 @@ public class RoadDataService extends StatisticsService {
         super.handleRequest(request, response, ServiceName.ROAD);
     }
 
-
-    @Override
-    protected CprPlugin getCprPlugin() {
-        return this.cprPlugin;
-    }
-
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
@@ -123,16 +106,6 @@ public class RoadDataService extends StatisticsService {
         return this.log;
     }
 
-    @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        return null;
-    }
-
-    private static Pattern numeric = Pattern.compile("\\d+");
-    private static int limit = 1000;
-
-
-
     public int run(Filter filter, OutputStream outputStream) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
@@ -143,22 +116,45 @@ public class RoadDataService extends StatisticsService {
             primarySession.setDefaultReadOnly(true);
             secondarySession.setDefaultReadOnly(true);
 
-            RoadRecordQuery query = new RoadRecordQuery();
+            List<Map<String, String>> concatenation = new ArrayList<>();
 
-            List<RoadEntity> entities = QueryManager.getAllEntities(primarySession, query, RoadEntity.class);
-            Stream<Map<String, String>> concatenation = null;
+            String hql = "SELECT DISTINCT roadEntity,roadMunicipality.code,accessAddressPostcode.postcode ,roadName.name, locality " +
+                    "FROM "+RoadEntity.class.getCanonicalName()+" roadEntity "+
+                    "JOIN roadEntity."+RoadEntity.DB_FIELD_IDENTIFICATION+" roadIdentification "+
+                    "LEFT JOIN "+ AccessAddressRoadRecord.class.getCanonicalName()+" accessAddressRoad ON accessAddressRoad.reference = roadIdentification " +
+                    "JOIN accessAddressRoad."+AccessAddressRoadRecord.DB_FIELD_ENTITY+" accessAddress "+
+                    "LEFT JOIN accessAddress."+AccessAddressEntity.DB_FIELD_POSTCODE+" accessAddressPostcode "+
+                    "JOIN roadEntity."+RoadEntity.DB_FIELD_MUNICIPALITY+" roadMunicipality " +
+                    "JOIN roadEntity."+RoadEntity.DB_FIELD_NAME+" roadName " +
+                    "LEFT JOIN accessAddress."+AccessAddressEntity.DB_FIELD_POSTCODE+" accessAddressPostcode "+
+                    "JOIN roadEntity."+RoadEntity.DB_FIELD_LOCALITY+" roadLocality " +
+                    "JOIN " + LocalityEntity.class.getCanonicalName()+" locality ON roadLocality.reference = locality."+LocalityEntity.DB_FIELD_IDENTIFICATION+" "+
+                    "JOIN locality."+LocalityEntity.DB_FIELD_NAME+" localityName" +
+                    "";
 
-            for (RoadEntity entity : entities) {
-                Stream<Map<String, String>> formatted = this.formatRoad(entity).stream();
-                concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
+            Query query = secondarySession.createQuery(hql);
+            for (Object item : query.getResultList()) {
+                Object[] items = (Object[]) item;
+                RoadEntity roadEntity = (RoadEntity) items[0];
+                Integer municipalityCode = (Integer) items[1];
+                Integer postcode = (Integer) items[2];
+                String roadName = (String) items[3];
+                LocalityEntity locality = (LocalityEntity) items[4];
+                HashMap<String, String> csvRow = new HashMap<>();
+                csvRow.put(MUNICIPALITY_CODE, municipalityCode+"");
+                csvRow.put(LOCALITY_CODE, roadEntity.getCode()+"");
+                csvRow.put(ROAD_CODE, postcode+"");
+                csvRow.put(ROAD_NAME, roadName);
+                csvRow.put(BYGDE, locality.getName().iterator().next().getName());
+                csvRow.put(POST_CODE, locality.getCode()+"");
+                concatenation.add(csvRow);
             }
 
-            if (concatenation != null) {
-                if (outputStream != null) {
-                    return this.writeItems(concatenation.iterator(), outputStream, item -> {
 
-                    });
-                }
+            if (outputStream != null) {
+                return this.writeItems(concatenation.iterator(), outputStream, item -> {
+
+                });
             }
 
         } catch (Exception e) {
@@ -208,70 +204,4 @@ public class RoadDataService extends StatisticsService {
         return written;
     }
 
-
-
-    private List<Map<String, String>> formatRoad(dk.magenta.datafordeler.cpr.records.road.data.RoadEntity road) {
-
-        String munitpialityCode = road.getMunicipalityCode()+"";
-        String roadCode = road.getRoadcode()+"";
-        String roadName = road.getName().size()>0 ? (road.getName().stream().findFirst().get().getRoadName()+"") : "";
-
-        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        HashMap<String, String> item = new HashMap<>();
-
-        Iterator<RoadPostalcodeBitemporalRecord> roadPostalcodes = road.getPostcode().iterator();
-        while(roadPostalcodes.hasNext()) {
-            RoadPostalcodeBitemporalRecord postalCode = roadPostalcodes.next();
-            item.put(MUNICIPALITY_CODE, munitpialityCode);
-            item.put(LOCALITY_CODE, "");
-            item.put(ROAD_CODE, roadCode);
-            item.put(ROAD_NAME, roadName);
-
-            //new roadcode is expected to always mean new city, that is why there is only one
-            String cityName = road.getCity().size()>0 ? (road.getCity().stream().findFirst().get().getCityName()+"") : "";
-            item.put(BYGDE, cityName);
-
-            item.put(POST_CODE, postalCode.getPostalCode()+"");
-            item.put("Void", (road.getName().size()>1 ? (road.getName().size()+"") : ""));
-            list.add(item);
-        }
-
-        return list;
-    }
-
-    @Override
-    protected Filter getFilter(HttpServletRequest request) {
-        Filter filter = new Filter();
-
-        InputStream inputStream = null;
-        String fieldName = "file"; // Matches the file field in addressServiceForm.html
-        try {
-            Part filePart = request.getPart(fieldName);
-            if (filePart != null) {
-                inputStream = filePart.getInputStream();
-            }
-        } catch (ServletException | IOException e) {
-            e.printStackTrace();
-        }
-        if (inputStream != null) {
-
-            ArrayList<String> pnrs = new ArrayList<>();
-            Stream<String> stream = new BufferedReader(new InputStreamReader(inputStream)).lines();
-
-            try {
-                stream.forEach(pnrs::add);
-            } finally {
-                stream.close();
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    log.error("IOException", e);
-                }
-            }
-            filter.onlyPnr = pnrs;
-        }
-
-        filter.effectAt = OffsetDateTime.now();
-        return filter;
-    }
 }

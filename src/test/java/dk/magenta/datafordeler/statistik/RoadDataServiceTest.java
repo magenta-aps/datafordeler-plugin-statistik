@@ -30,7 +30,7 @@ public class RoadDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
     @Autowired
     private RoadDataService roadDataService;
@@ -43,8 +43,11 @@ public class RoadDataServiceTest {
     @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
-        testsUtils.loadRoadData("roaddata.txt");
-        testsUtils.loadGladdrregData();
+        testsUtils.loadGeoLocalityData("Lokalitet_GEOJSON.json");
+        testsUtils.loadGeoRoadData("Vejmidte_GEOJSON.json");
+        testsUtils.loadAccessLocalityData("Adgangsadresse_GEOJSON.json");
+        testsUtils.loadPostalLocalityData("Postnummer.json");
+
     }
 
     @Test
@@ -59,11 +62,8 @@ public class RoadDataServiceTest {
         form.add("file", new InputStreamResource(RoadDataServiceTest.class.getResourceAsStream("/addressInput.csv")));
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/road_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
-        String expected = "\"Pnr\";\"Fornavn\";\"Mellemnavn\";\"Efternavn\";\"Bnr\";\"VejNavn\";\"HusNr\";\"Etage\";\"SideDoer\";\"Postnr\";\"PostDistrikt\"\n" +
-                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";;\"5\";\"1\";\"tv\";\"0\";\n";
 
-
-        System.out.println(response);
+        System.out.println(response.toString());
 
 
         /*Assert.assertEquals(

@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -65,6 +66,12 @@ public class TestUtils {
 
     @Autowired
     private dk.magenta.datafordeler.geo.data.locality.LocalityEntityManager localityEntityManager;
+
+    @Autowired
+    private dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressEntityManager accessAddressEntityManager;
+
+    @Autowired
+    private dk.magenta.datafordeler.geo.data.postcode.PostcodeEntityManager postcodeEntityManager;
 
     @SpyBean
     private DafoUserManager dafoUserManager;
@@ -190,6 +197,64 @@ public class TestUtils {
         transaction.commit();
         session.close();
     }
+
+
+    public void loadAccessLocalityData(String resource) throws DataFordelerException {
+        loadAccessLocalityData(
+                new ImportInputStream(
+                        new LabeledSequenceInputStream(
+                                Collections.singletonList(
+                                        Pair.of(
+                                                resource,
+                                                TestUtils.class.getResourceAsStream("/" + resource)
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+
+    public void loadAccessLocalityData(InputStream testData) throws DataFordelerException {
+        ImportMetadata importMetadata = new ImportMetadata();
+        Session session = sessionManager.getSessionFactory().openSession();
+        importMetadata.setSession(session);
+        Transaction transaction = session.beginTransaction();
+        importMetadata.setTransactionInProgress(true);
+        accessAddressEntityManager.parseData(testData, importMetadata);
+        transaction.commit();
+        session.close();
+    }
+
+
+    public void loadPostalLocalityData(String resource) throws DataFordelerException {
+        loadPostalLocalityData(
+                new ImportInputStream(
+                        new LabeledSequenceInputStream(
+                                Collections.singletonList(
+                                        Pair.of(
+                                                resource,
+                                                TestUtils.class.getResourceAsStream("/" + resource)
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+
+    public void loadPostalLocalityData(InputStream testData) throws DataFordelerException {
+        ImportMetadata importMetadata = new ImportMetadata();
+        Session session = sessionManager.getSessionFactory().openSession();
+        importMetadata.setSession(session);
+        Transaction transaction = session.beginTransaction();
+        importMetadata.setTransactionInProgress(true);
+        postcodeEntityManager.parseData(testData, importMetadata);
+        transaction.commit();
+        session.close();
+    }
+
+
 
     public void loadPersonData(InputStream testData) throws Exception {
         ImportMetadata importMetadata = new ImportMetadata();
