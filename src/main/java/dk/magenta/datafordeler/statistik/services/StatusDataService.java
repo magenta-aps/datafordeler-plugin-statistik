@@ -36,7 +36,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/statistik/status_data")
-public class StatusDataService extends StatisticsService {
+public class StatusDataService extends PersonStatisticsService {
 
     @Autowired
     SessionManager sessionManager;
