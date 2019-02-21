@@ -8,6 +8,8 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LabeledSequenceInputStream;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntityManager;
+import dk.magenta.datafordeler.geo.GeoPlugin;
+import dk.magenta.datafordeler.geo.data.road.RoadEntityManager;
 import dk.magenta.datafordeler.gladdrreg.GladdrregPlugin;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntity;
 import dk.magenta.datafordeler.gladdrreg.data.locality.LocalityEntityManager;
@@ -41,7 +43,7 @@ import java.util.*;
 import static org.mockito.Mockito.when;
 
 @Component
-public class PersonTestsUtils {
+public class TestUtils {
 
     @Autowired
     private SessionManager sessionManager;
@@ -55,13 +57,22 @@ public class PersonTestsUtils {
     @Autowired
     private GladdrregPlugin gladdrregPlugin;
 
+    @Autowired
+    private GeoPlugin geoPlugin;
+
+    @Autowired
+    private RoadEntityManager roadEntityManager;
+
+    @Autowired
+    private dk.magenta.datafordeler.geo.data.locality.LocalityEntityManager localityEntityManager;
+
     @SpyBean
     private DafoUserManager dafoUserManager;
 
     HashSet<Entity> createdEntities = new HashSet<>();
 
-    public PersonTestsUtils(SessionManager sessionManager,
-                            PersonEntityManager personEntityManager){
+    public TestUtils(SessionManager sessionManager,
+                     PersonEntityManager personEntityManager){
         this.sessionManager = sessionManager;
         this.personEntityManager = personEntityManager;
     }
@@ -91,7 +102,7 @@ public class PersonTestsUtils {
                                 Collections.singletonList(
                                         Pair.of(
                                                 resource,
-                                                PersonTestsUtils.class.getResourceAsStream("/" + resource)
+                                                TestUtils.class.getResourceAsStream("/" + resource)
                                         )
                                 )
                         )
@@ -107,13 +118,14 @@ public class PersonTestsUtils {
                                 Collections.singletonList(
                                         Pair.of(
                                                 resource,
-                                                PersonTestsUtils.class.getResourceAsStream("/" + resource)
+                                                TestUtils.class.getResourceAsStream("/" + resource)
                                         )
                                 )
                         )
                 )
         );
     }
+
 
 
     public void loadRoadData(InputStream testData) throws Exception {
@@ -123,6 +135,60 @@ public class PersonTestsUtils {
         cprRoadEntityManager.parseData(testData, importMetadata);
         session.close();
         testData.close();
+    }
+
+    public void loadGeoRoadData(String resource) throws DataFordelerException {
+        loadGeoRoadData(
+                new ImportInputStream(
+                        new LabeledSequenceInputStream(
+                                Collections.singletonList(
+                                        Pair.of(
+                                                resource,
+                                                TestUtils.class.getResourceAsStream("/" + resource)
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+
+    public void loadGeoRoadData(InputStream testData) throws DataFordelerException {
+        ImportMetadata importMetadata = new ImportMetadata();
+        Session session = sessionManager.getSessionFactory().openSession();
+        importMetadata.setSession(session);
+        Transaction transaction = session.beginTransaction();
+        importMetadata.setTransactionInProgress(true);
+        roadEntityManager.parseData(testData, importMetadata);
+        transaction.commit();
+        session.close();
+    }
+
+    public void loadGeoLocalityData(String resource) throws DataFordelerException {
+        loadGeoLocalityData(
+                new ImportInputStream(
+                        new LabeledSequenceInputStream(
+                                Collections.singletonList(
+                                        Pair.of(
+                                                resource,
+                                                TestUtils.class.getResourceAsStream("/" + resource)
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+
+    public void loadGeoLocalityData(InputStream testData) throws DataFordelerException {
+        ImportMetadata importMetadata = new ImportMetadata();
+        Session session = sessionManager.getSessionFactory().openSession();
+        importMetadata.setSession(session);
+        Transaction transaction = session.beginTransaction();
+        importMetadata.setTransactionInProgress(true);
+        localityEntityManager.parseData(testData, importMetadata);
+        transaction.commit();
+        session.close();
     }
 
     public void loadPersonData(InputStream testData) throws Exception {
@@ -138,7 +204,7 @@ public class PersonTestsUtils {
 
     private void loadLocality(Session session) throws DataFordelerException, IOException {
         List<? extends Registration> regs;
-        try (InputStream testData = PersonTestsUtils.class.getResourceAsStream("/locality.json")) {
+        try (InputStream testData = TestUtils.class.getResourceAsStream("/locality.json")) {
             LocalityEntityManager localityEntityManager = (LocalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(LocalityEntity.schema);
             regs = localityEntityManager.parseData(testData, new ImportMetadata());
         }
@@ -150,7 +216,7 @@ public class PersonTestsUtils {
     }
 
     private void loadRoad(Session session) throws DataFordelerException, IOException {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/road.json");
+        InputStream testData = TestUtils.class.getResourceAsStream("/road.json");
         dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager roadEntityManager = (dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(RoadEntity.schema);
         List<? extends Registration> regs = roadEntityManager.parseData(testData, new ImportMetadata());
         testData.close();
@@ -162,7 +228,7 @@ public class PersonTestsUtils {
     }
 
     private void loadMunicipality(Session session) throws DataFordelerException, IOException {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/municipality.json");
+        InputStream testData = TestUtils.class.getResourceAsStream("/municipality.json");
         MunicipalityEntityManager municipalityEntityManager = (MunicipalityEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(MunicipalityEntity.schema);
         List<? extends Registration> regs = municipalityEntityManager.parseData(testData, new ImportMetadata());
         testData.close();
@@ -174,7 +240,7 @@ public class PersonTestsUtils {
     }
 
     private void loadPostalCode(Session session) throws DataFordelerException {
-        InputStream testData = PersonTestsUtils.class.getResourceAsStream("/postalcode.json");
+        InputStream testData = TestUtils.class.getResourceAsStream("/postalcode.json");
         PostalCodeEntityManager postalCodeEntityManager = (PostalCodeEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(PostalCodeEntity.schema);
         List<? extends Registration> regs = postalCodeEntityManager.parseData(testData, new ImportMetadata());
         for (Registration registration : regs) {

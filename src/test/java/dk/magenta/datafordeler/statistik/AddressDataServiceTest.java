@@ -6,7 +6,6 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.AddressDataService;
-import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +32,7 @@ public class AddressDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
     @Autowired
     private AddressDataService addressDataService;
