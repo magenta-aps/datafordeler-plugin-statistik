@@ -35,7 +35,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/statistik/birth_data")
-public class BirthDataService extends StatisticsService {
+public class BirthDataService extends PersonStatisticsService {
 
     private class Exclude extends Exception {
     }

@@ -34,7 +34,7 @@ public class StatusDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
     @Autowired
     private StatusDataService statusDataService;

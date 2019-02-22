@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/statistik/address_data")
-public class AddressDataService extends StatisticsService {
+public class AddressDataService extends PersonStatisticsService {
 
 
     @Autowired
