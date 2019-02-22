@@ -136,7 +136,8 @@ public abstract class StatisticsService {
         MOVEMENT,
         STATUS,
         ADDRESS,
-        ROAD;
+        ROAD,
+        LOCALITY;
     }
 
     private boolean writeToLocalFile = true;
@@ -201,6 +202,12 @@ public abstract class StatisticsService {
     public static final String CHURCH = "Kirke";
     public static final String BYGDE = "Bygde";
 
+    public static final String MUNICIPALITY_MAP_MANE = "KomKortNavn";
+    public static final String MUNICIPALITY_NAME = "KomNavn";
+    public static final String LOC_TYPE_CODE = "LokTypeKod";
+    public static final String LOC_TYPE_NAME = "LokTypeNavn";
+    public static final String LOC_STATUS_CODE = "LokStatusKod";
+    public static final String LOC_STATUS_NAME = "LokStatusNavn";
 
     public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
     public static final String ORIGIN_LOCALITY_NAME = "FraLokKortNavn";
