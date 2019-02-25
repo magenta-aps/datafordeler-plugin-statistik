@@ -145,6 +145,7 @@ public class RoadDataService extends StatisticsService {
                 csvRow.put(LOCALITY_CODE, locality.getCode()+"");
                 csvRow.put(ROAD_CODE, roadEntity.getCode()+"");
                 csvRow.put(ROAD_NAME, roadName);
+                //It is expected that there is only one name on a roadentity
                 csvRow.put(BYGDE, locality.getName().iterator().next().getName());
                 csvRow.put(POST_CODE, postcode+"");
                 concatenation.add(csvRow);

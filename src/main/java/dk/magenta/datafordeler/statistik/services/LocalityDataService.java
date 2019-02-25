@@ -13,6 +13,7 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
@@ -66,12 +67,12 @@ public class LocalityDataService extends StatisticsService {
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-        /*try {
+        try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
         } catch (AccessDeniedException e) {
             loggerHelper.info("Access denied: " + e.getMessage());
             throw (e);
-        }*/
+        }
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/")
@@ -123,6 +124,7 @@ public class LocalityDataService extends StatisticsService {
             HashMap<String, Map<String, String>> cache = new HashMap<>();
             for (LocalityEntity localityEntity : localityEntities) {
 
+                //The testdataset indicates that we can expect to find one of each record
                 Integer KomKod = localityEntity.getMunicipality().iterator().next().getCode();
                 String KomKortNavn = munipialityIdToMapName(KomKod);
                 String KomNavn = munipialityIdToName(KomKod);
