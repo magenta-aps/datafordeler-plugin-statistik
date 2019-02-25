@@ -142,11 +142,11 @@ public class RoadDataService extends StatisticsService {
                 LocalityEntity locality = (LocalityEntity) items[4];
                 HashMap<String, String> csvRow = new HashMap<>();
                 csvRow.put(MUNICIPALITY_CODE, municipalityCode+"");
-                csvRow.put(LOCALITY_CODE, roadEntity.getCode()+"");
-                csvRow.put(ROAD_CODE, postcode+"");
+                csvRow.put(LOCALITY_CODE, locality.getCode()+"");
+                csvRow.put(ROAD_CODE, roadEntity.getCode()+"");
                 csvRow.put(ROAD_NAME, roadName);
                 csvRow.put(BYGDE, locality.getName().iterator().next().getName());
-                csvRow.put(POST_CODE, locality.getCode()+"");
+                csvRow.put(POST_CODE, postcode+"");
                 concatenation.add(csvRow);
             }
 
