@@ -133,6 +133,7 @@ public abstract class StatisticsService {
     public enum ServiceName {
         BIRTH,
         DEATH,
+        CIVILSTATUS,
         MOVEMENT,
         STATUS,
         ADDRESS,
