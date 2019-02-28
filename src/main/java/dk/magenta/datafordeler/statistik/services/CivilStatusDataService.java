@@ -11,6 +11,7 @@ import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-/*Created by Efrin 06-04-2018*/
 
 @RestController
 @RequestMapping("/statistik/civilstate_data")
@@ -60,8 +60,9 @@ public class CivilStatusDataService extends PersonStatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                CIVIL_STATUS, "civilDate", PNR, SPOUSE_PNR, "authority", MUNICIPALITY_CODE,
-                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
+                CIVIL_STATUS, "civilDate", PROD_DATE, PNR, SPOUSE_PNR, "authority", MUNICIPALITY_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT,
+                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, BNR
+
         });
     }
 
@@ -124,6 +125,18 @@ public class CivilStatusDataService extends PersonStatisticsService {
         OffsetDateTime searchTime = filter.registrationAfter;
         OffsetDateTime mariageEffectTime = null;
 
+        String birthAuthorityId;
+        String birthAuthorityText;
+        String birthAuthorityCode;
+
+        /*for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(person.getBirthPlace())) {
+            if (birthPlaceDataRecord.getBitemporality().registrationTo == null && birthPlaceDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
+                birthAuthorityId = Integer.toString(birthPlaceDataRecord.getAuthority());
+                birthAuthorityText = birthPlaceDataRecord.getBirthPlaceName();
+                birthAuthorityCode = Integer.toString(birthPlaceDataRecord.getBirthPlaceName());
+            }
+        }*/
+
         for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(person.getCivilstatus())) {
             if (filter.registrationAfter.isBefore(civilStatusDataRecord.getEffectFrom())) {
 
@@ -139,6 +152,38 @@ public class CivilStatusDataService extends PersonStatisticsService {
                     item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
                     item.put("authority", Integer.toString(civilStatusDataRecord.getAuthority()));
 
+
+
+
+                    for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
+                        if (addressDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) ) {
+                            int municipalityCode = addressDataRecord.getMunicipalityCode();
+                            item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
+                            item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+                            item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+                            item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
+                            item.put(DOOR_NUMBER, addressDataRecord.getDoor());
+                            item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+                            Lookup lookup = lookupService.doLookup(
+                                    addressDataRecord.getMunicipalityCode(),
+                                    addressDataRecord.getRoadCode(),
+                                    addressDataRecord.getHouseNumber()
+                            );
+                            if (lookup != null) {
+                                if (lookup.localityName != null) {
+                                    item.put(LOCALITY_NAME, lookup.localityName);
+                                }
+                                if (lookup.localityAbbrev != null) {
+                                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                                }
+                                if (lookup.localityCode != 0) {
+                                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+                                }
+                            }
+                        }
+                    }
+
+
                     replaceMapValues(item, null, "");
 
                     itemMap.add(item);
@@ -152,37 +197,6 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
         }
 
-        /*int municipalityCode = 0;
-        for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-            if (addressDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) && addressDataRecord.getReplacedby() == null) {
-                municipalityCode = addressDataRecord.getMunicipalityCode();
-                item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
-                item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
-                item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-                item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
-                item.put(DOOR_NUMBER, addressDataRecord.getDoor());
-                item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-                Lookup lookup = lookupService.doLookup(
-                        addressDataRecord.getMunicipalityCode(),
-                        addressDataRecord.getRoadCode(),
-                        addressDataRecord.getHouseNumber()
-                );
-                if (lookup != null) {
-                    if (lookup.localityName != null) {
-                        item.put(LOCALITY_NAME, lookup.localityName);
-                    }
-                    if (lookup.localityAbbrev != null) {
-                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                    }
-                    if (lookup.localityCode != 0) {
-                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
-                    }
-                }
-            }
-        }
-        if (municipalityCode < 955 || municipalityCode > 961) {
-            return null;
-        }*/
 
 
 
