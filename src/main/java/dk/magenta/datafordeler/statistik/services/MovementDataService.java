@@ -35,7 +35,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/statistik/movement_data")
-public class MovementDataService extends StatisticsService {
+public class MovementDataService extends PersonStatisticsService {
 
     @Autowired
     SessionManager sessionManager;

@@ -38,7 +38,7 @@ public class DeathDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
     @Autowired
     private DeathDataService deathDataService;

@@ -25,7 +25,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -36,7 +35,7 @@ public class MovementDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
     @Autowired
     private MovementDataService movementDataService;
