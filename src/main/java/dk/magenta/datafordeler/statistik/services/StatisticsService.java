@@ -202,7 +202,7 @@ public abstract class StatisticsService {
     public static final String CHURCH = "Kirke";
     public static final String BYGDE = "Bygde";
 
-    public static final String MUNICIPALITY_MAP_MANE = "KomKortNavn";
+    public static final String MUNICIPALITY_SHORT_NAME = "KomKortNavn";
     public static final String MUNICIPALITY_NAME = "KomNavn";
     public static final String LOC_TYPE_CODE = "LokTypeKod";
     public static final String LOC_TYPE_NAME = "LokTypeNavn";

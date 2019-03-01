@@ -84,7 +84,7 @@ public class LocalityDataService extends StatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                MUNICIPALITY_CODE, MUNICIPALITY_MAP_MANE, MUNICIPALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, LOCALITY_NAME,
+                MUNICIPALITY_CODE, MUNICIPALITY_SHORT_NAME, MUNICIPALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, LOCALITY_NAME,
                 LOC_TYPE_CODE, LOC_TYPE_NAME, LOC_STATUS_CODE, LOC_STATUS_NAME, "Void"
         });
     }
@@ -126,19 +126,20 @@ public class LocalityDataService extends StatisticsService {
 
                 //The testdataset indicates that we can expect to find one of each record
                 Integer KomKod = localityEntity.getMunicipality().iterator().next().getCode();
-                String KomKortNavn = munipialityIdToMapName(KomKod);
-                String KomNavn = munipialityIdToName(KomKod);
-                String localityCode = localityEntity.getMunicipality().iterator().next().getEntity().getCode();
-                String LokKortNavn = localityEntity.getAbbreviation().iterator().next().getName();
-                String localityName = localityEntity.getName().iterator().next().getName();
-                Integer LokTypeKod = localityEntity.getType().iterator().next().getType();
+                String KomKortNavn = municipalityIdToMapName(KomKod);
+                String KomNavn = municipalityIdToName(KomKod);
+
+                String localityCode = localityEntity.getMunicipality().size()>0 ? localityEntity.getMunicipality().iterator().next().getEntity().getCode() : "";
+                String LokKortNavn = localityEntity.getAbbreviation().size()>0 ? localityEntity.getAbbreviation().iterator().next().getName() : "";
+                String localityName = localityEntity.getName().size()>0 ? localityEntity.getName().iterator().next().getName() : "";
+                Integer LokTypeKod = localityEntity.getType().size()>0 ? localityEntity.getType().iterator().next().getType() : 0;
                 String LokTypeNavn = TypeCodeToName(LokTypeKod);
                 String LokStatusKod = "?";
                 String LokStatusNavn = "?";
 
                 HashMap<String, String> csvRow = new HashMap<>();
-                csvRow.put(MUNICIPALITY_CODE, KomKod+"");
-                csvRow.put(MUNICIPALITY_MAP_MANE, KomKortNavn);
+                csvRow.put(MUNICIPALITY_CODE, Integer.toString(KomKod));
+                csvRow.put(MUNICIPALITY_SHORT_NAME, KomKortNavn);
                 csvRow.put(MUNICIPALITY_NAME, KomNavn);
                 csvRow.put(LOCALITY_CODE, localityCode);
                 csvRow.put(LOCALITY_ABBREVIATION, LokKortNavn);
@@ -165,7 +166,7 @@ public class LocalityDataService extends StatisticsService {
         return 0;
     }
 
-    private static String munipialityIdToName(Integer code) {
+    private static String municipalityIdToName(Integer code) {
         switch(code) {
             case 955:
                 return "Kujalleq";
@@ -185,7 +186,7 @@ public class LocalityDataService extends StatisticsService {
     }
 
 
-    private static String munipialityIdToMapName(Integer code) {
+    private static String municipalityIdToMapName(Integer code) {
         switch(code) {
             case 955:
                 return "KU";
