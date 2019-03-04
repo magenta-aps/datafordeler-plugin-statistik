@@ -63,7 +63,7 @@ public class CivilStatusDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadPersonData("marriedperson.txt");
-        //testsUtils.loadGladdrregData();
+        testsUtils.loadGladdrregData();
     }
 
     @After
@@ -99,7 +99,7 @@ public class CivilStatusDataServiceTest {
         assertNotNull("Response body", response.getBody());
         String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
                 "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
@@ -121,7 +121,7 @@ public class CivilStatusDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
         String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
@@ -157,7 +157,7 @@ public class CivilStatusDataServiceTest {
 
         String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
                 "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
