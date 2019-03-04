@@ -33,7 +33,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/statistik/death_data")
-public class DeathDataService extends StatisticsService {
+public class DeathDataService extends PersonStatisticsService {
     @Autowired
     SessionManager sessionManager;
 
