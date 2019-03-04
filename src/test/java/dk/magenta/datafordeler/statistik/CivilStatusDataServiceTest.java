@@ -8,7 +8,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-//import dk.magenta.datafordeler.statistik.services.CivilStatusDataService;
+import dk.magenta.datafordeler.statistik.services.CivilStatusDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.hibernate.Session;
 import org.junit.After;
@@ -45,8 +45,8 @@ public class CivilStatusDataServiceTest {
     @Autowired
     private TestUtils testsUtils;
 
-    /*@Autowired
-    private CivilStatusDataService civilStatusDataService;*/
+    @Autowired
+    private CivilStatusDataService civilStatusDataService;
 
     @Autowired
     private SessionManager sessionManager;
@@ -63,8 +63,7 @@ public class CivilStatusDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadPersonData("marriedperson.txt");
-        //testsUtils.loadPersonData("deadperson.txt");
-        testsUtils.loadGladdrregData();
+        //testsUtils.loadGladdrregData();
     }
 
     @After
@@ -79,19 +78,16 @@ public class CivilStatusDataServiceTest {
         Session session = sessionManager.getSessionFactory().openSession();
         List<PersonEntity> personEntities = QueryManager.getAllEntities(session, PersonEntity.class);
         PersonEntity personEntity = personEntities.get(0);
-
-        Assert.assertEquals(3, personEntity.getCivilstatus().size());
+        Assert.assertEquals(4, personEntity.getCivilstatus().size());
     }
 
 
     @Test
-    public void testService() throws JsonProcessingException {
-/*
+    public void testServiceMarried() throws JsonProcessingException {
         civilStatusDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?civilState=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
-
 
         testUserDetails = new TestUserDetails();
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
@@ -101,21 +97,43 @@ public class CivilStatusDataServiceTest {
         response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
-        String expected = "\"CivSt\";\"civilDate\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                "\"G\";\"05-10-1985\";\"0123456789\";\"0202501111\";\"1316\";;;;;;;;\n" +
-                "\"G\";\"02-08-1991\";\"0123456789\";\"0303501111\";\"1316\";;;;;;;;";
+        String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
+                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
-        );*/
+        );
     }
 
 
-    //@Test
+    @Test
+    public void testServiceWidow() throws JsonProcessingException {
+
+        civilStatusDataService.setWriteToLocalFile(false);
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=E&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response body", response.getBody());
+        String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
+        );
+    }
+
+
+    @Test
     public void testFileOutput() throws IOException {
-        /*civilStatusDataService.setWriteToLocalFile(true);
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/death_data/?registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        civilStatusDataService.setWriteToLocalFile(true);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
 
         testUserDetails = new TestUserDetails();
@@ -123,12 +141,12 @@ public class CivilStatusDataServiceTest {
         testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        response = restTemplate.exchange("/statistik/death_data/?registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNull(response.getBody());
 
-        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("death"));
+        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("civilstatus"));
         Assert.assertEquals(1, deathFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + deathFiles[0]);
@@ -137,13 +155,13 @@ public class CivilStatusDataServiceTest {
         );
         fileInputStream.close();
 
-        String expected = "\"Status\";\"DoedDto\";\"ProdDto\";\"ProdFilDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                "\"90\";\"30-08-2017\";\"31-08-2017\";\"\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";;;;\"9516\";\"\";\"955\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"";
+        String expected = "\"CivSt\";\"civilDate\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
+                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"\";\"\";\"\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(contents.trim())
-        );*/
-
+        );
     }
-
 }

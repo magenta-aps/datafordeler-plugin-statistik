@@ -19,7 +19,7 @@ public class PersonCivilStatusQuery extends PersonStatisticsQuery {
 
     public PersonCivilStatusQuery(CivilStatusFilter filter) {
         super(filter);
-        civilStatus = filter.civilStatus;
+        civilStatus = filter.getCivilStatus();
     }
 
     @Override
@@ -35,10 +35,7 @@ public class PersonCivilStatusQuery extends PersonStatisticsQuery {
         this.applyOriginTimes(fieldDefinition);
         this.applyRegistrationTimes(fieldDefinition);
         this.applyEffectTimes(fieldDefinition);
-
         lookupDefinition.put(fieldDefinition);
-
         return lookupDefinition;
     }
-
 }

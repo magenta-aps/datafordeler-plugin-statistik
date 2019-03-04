@@ -5,12 +5,21 @@ import javax.servlet.http.HttpServletRequest;
 
 public class CivilStatusFilter extends Filter {
 
-    public  String civilStatus;
+    private String civilStatus;
 
 
     public CivilStatusFilter(HttpServletRequest request) {
         super(request);
         this.civilStatus = request.getParameter(StatisticsService.CIVIL_STATUS);
+    }
+
+
+    public String getCivilStatus() {
+        return civilStatus;
+    }
+
+    public void setCivilStatus(String civilStatus) {
+        this.civilStatus = civilStatus;
     }
 
     @Override
