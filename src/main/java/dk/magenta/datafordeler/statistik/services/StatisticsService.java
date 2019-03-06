@@ -239,6 +239,12 @@ public abstract class StatisticsService {
     //Column names for  spouse person
     public static final String SPOUSE_PNR = "AegtePnr";
 
+    //Column names for  guardian person
+    public static final String NO_OF_GUARDIANS = "Guardians";
+    public static final String GUARDIAN_PNR = "GuardianPnr";
+
+    public static final String PROTECTION_TYPE = "ProtectionType";
+
     protected int writeItems(Iterator<Map<String, String>> items, OutputStream outputStream, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
