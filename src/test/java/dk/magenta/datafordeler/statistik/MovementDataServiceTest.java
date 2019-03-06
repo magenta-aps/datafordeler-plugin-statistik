@@ -51,6 +51,7 @@ public class MovementDataServiceTest {
 
     @Before
     public void initialize() throws Exception {
+        testsUtils.deleteAll();
         testsUtils.setPath();
         testsUtils.loadGladdrregData();
         testsUtils.loadPersonData("movedperson.txt");
@@ -59,7 +60,7 @@ public class MovementDataServiceTest {
     @After
     public void cleanup() {
         testsUtils.clearPath();
-        //testsUtils.deleteAll();
+        testsUtils.deleteAll();
     }
 
     @Test
