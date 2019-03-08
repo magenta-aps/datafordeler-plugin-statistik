@@ -349,7 +349,7 @@ public abstract class StatisticsService {
 
     protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
 
-    private static ZoneId timezone = ZoneId.of("Europe/Copenhagen");
+    private static ZoneId timezone = ZoneId.systemDefault();
 
     protected String formatTime(OffsetDateTime time) {
         if (time == null) return "";
