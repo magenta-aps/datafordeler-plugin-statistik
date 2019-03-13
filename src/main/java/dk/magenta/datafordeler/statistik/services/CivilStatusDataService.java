@@ -92,7 +92,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     protected String[] requiredParameters() {
-        return new String[]{"registrationAfter", CIVIL_STATUS};
+        return new String[]{"registrationAfter"};
     }
 
     @Override
@@ -136,7 +136,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
             if (filter.registrationAfter.isBefore(civilStatusDataRecord.getEffectFrom())) {
 
 
-                if (civilStatusDataRecord.getCivilStatus().equals(filter.getCivilStatus())) {
+                if (filter.getCivilStatus()==null || civilStatusDataRecord.getCivilStatus().equals(filter.getCivilStatus())) {
 
                     HashMap<String, String> item = new HashMap<>();
                     item.put(PNR, person.getPersonnummer());
