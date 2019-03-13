@@ -79,8 +79,8 @@ public class DeathDataServiceTest {
         response = restTemplate.exchange("/statistik/death_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
-        String expected = "\"Status\";\"DoedDto\";\"B_ProdDto\";\"B_ProdFilDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
-                "\"90\";\"30-08-2017\";\"31-08-2017\";\"\";\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";\"0202994321\";;;\"9516\";\"\";\"955\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"";
+        String expected = "\"Status\";\"DoedDto\";\"ProdDto\";\"ProdFilDto\";\"Pnr\";\"FoedAar\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"PnrGaeld\";\"StatKod\";\"FoedMynKod\";\"FoedMynTxt\";\"KomKod\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"SideDoer\";\"Bnr\"\n" +
+                "\"90\";\"30-08-2017\";\"31-08-2017\";;\"0101501234\";\"2000\";\"2903641234\";\"0101641234\";;;;\"9516\";\"\";\"955\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"tv\";\"1234\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),

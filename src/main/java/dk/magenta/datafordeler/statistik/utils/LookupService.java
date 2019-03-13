@@ -52,7 +52,6 @@ public class LookupService {
 
     private DoubleHashMap<Integer, Integer, Lookup> cache = new DoubleHashMap<>();
 
-
     public Lookup doLookup(int municipalityCode, int roadCode) {
         return this.doLookup(municipalityCode, roadCode, null);
     }
@@ -123,7 +122,6 @@ public class LookupService {
                                 }
                                 if (lookup.localityCode != 0) break;
                             }
-
 
                             if (lookup.localityCode == 600) {
                                 this.populateRoadDK(lookup, session, municipalityCode, roadCode, houseNumber);
@@ -248,10 +246,6 @@ public class LookupService {
         }
         return null;
     }
-
-
-
-
 
     private HashMap<Integer, MunicipalityEntity> municipalityCacheGR = new HashMap<>();
 
