@@ -77,7 +77,7 @@ public class StatusDataService extends PersonStatisticsService {
                 PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
                 BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, CITIZENSHIP_CODE, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
                 MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
-                BNR, MOVING_IN_DATE, MOVE_PROD_DATE, POST_CODE, CIVIL_STATUS_DATE, CIVIL_STATUS_PROD_DATE, CHURCH
+                BNR, MOVING_IN_DATE, MOVE_PROD_DATE, POST_CODE, CIVIL_STATUS_DATE, CIVIL_STATUS_PROD_DATE, CHURCH, NO_OF_GUARDIANS, GUARDIAN_PNR, PROTECTION_TYPE
         });
     }
 
@@ -157,7 +157,13 @@ public class StatusDataService extends PersonStatisticsService {
         for (ChurchDataRecord churchDataRecord : filter(person.getChurchRelation(), filter)) {
             item.put(CHURCH, churchDataRecord.getChurchRelation().toString());
         }
-
+        item.put(NO_OF_GUARDIANS, String.valueOf(person.getGuardian().size()));
+        for (GuardianDataRecord guardianDataRecord : filter(person.getGuardian(), filter)) {
+            item.put(GUARDIAN_PNR, guardianDataRecord.getRelationPnr());
+        }
+        for (ProtectionDataRecord protectionDataRecord : filter(person.getProtection(), filter)) {
+            item.put(PROTECTION_TYPE, protectionDataRecord.getProtectionType()+"");
+        }
         for (CivilStatusDataRecord civilStatusDataRecord : filter(person.getCivilstatus(), filter)) {
             item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
             item.put(CIVIL_STATUS_DATE, formatTime(civilStatusDataRecord.getEffectFrom()));
