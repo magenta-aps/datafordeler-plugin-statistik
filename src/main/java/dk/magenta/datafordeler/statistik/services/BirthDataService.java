@@ -9,6 +9,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
@@ -182,11 +183,11 @@ public class BirthDataService extends PersonStatisticsService {
                 }
             }
         }
-        for (PersonNumberDataRecord personNumberDataRecord : sortRecords(person.getPersonNumber())) {
-            if (personNumberDataRecord.getBitemporality().registrationTo == null && personNumberDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
+        PersonNumberDataRecord personNumberDataRecord = filter(person.getPersonNumber(), filter);
+            if (personNumberDataRecord != null) {
                 item.put(OWN_PREFIX + EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
             }
-        }
+
         for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(person.getCitizenship())) {
             if (citizenshipDataRecord.getBitemporality().registrationTo == null && citizenshipDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
                 item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
@@ -198,18 +199,15 @@ public class BirthDataService extends PersonStatisticsService {
                         birthRegistrationTime
         );
 
-        String motherPnr = null;
-        for (ParentDataRecord motherRecord : sortRecords(person.getMother())) {
-            if (motherRecord.getBitemporality().registrationTo == null && motherRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
-                motherPnr = motherRecord.getCprNumber();
-            }
-        }
-        item.put(MOTHER_PREFIX + PNR, motherPnr);
-        if (motherPnr != null && !motherPnr.isEmpty() && !motherPnr.equals("0000000000")) {
-            PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
+        //Find the newest mother registration
+        ParentDataRecord motherRecord = findMostImportant(person.getMother());
+
+        item.put(MOTHER_PREFIX + PNR, motherRecord.getCprNumber());
+        if (motherRecord != null && !motherRecord.getCprNumber().isEmpty() && !motherRecord.getCprNumber().equals("0000000000")) {
+            PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherRecord.getCprNumber()), PersonEntity.class);
             if (mother != null) {
                 try {
-                    item.putAll(this.formatParentPersonByRecord(mother, MOTHER_PREFIX, lookupService, parentFilter, true));
+                    item.putAll(this.formatParentPersonByRecord(mother, MOTHER_PREFIX, lookupService, parentFilter, birthRegistrationTime, true));
                 } catch (Exclude e) {
                     // Do not include births where the mother lives outside of Greenland at the time of birth
                     return Collections.emptyMap();
@@ -230,7 +228,7 @@ public class BirthDataService extends PersonStatisticsService {
             PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(fatherPnr), PersonEntity.class);
             if (father != null) {
                 try {
-                    item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, true));
+                    item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, birthRegistrationTime, true));
                 } catch (Exclude e) {
                 }
             }
@@ -240,37 +238,44 @@ public class BirthDataService extends PersonStatisticsService {
         return item;
     }
 
-    private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, LookupService lookupService, Filter filter, boolean excludeIfNonGreenlandic) throws Exclude {
+    private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, LookupService lookupService, Filter filter, OffsetDateTime birthEffectTime, boolean excludeIfNonGreenlandic) throws Exclude {
         HashMap<String, String> item = new HashMap<>();
-        List<AddressDataRecord> addressDataRecords = sortRecords(filterRecordsByEffect(person.getAddress(), filter.effectAt));
-        if (excludeIfNonGreenlandic && addressDataRecords.isEmpty()) {
+
+        Filter filterf = new Filter();
+        filterf.effectAt = birthEffectTime;
+        filterf.registrationAt = birthEffectTime;
+        AddressDataRecord addressDataRecord = filter(person.getAddress(), filterf);
+
+        if (excludeIfNonGreenlandic && addressDataRecord==null) {
+            log.warn("addressDataRecord==null");
             throw new Exclude();
         }
-        for (AddressDataRecord addressDataRecord : addressDataRecords) {
-            if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 955) {
-                throw new Exclude();
-            }
-            Lookup lookup = lookupService.doLookup(
-                    addressDataRecord.getMunicipalityCode(),
-                    addressDataRecord.getRoadCode(),
-                    addressDataRecord.getHouseNumber()
-            );
-            item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
-            item.put(prefix + ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
-            item.put(prefix + HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-            item.put(prefix + FLOOR_NUMBER, addressDataRecord.getFloor());
-            item.put(prefix + DOOR_NUMBER, addressDataRecord.getDoor());
-            item.put(prefix + BNR, formatBnr(addressDataRecord.getBuildingNumber()));
 
-            if (lookup.localityName != null) {
-                item.put(prefix + LOCALITY_NAME, lookup.localityName);
-            }
-            if (lookup.localityAbbrev != null) {
-                item.put(prefix + LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-            }
-            if (lookup.localityCode != 0) {
-                item.put(prefix + LOCALITY_CODE, Integer.toString(lookup.localityCode));
-            }
+        item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+        if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 955) {
+            log.warn("NOT GL ADD "+addressDataRecord.getId());
+            throw new Exclude();
+        }
+        Lookup lookup = lookupService.doLookup(
+                addressDataRecord.getMunicipalityCode(),
+                addressDataRecord.getRoadCode(),
+                addressDataRecord.getHouseNumber()
+        );
+        item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+        item.put(prefix + ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+        item.put(prefix + HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+        item.put(prefix + FLOOR_NUMBER, addressDataRecord.getFloor());
+        item.put(prefix + DOOR_NUMBER, addressDataRecord.getDoor());
+        item.put(prefix + BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+
+        if (lookup.localityName != null) {
+            item.put(prefix + LOCALITY_NAME, lookup.localityName);
+        }
+        if (lookup.localityAbbrev != null) {
+            item.put(prefix + LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+        }
+        if (lookup.localityCode != 0) {
+            item.put(prefix + LOCALITY_CODE, Integer.toString(lookup.localityCode));
         }
 
         for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), filter.effectAt))) {
@@ -284,4 +289,8 @@ public class BirthDataService extends PersonStatisticsService {
         return item;
     }
 
+
+    private static <R extends CprBitemporalRecord> R filter(Collection<R> records, Filter filter) {
+        return findMostImportant(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
+    }
 }

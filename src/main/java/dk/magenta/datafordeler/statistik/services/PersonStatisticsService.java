@@ -180,6 +180,16 @@ public abstract class PersonStatisticsService extends StatisticsService {
         return recordList;
     }
 
+    /**
+     * Find the most important registration according to "bitemporalComparator"
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findMostImportant(Collection<R> records) {
+        return (R) records.stream().max(bitemporalComparator).orElse(null);
+    }
+
     public static CprBitemporality getBitemporality(CprBitemporalRecord record) {
         return record.getBitemporality();
     }
