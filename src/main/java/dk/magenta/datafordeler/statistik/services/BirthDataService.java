@@ -199,20 +199,12 @@ public class BirthDataService extends PersonStatisticsService {
                         birthRegistrationTime
         );
 
-        Filter filterf = new Filter();
-        filterf.effectAt = birthEffectTime;
-        filterf.registrationAt = birthEffectTime;
+        //Find the newest mother registration
         ParentDataRecord motherRecord = findMostImportant(person.getMother());
 
-        String motherPnr = null;
-        //for (ParentDataRecord motherRecord : sortRecords(motherList)) {
-            if (motherRecord.getBitemporality().registrationTo == null && motherRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
-                motherPnr = motherRecord.getCprNumber();
-            }
-        //}
-        item.put(MOTHER_PREFIX + PNR, motherPnr);
-        if (motherPnr != null && !motherPnr.isEmpty() && !motherPnr.equals("0000000000")) {
-            PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherPnr), PersonEntity.class);
+        item.put(MOTHER_PREFIX + PNR, motherRecord.getCprNumber());
+        if (motherRecord != null && !motherRecord.getCprNumber().isEmpty() && !motherRecord.getCprNumber().equals("0000000000")) {
+            PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherRecord.getCprNumber()), PersonEntity.class);
             if (mother != null) {
                 try {
                     item.putAll(this.formatParentPersonByRecord(mother, MOTHER_PREFIX, lookupService, parentFilter, birthRegistrationTime, true));
