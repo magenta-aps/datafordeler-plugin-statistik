@@ -12,6 +12,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -133,6 +134,7 @@ public abstract class StatisticsService {
     public enum ServiceName {
         BIRTH,
         DEATH,
+        CIVILSTATUS,
         MOVEMENT,
         STATUS,
         ADDRESS,
@@ -347,7 +349,7 @@ public abstract class StatisticsService {
 
     protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
 
-    private static ZoneId timezone = ZoneId.of("Europe/Copenhagen");
+    private static ZoneId timezone = ZoneId.systemDefault();
 
     protected String formatTime(OffsetDateTime time) {
         if (time == null) return "";
