@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
@@ -135,7 +136,8 @@ public class CivilStatusDataService extends PersonStatisticsService {
         for (CivilStatusDataRecord civilStatusDataRecord : person.getCivilstatus()) {
             mariageEffectTime = civilStatusDataRecord.getEffectFrom();
 
-            if (mariageEffectTime!=null && (searchTime==null || mariageEffectTime.isAfter(searchTime))) {
+            if (mariageEffectTime!=null && (searchTime==null || mariageEffectTime.isAfter(searchTime)) &&
+                    civilStatusDataRecord.getBitemporality().registrationTo == null) {
 
                 if (filter.getCivilStatus()==null || civilStatusDataRecord.getCivilStatus().equals(filter.getCivilStatus())) {
 
@@ -203,5 +205,12 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
         }
         return itemMap;
+    }
+
+
+    private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
+        List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
+        //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
+        return sorted;
     }
 }
