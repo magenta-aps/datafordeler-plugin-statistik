@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
@@ -48,7 +49,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
     private String civilStatus;
 
-    private Logger log = LogManager.getLogger(DeathDataService.class.getCanonicalName());
+    private Logger log = LogManager.getLogger(CivilStatusDataService.class.getCanonicalName());
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/")
@@ -60,7 +61,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                CIVIL_STATUS, "civilDate", CITIZENSHIP_CODE, PROD_DATE, PNR, SPOUSE_PNR, "authority", MUNICIPALITY_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, BIRTH_AUTHORITY_CODE_TEXT,
+                CIVIL_STATUS, CIVIL_STATUS_DATE, CITIZENSHIP_CODE, PROD_DATE, PNR, SPOUSE_PNR, "authority", MUNICIPALITY_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, BIRTH_AUTHORITY_CODE_TEXT,
                 LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, BNR
 
         });
@@ -92,7 +93,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     protected String[] requiredParameters() {
-        return new String[]{"registrationAfter"};
+        return new String[]{};
     }
 
     @Override
@@ -132,9 +133,11 @@ public class CivilStatusDataService extends PersonStatisticsService {
         birthAuthorityCode = Integer.toString(birthPlaceDataRecord.getBirthPlaceCode());
 
 
-        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(person.getCivilstatus())) {
-            if (filter.registrationAfter.isBefore(civilStatusDataRecord.getEffectFrom())) {
+        for (CivilStatusDataRecord civilStatusDataRecord : person.getCivilstatus()) {
+            mariageEffectTime = civilStatusDataRecord.getEffectFrom();
 
+            if (mariageEffectTime!=null && (searchTime==null || mariageEffectTime.isAfter(searchTime)) &&
+                    civilStatusDataRecord.getBitemporality().registrationTo == null) {
 
                 if (filter.getCivilStatus()==null || civilStatusDataRecord.getCivilStatus().equals(filter.getCivilStatus())) {
 
@@ -142,7 +145,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
                     item.put(PNR, person.getPersonnummer());
 
                     item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
-                    mariageEffectTime = civilStatusDataRecord.getEffectFrom();
+
 
                     item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
                     item.put("authority", Integer.toString(civilStatusDataRecord.getAuthority()));
@@ -151,7 +154,9 @@ public class CivilStatusDataService extends PersonStatisticsService {
                     item.put(BIRTH_AUTHORITY_TEXT, birthAuthorityText);
                     item.put(BIRTH_AUTHORITY_CODE_TEXT, birthAuthorityCode);
 
-                    item.put("civilDate", formatTime(mariageEffectTime));
+                    if(mariageEffectTime!=null) {
+                        item.put(CIVIL_STATUS_DATE, formatTime(mariageEffectTime));
+                    }
 
                     if (civilStatusDataRecord.getRegistrationFrom() != null) {
                         item.put(PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom().atZoneSameInstant(cprDataOffset)));
@@ -161,7 +166,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
                     }
 
                     for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-                        if (addressDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) ) {
+                        if (mariageEffectTime != null && addressDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) ) {
                             int municipalityCode = addressDataRecord.getMunicipalityCode();
                             item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
                             item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
@@ -200,5 +205,12 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
         }
         return itemMap;
+    }
+
+
+    private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
+        List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
+        //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
+        return sorted;
     }
 }
