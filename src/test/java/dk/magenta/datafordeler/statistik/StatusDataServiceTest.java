@@ -73,8 +73,8 @@ public class StatusDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNotNull("Response contains a body", response);
 
-        String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"Guardians\";\"GuardianPnr\";\"ProtectionType\"\n" +
-                "\"0101001234\";\"2000\";\"Other Tester\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\";\"0101010123\";\"1\"";
+        String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"ProtectionType\"\n" +
+                "\"0101001234\";\"2000\";\"Other Tester\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
@@ -85,7 +85,7 @@ public class StatusDataServiceTest {
     public void testFileOutput() throws IOException {
         statusDataService.setWriteToLocalFile(true);
 
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-05-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-05-01&registrationAt=2018-08-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
 
         testUserDetails = new TestUserDetails();
@@ -93,7 +93,7 @@ public class StatusDataServiceTest {
         testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-04-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        response = restTemplate.exchange("/statistik/status_data/?effectDate=2018-07-01&registrationAt=2018-08-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertNull(response.getBody());
@@ -107,8 +107,8 @@ public class StatusDataServiceTest {
         );
         fileInputStream.close();
 
-        String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"Guardians\";\"GuardianPnr\";\"ProtectionType\"\n" +
-                "\"0101001234\";;\"Other Tester\";\"Testersen\";;;;;;;;;;;;;;;;;;;;;;;;\"1\";;";
+        String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"ProtectionType\"\n" +
+                "\"0101001234\";\"2000\";\"Other Tester\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(contents.trim())
