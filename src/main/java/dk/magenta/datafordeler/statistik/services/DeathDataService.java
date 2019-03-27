@@ -161,7 +161,7 @@ public class DeathDataService extends PersonStatisticsService {
 
         filter.effectAt = deathEffectTime;
 
-        CivilStatusDataRecord civilStateRecord = findNewestAfterFilterOnEffect(person.getCivilstatus(), deathEffectTime);
+        CivilStatusDataRecord civilStateRecord = findNewestAfterFilterOnEffect(person.getCivilstatus(), deathEffectTime.minusDays(4));
         if (civilStateRecord != null) {
             item.put(CIVIL_STATUS, civilStateRecord.getCivilStatus());
         }

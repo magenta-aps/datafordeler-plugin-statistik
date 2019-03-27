@@ -137,6 +137,9 @@ public class StatisticsCommandHandler extends CommandHandler {
                         case ROAD:
                             StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
                             break;
+                        case LOCALITY:
+                            StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
+                            break;
                     }
                     log.info(outputDescription);
                 } catch (IOException e) {

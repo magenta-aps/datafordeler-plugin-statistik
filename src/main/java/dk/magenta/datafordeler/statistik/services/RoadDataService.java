@@ -79,6 +79,15 @@ public class RoadDataService extends StatisticsService {
         super.handleRequest(request, response, ServiceName.ROAD);
     }
 
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        log.info("Service called");
+        super.handleRequest(request, response, ServiceName.ROAD);
+    }
+
+
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
