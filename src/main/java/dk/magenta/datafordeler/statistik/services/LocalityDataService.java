@@ -7,13 +7,17 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
@@ -73,6 +77,13 @@ public class LocalityDataService extends StatisticsService {
             loggerHelper.info("Access denied: " + e.getMessage());
             throw (e);
         }
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        log.info("Service called");
+        super.handleRequest(request, response, ServiceName.LOCALITY);
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/")
@@ -378,4 +389,24 @@ public class LocalityDataService extends StatisticsService {
         filter.effectAt = OffsetDateTime.now();
         return filter;
     }
+
+
+    private static Comparator bitemporalComparator = Comparator.comparing(PersonStatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getDafoUpdated)
+            .thenComparing(DatabaseEntry::getId);
+
+
+    /**
+     * Find the newest unclosed record from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null &&
+                r.getOriginDate() != null).max(bitemporalComparator).orElse(null);
+    }
+
+
 }
