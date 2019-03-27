@@ -28,7 +28,10 @@ import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toSet;
 
 public abstract class PersonStatisticsService extends StatisticsService {
 
@@ -141,12 +144,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     public static <R extends CprBitemporalRecord> Set<R> filterRecordsByEffect(Collection<R> records, OffsetDateTime effectAt) {
-        HashSet<R> filtered = new HashSet<>();
-        for (R record : records) {
-            if (record.getBitemporality().containsEffect(effectAt, effectAt)) {
-                filtered.add(record);
-            }
-        }
+        HashSet<R> filtered = (HashSet<R>) records.stream().filter(r -> effectAt==null || r.getBitemporality().containsEffect(effectAt, effectAt)).collect(toSet());
         return filtered;
     }
 
@@ -214,7 +212,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findNewestAfterFilterOnEffect(Collection<R> records, OffsetDateTime registrationAt) {
-        return (R) records.stream().filter(r -> r.getBitemporality().containsEffect(registrationAt, registrationAt) &&
+        return (R) records.stream().filter(r -> (registrationAt == null || r.getBitemporality().containsEffect(registrationAt, registrationAt)) &&
                 r.getOriginDate()!=null).max(bitemporalComparator).orElse(null);
     }
 
