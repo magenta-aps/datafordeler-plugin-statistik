@@ -77,7 +77,7 @@ public class StatusDataService extends PersonStatisticsService {
                 PNR, BIRTHDAY_YEAR, FIRST_NAME, LAST_NAME, STATUS_CODE,
                 BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, CITIZENSHIP_CODE, MOTHER_PNR, FATHER_PNR, CIVIL_STATUS, SPOUSE_PNR,
                 MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_CODE, LOCALITY_ABBREVIATION, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER,
-                BNR, MOVING_IN_DATE, MOVE_PROD_DATE, POST_CODE, CIVIL_STATUS_DATE, CIVIL_STATUS_PROD_DATE, CHURCH, PROTECTION_TYPE
+                BNR, MOVING_IN_DATE, MOVE_PROD_DATE, POST_CODE, CIVIL_STATUS_DATE, CIVIL_STATUS_PROD_DATE, CHURCH, NO_OF_GUARDIANS, GUARDIAN_PNR, PROTECTION_TYPE
         });
     }
 
@@ -117,54 +117,71 @@ public class StatusDataService extends PersonStatisticsService {
         item.put(PNR, formatPnr(person.getPersonnummer()));
 
         // Loop over the list of registrations (which is already sorted (by time, ascending))
-        for (NameDataRecord nameDataRecord : sort(person.getName())) {
+        NameDataRecord nameDataRecord = filter(person.getName(), filter);
+        if(nameDataRecord!=null) {
             item.put(FIRST_NAME, nameDataRecord.getFirstNames());
             item.put(LAST_NAME, nameDataRecord.getLastName());
         }
 
-        for (BirthPlaceDataRecord birthPlaceDataRecord : filter(person.getBirthPlace(), filter)) {
+        BirthPlaceDataRecord birthPlaceDataRecord = filter(person.getBirthPlace(), filter);
+        if(birthPlaceDataRecord!=null) {
             item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(BIRTH_AUTHORITY_CODE_TEXT, birthPlaceDataRecord.getBirthPlaceName());
             item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
         }
-        for (BirthTimeDataRecord birthTimeDataRecord : filter(person.getBirthTime(), filter)) {
+
+        BirthTimeDataRecord birthTimeDataRecord = filter(person.getBirthTime(), filter);
+        if(birthTimeDataRecord!=null) {
             LocalDateTime birthTime = birthTimeDataRecord.getBirthDatetime();
             if (birthTime != null) {
                 item.put(BIRTHDAY_YEAR, Integer.toString(birthTime.getYear()));
             }
         }
-        try {
-            System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(person.getStatus()));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        for (PersonStatusDataRecord statusDataRecord : filter(person.getStatus(), filter)) {
+
+        PersonStatusDataRecord statusDataRecord = filter(person.getStatus(), filter);
+        if(statusDataRecord!=null) {
             item.put(STATUS_CODE, formatStatusCode(statusDataRecord.getStatus()));
         }
-        for (CitizenshipDataRecord citizenshipDataRecord : filter(person.getCitizenship(), filter)) {
+
+        CitizenshipDataRecord citizenshipDataRecord = filter(person.getCitizenship(), filter);
+        if(citizenshipDataRecord!=null) {
             item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
-        for (ParentDataRecord parentDataRecord : filter(person.getMother(), filter)) {
-            item.put(MOTHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+
+        ParentDataRecord mparentDataRecord = filter(person.getMother(), filter);
+        if(mparentDataRecord!=null) {
+            item.put(MOTHER_PNR, formatPnr(mparentDataRecord.getCprNumber()));
         }
-        for (ParentDataRecord parentDataRecord : filter(person.getFather(), filter)) {
-            item.put(FATHER_PNR, formatPnr(parentDataRecord.getCprNumber()));
+
+        ParentDataRecord fparentDataRecord = filter(person.getFather(), filter);
+        if(fparentDataRecord!=null) {
+            item.put(FATHER_PNR, formatPnr(fparentDataRecord.getCprNumber()));
         }
-        for (CivilStatusDataRecord civilStatusDataRecord : filter(person.getCivilstatus(), filter)) {
+
+        CivilStatusDataRecord civilStatusDataRecord = filter(person.getCivilstatus(), filter);
+        if(civilStatusDataRecord!=null) {
             item.put(SPOUSE_PNR, formatPnr(civilStatusDataRecord.getSpouseCpr()));
         }
-        for (ChurchDataRecord churchDataRecord : filter(person.getChurchRelation(), filter)) {
+
+        ChurchDataRecord churchDataRecord = filter(person.getChurchRelation(), filter);
+        if(churchDataRecord!=null) {
             item.put(CHURCH, churchDataRecord.getChurchRelation().toString());
         }
-        for (ProtectionDataRecord protectionDataRecord : filter(person.getProtection(), filter)) {
-            item.put(PROTECTION_TYPE, protectionDataRecord.getProtectionType()+"");
+
+        ProtectionDataRecord protectionDataRecord = filter(person.getProtection(), filter);
+        if(protectionDataRecord!=null) {
+            item.put(PROTECTION_TYPE, Integer.toString(protectionDataRecord.getProtectionType()));
         }
-        for (CivilStatusDataRecord civilStatusDataRecord : filter(person.getCivilstatus(), filter)) {
-            item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
-            item.put(CIVIL_STATUS_DATE, formatTime(civilStatusDataRecord.getEffectFrom()));
-            item.put(CIVIL_STATUS_PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom()));
+
+        CivilStatusDataRecord civilStatusDataRecordr = filter(person.getCivilstatus(), filter);
+        if(civilStatusDataRecordr!=null) {
+            item.put(CIVIL_STATUS, civilStatusDataRecordr.getCivilStatus());
+            item.put(CIVIL_STATUS_DATE, formatTime(civilStatusDataRecordr.getEffectFrom()));
+            item.put(CIVIL_STATUS_PROD_DATE, formatTime(civilStatusDataRecordr.getRegistrationFrom()));
         }
-        for (AddressDataRecord addressDataRecord : filter(person.getAddress(), filter)) {
+
+        AddressDataRecord addressDataRecord = filter(person.getAddress(), filter);
+        if(addressDataRecord!=null) {
             if (addressDataRecord.getMunicipalityCode() < 900) return null;
             item.put(MOVING_IN_DATE, formatTime(addressDataRecord.getEffectFrom()));
             item.put(MOVE_PROD_DATE, formatTime(addressDataRecord.getRegistrationFrom()));
@@ -190,15 +207,14 @@ public class StatusDataService extends PersonStatisticsService {
             }
         }
 
+
         replaceMapValues(item, null, "");
 
         return item;
     }
 
-    private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
-        List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
-        //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
-        return sorted;
+    private static <R extends CprBitemporalRecord> R filter(Collection<R> records, Filter filter) {
+        return findMostImportant(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
     }
 
     private static <R extends CprBitemporalRecord> List<R> sort(Collection<R> records) {

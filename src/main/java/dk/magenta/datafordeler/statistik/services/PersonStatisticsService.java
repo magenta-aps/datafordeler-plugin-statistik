@@ -180,6 +180,9 @@ public abstract class PersonStatisticsService extends StatisticsService {
         return recordList;
     }
 
+
+
+
     /**
      * Find the most important registration according to "bitemporalComparator"
      * @param records
@@ -189,6 +192,29 @@ public abstract class PersonStatisticsService extends StatisticsService {
     public static <R extends CprBitemporalRecord> R findMostImportant(Collection<R> records) {
         return (R) records.stream().max(bitemporalComparator).orElse(null);
     }
+
+    /**
+     *
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null).max(bitemporalComparator).orElse(null);
+    }
+
+    /**
+     *
+     * @param records
+     * @param registrationAt
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestAfterFilterOnEffect(Collection<R> records, OffsetDateTime registrationAt) {
+        return (R) records.stream().filter(r -> r.getBitemporality().containsEffect(registrationAt, registrationAt)).max(bitemporalComparator).orElse(null);
+    }
+
+
 
     public static CprBitemporality getBitemporality(CprBitemporalRecord record) {
         return record.getBitemporality();
