@@ -185,22 +185,25 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     /**
      * Find the most important registration according to "bitemporalComparator"
+     * Records with a missing OriginDate is removed since they are considered invalid
      * @param records
      * @param <R>
      * @return
      */
     public static <R extends CprBitemporalRecord> R findMostImportant(Collection<R> records) {
-        return (R) records.stream().max(bitemporalComparator).orElse(null);
+        return (R) records.stream().filter(r -> r.getOriginDate()!=null).max(bitemporalComparator).orElse(null);
     }
 
     /**
-     *
+     * Find the newest unclosed record from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
      * @param records
      * @param <R>
      * @return
      */
     public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
-        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null).max(bitemporalComparator).orElse(null);
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null &&
+                r.getOriginDate() != null).max(bitemporalComparator).orElse(null);
     }
 
     /**
@@ -211,7 +214,8 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findNewestAfterFilterOnEffect(Collection<R> records, OffsetDateTime registrationAt) {
-        return (R) records.stream().filter(r -> r.getBitemporality().containsEffect(registrationAt, registrationAt)).max(bitemporalComparator).orElse(null);
+        return (R) records.stream().filter(r -> r.getBitemporality().containsEffect(registrationAt, registrationAt) &&
+                r.getOriginDate()!=null).max(bitemporalComparator).orElse(null);
     }
 
 
