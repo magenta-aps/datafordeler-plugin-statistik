@@ -134,8 +134,7 @@ public class BirthDataService extends PersonStatisticsService {
         OffsetDateTime birthRegistrationTime = null;
         LocalDate birthFileTime = null;
 
-        for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(person.getBirthTime())) {
-            if (birthTimeDataRecord.getBitemporality().registrationTo == null) {
+        BirthTimeDataRecord birthTimeDataRecord = findNewestUnclosed(person.getBirthTime());
                 LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
                 if (birthDatetime != null) {
                     OffsetDateTime thisBirthEffectTime = birthTimeDataRecord.getEffectFrom();
@@ -153,8 +152,6 @@ public class BirthDataService extends PersonStatisticsService {
                     }
 
                 }
-            }
-        }
 
 
         if (birthRegistrationTime != null) {
@@ -166,36 +163,26 @@ public class BirthDataService extends PersonStatisticsService {
 
 
         ///////
-        for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(person.getBirthPlace())) {
-            if (birthPlaceDataRecord.getBitemporality().registrationTo == null && birthPlaceDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosed(person.getBirthPlace());
+        if (birthPlaceDataRecord != null) {
                 item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
                 item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
                 item.put(OWN_PREFIX + BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
-            }
         }
-        LocalDateTime birthTime = null;
-        for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(person.getBirthTime())) {
-            if (birthTimeDataRecord.getBitemporality().registrationTo == null && birthTimeDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
-                LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
-                if (birthDatetime != null) {
-                    item.put(OWN_PREFIX + BIRTHDAY_YEAR, Integer.toString(birthDatetime.getYear()));
-                    birthTime = birthDatetime;
-                }
-            }
-        }
-        PersonNumberDataRecord personNumberDataRecord = filter(person.getPersonNumber(), filter);
+
+        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosed(person.getPersonNumber());
             if (personNumberDataRecord != null) {
                 item.put(OWN_PREFIX + EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
             }
 
-        for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(person.getCitizenship())) {
-            if (citizenshipDataRecord.getBitemporality().registrationTo == null && citizenshipDataRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosed(person.getCitizenship());
+            if (citizenshipDataRecord != null) {
                 item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
             }
-        }
+
         Filter parentFilter = new Filter(
-                birthTime != null ?
-                        birthTime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime() :
+                birthDatetime != null ?
+                        birthDatetime.atZone(StatisticsService.cprDataOffset).toOffsetDateTime() :
                         birthRegistrationTime
         );
 
@@ -218,11 +205,11 @@ public class BirthDataService extends PersonStatisticsService {
         }
 
         String fatherPnr = null;
-        for (ParentDataRecord fatherRecord : sortRecords(person.getFather())) {
-            if (fatherRecord.getBitemporality().registrationTo == null && fatherRecord.getBitemporality().containsEffect(birthEffectTime, birthEffectTime)) {
+        ParentDataRecord fatherRecord = findNewestUnclosed(person.getFather());
+            if (fatherRecord != null) {
                 fatherPnr = fatherRecord.getCprNumber();
             }
-        }
+
         item.put(FATHER_PREFIX + PNR, fatherPnr);
         if (fatherPnr != null) {
             PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(fatherPnr), PersonEntity.class);
@@ -230,6 +217,7 @@ public class BirthDataService extends PersonStatisticsService {
                 try {
                     item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, birthRegistrationTime, true));
                 } catch (Exclude e) {
+                    //This should not have been an exception, but it will not be changed for now
                 }
             }
         }
@@ -278,11 +266,13 @@ public class BirthDataService extends PersonStatisticsService {
             item.put(prefix + LOCALITY_CODE, Integer.toString(lookup.localityCode));
         }
 
-        for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(filterRecordsByEffect(person.getCitizenship(), filter.effectAt))) {
+        CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), filter.effectAt);
+        if(citizenshipDataRecord!=null) {
             item.put(prefix + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
 
-        for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(filterRecordsByEffect(person.getBirthPlace(), filter.effectAt))) {
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestAfterFilterOnEffect(person.getBirthPlace(), filter.effectAt);
+        if(birthPlaceDataRecord!=null) {
             item.put(prefix + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(prefix + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
         }

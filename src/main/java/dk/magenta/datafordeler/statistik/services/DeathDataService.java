@@ -55,17 +55,17 @@ public class DeathDataService extends PersonStatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
-        log.info("Servive called");
+        log.info("Service called");
         super.handleRequest(request, response, ServiceName.DEATH);
     }
 
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                STATUS_CODE, DEATH_DATE, PROD_DATE, FILE_DATE, PNR, BIRTHDAY_YEAR,
+                STATUS_CODE, DEATH_DATE, PROD_DATE, FILE_DATE, PNR, CIVIL_STATUS, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
                 EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
-                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
+                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, BNR
         });
     }
 
@@ -161,7 +161,10 @@ public class DeathDataService extends PersonStatisticsService {
 
         filter.effectAt = deathEffectTime;
 
-
+        CivilStatusDataRecord civilStateRecord = findNewestAfterFilterOnEffect(person.getCivilstatus(), deathEffectTime);
+        if (civilStateRecord != null) {
+            item.put(CIVIL_STATUS, civilStateRecord.getCivilStatus());
+        }
         PersonNumberDataRecord personNumberDataRecord = findNewestUnclosed(person.getPersonNumber());
         if (personNumberDataRecord != null) {
             item.put(EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
