@@ -55,7 +55,7 @@ public class LocalityDataService extends StatisticsService {
 
     @PostConstruct
     public void init() {
-        this.setWriteToLocalFile(false);
+        this.setWriteToLocalFile(true);
     }
 
 
