@@ -7,7 +7,6 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
@@ -27,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
+
+import static java.util.stream.Collectors.toSet;
 
 
 @RestController
@@ -103,13 +104,13 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
     @Override
     protected PersonCivilStatusQuery getQuery(Filter filter) {
-        return new PersonCivilStatusQuery((CivilStatusFilter)filter);
+        return new PersonCivilStatusQuery((CivilStatusFilter) filter);
     }
 
 
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
-        List<Map<String, String>> itemMap = this.formatPersonByRecord(person, session, lookupService, (CivilStatusFilter)filter);
+        List<Map<String, String>> itemMap = this.formatPersonByRecord(person, session, lookupService, (CivilStatusFilter) filter);
         if (itemMap == null || itemMap.isEmpty()) {
             return Collections.emptyList();
         }
@@ -132,85 +133,76 @@ public class CivilStatusDataService extends PersonStatisticsService {
         birthAuthorityText = birthPlaceDataRecord.getBirthPlaceName();
         birthAuthorityCode = Integer.toString(birthPlaceDataRecord.getBirthPlaceCode());
 
+        Set<CivilStatusDataRecord> civilStatusses = null;
+        if (filter.getCivilStatus() != null) {
+            civilStatusses = person.getCivilstatus().stream().filter(r -> filter.getCivilStatus().equals(r.getCivilStatus())).collect(toSet());
+        } else {
+            civilStatusses = person.getCivilstatus();
+        }
 
-        for (CivilStatusDataRecord civilStatusDataRecord : person.getCivilstatus()) {
+        for (CivilStatusDataRecord civilStatusDataRecord : civilStatusses) {
             mariageEffectTime = civilStatusDataRecord.getEffectFrom();
 
-            if (mariageEffectTime!=null && (searchTime==null || mariageEffectTime.isAfter(searchTime)) &&
-                    civilStatusDataRecord.getBitemporality().registrationTo == null) {
+            HashMap<String, String> item = new HashMap<>();
+            item.put(PNR, person.getPersonnummer());
 
-                if (filter.getCivilStatus()==null || civilStatusDataRecord.getCivilStatus().equals(filter.getCivilStatus())) {
-
-                    HashMap<String, String> item = new HashMap<>();
-                    item.put(PNR, person.getPersonnummer());
-
-                    item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
+            item.put(CIVIL_STATUS, civilStatusDataRecord.getCivilStatus());
 
 
-                    item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
-                    item.put("authority", Integer.toString(civilStatusDataRecord.getAuthority()));
+            item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
+            item.put("authority", Integer.toString(civilStatusDataRecord.getAuthority()));
 
-                    item.put(BIRTH_AUTHORITY, birthAuthorityId);
-                    item.put(BIRTH_AUTHORITY_TEXT, birthAuthorityText);
-                    item.put(BIRTH_AUTHORITY_CODE_TEXT, birthAuthorityCode);
+            item.put(BIRTH_AUTHORITY, birthAuthorityId);
+            item.put(BIRTH_AUTHORITY_TEXT, birthAuthorityText);
+            item.put(BIRTH_AUTHORITY_CODE_TEXT, birthAuthorityCode);
 
-                    if(mariageEffectTime!=null) {
-                        item.put(CIVIL_STATUS_DATE, formatTime(mariageEffectTime));
+            if (mariageEffectTime != null) {
+                item.put(CIVIL_STATUS_DATE, formatTime(mariageEffectTime));
+            }
+
+            if (civilStatusDataRecord.getRegistrationFrom() != null) {
+                item.put(PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom().atZoneSameInstant(cprDataOffset)));
+            }
+            if (civilStatusDataRecord.getOriginDate() != null) {
+                item.put(FILE_DATE, formatTime(civilStatusDataRecord.getOriginDate()));
+            }
+
+            AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), mariageEffectTime);
+            if (addressDataRecord != null) {
+                int municipalityCode = addressDataRecord.getMunicipalityCode();
+                item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
+                item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+                item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+                item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
+                item.put(DOOR_NUMBER, addressDataRecord.getDoor());
+                item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+                Lookup lookup = lookupService.doLookup(
+                        addressDataRecord.getMunicipalityCode(),
+                        addressDataRecord.getRoadCode(),
+                        addressDataRecord.getHouseNumber()
+                );
+                if (lookup != null) {
+                    if (lookup.localityName != null) {
+                        item.put(LOCALITY_NAME, lookup.localityName);
                     }
-
-                    if (civilStatusDataRecord.getRegistrationFrom() != null) {
-                        item.put(PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom().atZoneSameInstant(cprDataOffset)));
+                    if (lookup.localityAbbrev != null) {
+                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
                     }
-                    if (civilStatusDataRecord.getOriginDate() != null) {
-                        item.put(FILE_DATE, formatTime(civilStatusDataRecord.getOriginDate()));
+                    if (lookup.localityCode != 0) {
+                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                     }
-
-                    for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-                        if (mariageEffectTime != null && addressDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) ) {
-                            int municipalityCode = addressDataRecord.getMunicipalityCode();
-                            item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
-                            item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
-                            item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-                            item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
-                            item.put(DOOR_NUMBER, addressDataRecord.getDoor());
-                            item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-                            Lookup lookup = lookupService.doLookup(
-                                    addressDataRecord.getMunicipalityCode(),
-                                    addressDataRecord.getRoadCode(),
-                                    addressDataRecord.getHouseNumber()
-                            );
-                            if (lookup != null) {
-                                if (lookup.localityName != null) {
-                                    item.put(LOCALITY_NAME, lookup.localityName);
-                                }
-                                if (lookup.localityAbbrev != null) {
-                                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                                }
-                                if (lookup.localityCode != 0) {
-                                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(person.getCitizenship())) {
-                        if (citizenshipDataRecord.getBitemporality().containsEffect(mariageEffectTime, mariageEffectTime) ) {
-                            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
-                            break;
-                        }
-                    }
-                    replaceMapValues(item, null, "");
-                    itemMap.add(item);
                 }
             }
+
+            CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), mariageEffectTime);
+            if (citizenshipDataRecord != null) {
+                item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+            }
+
+            replaceMapValues(item, null, "");
+            itemMap.add(item);
+
         }
         return itemMap;
-    }
-
-
-    private static <R extends CprBitemporalRecord> List<R> filter(Collection<R> records, Filter filter) {
-        List<R> sorted = sortRecords(filterRecordsByEffect(filterRecordsByRegistration(filterUndoneRecords(records), filter.registrationAt), filter.effectAt));
-        //return sorted.isEmpty() ? Collections.emptyList() : Collections.singletonList(sorted.get(sorted.size()-1));
-        return sorted;
     }
 }
