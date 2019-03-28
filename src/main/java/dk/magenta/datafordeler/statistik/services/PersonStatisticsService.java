@@ -20,6 +20,8 @@ import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +30,6 @@ import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
@@ -36,6 +37,7 @@ import static java.util.stream.Collectors.toSet;
 public abstract class PersonStatisticsService extends StatisticsService {
 
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
+    private Logger log = LogManager.getLogger(PersonStatisticsService.class.getCanonicalName());
 
     protected String[] requiredParameters() {
         return new String[]{};
@@ -65,10 +67,12 @@ public abstract class PersonStatisticsService extends StatisticsService {
                 Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
                 concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
             }
+            log.info("Start writing persons");
 
             if (concatenation != null) {
                 //final Counter counter = new Counter();
                 if (outputStream != null) {
+                    log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
                         /*counter.count++;
                         if (counter.count > 100) {
@@ -79,7 +83,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
                     });
                 }
             }
-
+            log.info("Done writing persons");
 
         } catch (Exception e) {
             e.printStackTrace();
