@@ -39,7 +39,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-
+/**
+ * This might be a naive implementation, but so far it does not look like it
+ * It does not take bitemporality or noe to many relations on locality into account
+ */
 @RestController
 @RequestMapping("/statistik/locality_data")
 public class LocalityDataService extends StatisticsService {

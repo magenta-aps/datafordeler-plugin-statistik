@@ -34,6 +34,10 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ *  This might be a naive implementation, but so far it does not look like it
+ *  It does not take bitemporality or noe to many relations on roadentity into account
+ */
 @RestController
 @RequestMapping("/statistik/road_data")
 public class RoadDataService extends StatisticsService {
