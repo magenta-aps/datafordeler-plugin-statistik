@@ -134,8 +134,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
         birthAuthorityCode = Integer.toString(birthPlaceDataRecord.getBirthPlaceCode());
 
         Set<CivilStatusDataRecord> civilStatusses = null;
-        if (filter.getCivilStatus() != null) {
-            civilStatusses = person.getCivilstatus().stream().filter(r -> filter.getCivilStatus().equals(r.getCivilStatus())).collect(toSet());
+        if (filter.getCivilStatus() != null || searchTime != null) {
+            civilStatusses = person.getCivilstatus().stream().filter(r -> (filter.getCivilStatus()== null || filter.getCivilStatus().equals(r.getCivilStatus())) &&
+                    r.getBitemporality().effectFrom.isAfter(searchTime)
+            ).collect(toSet());
         } else {
             civilStatusses = person.getCivilstatus();
         }
