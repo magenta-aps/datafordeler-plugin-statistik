@@ -32,6 +32,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.Comparator.naturalOrder;
 import static java.util.stream.Collectors.toSet;
 
 public abstract class PersonStatisticsService extends StatisticsService {
@@ -173,6 +174,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     private static Comparator bitemporalComparator = Comparator.comparing(PersonStatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getOriginDate, Comparator.nullsLast(naturalOrder()))
             .thenComparing(CprNontemporalRecord::getDafoUpdated)
             .thenComparing(DatabaseEntry::getId);
 
@@ -193,7 +195,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findMostImportant(Collection<R> records) {
-        return (R) records.stream().filter(r -> r.getOriginDate()!=null).max(bitemporalComparator).orElse(null);
+        return (R) records.stream().max(bitemporalComparator).orElse(null);
     }
 
     /**
@@ -204,8 +206,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
-        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null &&
-                r.getOriginDate() != null).max(bitemporalComparator).orElse(null);
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null).max(bitemporalComparator).orElse(null);
     }
 
     /**
@@ -216,8 +217,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findNewestAfterFilterOnEffect(Collection<R> records, OffsetDateTime registrationAt) {
-        return (R) records.stream().filter(r -> (registrationAt == null || r.getBitemporality().containsEffect(registrationAt, registrationAt)) &&
-                r.getOriginDate()!=null).max(bitemporalComparator).orElse(null);
+        return (R) records.stream().filter(r -> (registrationAt == null || r.getBitemporality().containsEffect(registrationAt, registrationAt))).max(bitemporalComparator).orElse(null);
     }
 
 
