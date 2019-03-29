@@ -165,19 +165,19 @@ public class DeathDataService extends PersonStatisticsService {
         if (civilStateRecord != null) {
             item.put(CIVIL_STATUS, civilStateRecord.getCivilStatus());
         }
-        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosed(person.getPersonNumber());
+        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getPersonNumber(), deathEffectTime);
         if (personNumberDataRecord != null) {
             item.put(EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
         }
 
-        BirthPlaceDataRecord birthPlaceDataRecord = findNewestAfterFilterOnEffect(person.getBirthPlace(), deathEffectTime);
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), deathEffectTime);
         if (birthPlaceDataRecord != null) {
             item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
             item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
         }
 
-        BirthTimeDataRecord birthTimeDataRecord = findNewestAfterFilterOnEffect(person.getBirthTime(), deathEffectTime);
+        BirthTimeDataRecord birthTimeDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthTime(), deathEffectTime);
         if (birthTimeDataRecord != null) {
             LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
             if (birthDatetime != null) {
@@ -186,13 +186,13 @@ public class DeathDataService extends PersonStatisticsService {
         }
 
 
-        CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), deathEffectTime);
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), deathEffectTime);
         if (citizenshipDataRecord != null) {
             item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
 
         int municipalityCode = 0;
-        AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), deathEffectTime);
+        AddressDataRecord addressDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getAddress(), deathEffectTime);
         if (addressDataRecord != null) {
             municipalityCode = addressDataRecord.getMunicipalityCode();
             item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
@@ -223,17 +223,17 @@ public class DeathDataService extends PersonStatisticsService {
             return null;
         }
 
-        ParentDataRecord motherRecord = findNewestAfterFilterOnEffect(person.getMother(), deathEffectTime);
+        ParentDataRecord motherRecord = findNewestUnclosedWithSpecifiedEffect(person.getMother(), deathEffectTime);
         if (motherRecord != null) {
             item.put(MOTHER_PNR, motherRecord.getCprNumber());
         }
 
-        ParentDataRecord fatherRecord = findNewestAfterFilterOnEffect(person.getFather(), deathEffectTime);
+        ParentDataRecord fatherRecord = findNewestUnclosedWithSpecifiedEffect(person.getFather(), deathEffectTime);
         if (fatherRecord != null) {
             item.put(FATHER_PNR, fatherRecord.getCprNumber());
         }
 
-        CivilStatusDataRecord civilStatusDataRecord = findNewestAfterFilterOnEffect(person.getCivilstatus(), deathEffectTime);
+        CivilStatusDataRecord civilStatusDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCivilstatus(), deathEffectTime);
         if (civilStatusDataRecord != null) {
             item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
         }
