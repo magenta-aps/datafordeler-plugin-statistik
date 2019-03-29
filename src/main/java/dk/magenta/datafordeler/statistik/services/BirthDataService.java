@@ -135,23 +135,23 @@ public class BirthDataService extends PersonStatisticsService {
         LocalDate birthFileTime = null;
 
         BirthTimeDataRecord birthTimeDataRecord = findNewestUnclosed(person.getBirthTime());
-                LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
-                if (birthDatetime != null) {
-                    OffsetDateTime thisBirthEffectTime = birthTimeDataRecord.getEffectFrom();
-                    if (birthEffectTime == null || thisBirthEffectTime == null || thisBirthEffectTime.isBefore(birthEffectTime)) {
-                        birthEffectTime = thisBirthEffectTime;
-                    }
-                    OffsetDateTime thisBirthRegistrationTime = birthTimeDataRecord.getRegistrationFrom();
-                    if (birthRegistrationTime == null || thisBirthRegistrationTime == null || thisBirthRegistrationTime.isBefore(birthRegistrationTime)) {
-                        birthRegistrationTime = thisBirthRegistrationTime;
-                    }
+        LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
+        if (birthDatetime != null) {
+            OffsetDateTime thisBirthEffectTime = birthTimeDataRecord.getEffectFrom();
+            if (birthEffectTime == null || thisBirthEffectTime == null || thisBirthEffectTime.isBefore(birthEffectTime)) {
+                birthEffectTime = thisBirthEffectTime;
+            }
+            OffsetDateTime thisBirthRegistrationTime = birthTimeDataRecord.getRegistrationFrom();
+            if (birthRegistrationTime == null || thisBirthRegistrationTime == null || thisBirthRegistrationTime.isBefore(birthRegistrationTime)) {
+                birthRegistrationTime = thisBirthRegistrationTime;
+            }
 
-                    LocalDate thisBirthFileTime = birthTimeDataRecord.getOriginDate();
-                    if (birthFileTime == null || thisBirthFileTime.isBefore(birthFileTime)) {
-                        birthFileTime = thisBirthFileTime;
-                    }
-
-                }
+            LocalDate thisBirthFileTime = birthTimeDataRecord.getOriginDate();
+            if (birthFileTime == null || thisBirthFileTime.isBefore(birthFileTime)) {
+                birthFileTime = thisBirthFileTime;
+            }
+            item.put(OWN_PREFIX + BIRTHDAY_YEAR, Integer.toString(birthDatetime.getYear()));
+        }
 
 
         if (birthRegistrationTime != null) {
@@ -163,22 +163,22 @@ public class BirthDataService extends PersonStatisticsService {
 
 
         ///////
-        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosed(person.getBirthPlace());
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), birthEffectTime);
         if (birthPlaceDataRecord != null) {
-                item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
-                item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
-                item.put(OWN_PREFIX + BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
+            item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
+            item.put(OWN_PREFIX + BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
         }
 
-        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosed(person.getPersonNumber());
-            if (personNumberDataRecord != null) {
-                item.put(OWN_PREFIX + EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
-            }
+        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getPersonNumber(), birthEffectTime);
+        if (personNumberDataRecord != null) {
+            item.put(OWN_PREFIX + EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
+        }
 
-        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosed(person.getCitizenship());
-            if (citizenshipDataRecord != null) {
-                item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
-            }
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), birthEffectTime);
+        if (citizenshipDataRecord != null) {
+            item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+        }
 
         Filter parentFilter = new Filter(
                 birthDatetime != null ?
@@ -198,19 +198,19 @@ public class BirthDataService extends PersonStatisticsService {
                 } catch (Exclude e) {
                     // Do not include births where the mother lives outside of Greenland at the time of birth
                     //return Collections.emptyMap();
-                    item.put("EXTRA", "No GL address at birthtime");
+                    item.put("EXTRA", "NA");
                 }
             }
         } else {
-            item.put("EXTRA", "Unknown mother");
+            item.put("EXTRA", "UM");
             //return Collections.emptyMap();
         }
 
         String fatherPnr = null;
         ParentDataRecord fatherRecord = findNewestUnclosed(person.getFather());
-            if (fatherRecord != null) {
-                fatherPnr = fatherRecord.getCprNumber();
-            }
+        if (fatherRecord != null) {
+            fatherPnr = fatherRecord.getCprNumber();
+        }
 
         item.put(FATHER_PREFIX + PNR, fatherPnr);
         if (fatherPnr != null) {
@@ -236,14 +236,14 @@ public class BirthDataService extends PersonStatisticsService {
         filterf.registrationAt = birthEffectTime;
         AddressDataRecord addressDataRecord = filter(person.getAddress(), filterf);
 
-        if (excludeIfNonGreenlandic && addressDataRecord==null) {
+        if (excludeIfNonGreenlandic && addressDataRecord == null) {
             log.warn("addressDataRecord==null");
             throw new Exclude();
         }
 
         item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
         if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 955) {
-            log.warn("NOT GL ADD "+addressDataRecord.getId());
+            log.warn("NOT GL ADD " + addressDataRecord.getId());
             throw new Exclude();
         }
         Lookup lookup = lookupService.doLookup(
@@ -269,12 +269,12 @@ public class BirthDataService extends PersonStatisticsService {
         }
 
         CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), filter.effectAt);
-        if(citizenshipDataRecord!=null) {
+        if (citizenshipDataRecord != null) {
             item.put(prefix + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
 
         BirthPlaceDataRecord birthPlaceDataRecord = findNewestAfterFilterOnEffect(person.getBirthPlace(), filter.effectAt);
-        if(birthPlaceDataRecord!=null) {
+        if (birthPlaceDataRecord != null) {
             item.put(prefix + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(prefix + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
         }
