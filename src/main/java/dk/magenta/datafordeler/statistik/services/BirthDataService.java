@@ -26,9 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.*;
 
 
@@ -136,6 +134,8 @@ public class BirthDataService extends PersonStatisticsService {
 
         BirthTimeDataRecord birthTimeDataRecord = findNewestUnclosed(person.getBirthTime());
         LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
+        OffsetDateTime birthDatetimeRegistration = OffsetDateTime.of(birthDatetime, ZoneOffset.UTC);
+
         if (birthDatetime != null) {
             OffsetDateTime thisBirthEffectTime = birthTimeDataRecord.getEffectFrom();
             if (birthEffectTime == null || thisBirthEffectTime == null || thisBirthEffectTime.isBefore(birthEffectTime)) {
@@ -163,19 +163,19 @@ public class BirthDataService extends PersonStatisticsService {
 
 
         ///////
-        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), birthEffectTime);
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), birthDatetimeRegistration);
         if (birthPlaceDataRecord != null) {
             item.put(OWN_PREFIX + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
             item.put(OWN_PREFIX + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
             item.put(OWN_PREFIX + BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
         }
 
-        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getPersonNumber(), birthEffectTime);
+        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getPersonNumber(), birthDatetimeRegistration);
         if (personNumberDataRecord != null) {
             item.put(OWN_PREFIX + EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
         }
 
-        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), birthEffectTime);
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), birthDatetimeRegistration);
         if (citizenshipDataRecord != null) {
             item.put(OWN_PREFIX + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
@@ -194,7 +194,7 @@ public class BirthDataService extends PersonStatisticsService {
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherRecord.getCprNumber()), PersonEntity.class);
             if (mother != null) {
                 try {
-                    item.putAll(this.formatParentPersonByRecord(mother, MOTHER_PREFIX, lookupService, parentFilter, birthEffectTime, true));
+                    item.putAll(this.formatParentPersonByRecord(mother, MOTHER_PREFIX, lookupService, parentFilter, birthDatetimeRegistration, true));
                 } catch (Exclude e) {
                     // Do not include births where the mother lives outside of Greenland at the time of birth
                     //return Collections.emptyMap();
@@ -217,7 +217,7 @@ public class BirthDataService extends PersonStatisticsService {
             PersonEntity father = QueryManager.getEntity(session, PersonEntity.generateUUID(fatherPnr), PersonEntity.class);
             if (father != null) {
                 try {
-                    item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, birthRegistrationTime, true));
+                    item.putAll(this.formatParentPersonByRecord(father, FATHER_PREFIX, lookupService, parentFilter, birthDatetimeRegistration, true));
                 } catch (Exclude e) {
                     //This should not have been an exception, but it will not be changed for now
                 }
