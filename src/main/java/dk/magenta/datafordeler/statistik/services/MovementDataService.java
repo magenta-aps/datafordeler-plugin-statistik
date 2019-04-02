@@ -112,7 +112,7 @@ public class MovementDataService extends StatisticsService {
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
         System.out.println("-----------------------");
-        return this.formatPersonByRecord(person, session, lookupService, filter);
+		return this.formatPersonByRecord(person, session, lookupService, filter);
     }
 
     public List<Map<String, String>> formatPersonByRVD(PersonEntity person, Session session, LookupService lookupService, Filter filter){
