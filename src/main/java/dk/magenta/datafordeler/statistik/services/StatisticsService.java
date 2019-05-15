@@ -12,6 +12,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -133,6 +134,7 @@ public abstract class StatisticsService {
     public enum ServiceName {
         BIRTH,
         DEATH,
+        CIVILSTATUS,
         MOVEMENT,
         STATUS,
         ADDRESS,
@@ -239,6 +241,12 @@ public abstract class StatisticsService {
     //Column names for  spouse person
     public static final String SPOUSE_PNR = "AegtePnr";
 
+    //Column names for  guardian person
+    public static final String NO_OF_GUARDIANS = "Guardians";
+    public static final String GUARDIAN_PNR = "GuardianPnr";
+
+    public static final String PROTECTION_TYPE = "ProtectionType";
+
     protected int writeItems(Iterator<Map<String, String>> items, OutputStream outputStream, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
@@ -341,7 +349,7 @@ public abstract class StatisticsService {
 
     protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
 
-    private static ZoneId timezone = ZoneId.of("Europe/Copenhagen");
+    private static ZoneId timezone = ZoneId.systemDefault();
 
     protected String formatTime(OffsetDateTime time) {
         if (time == null) return "";

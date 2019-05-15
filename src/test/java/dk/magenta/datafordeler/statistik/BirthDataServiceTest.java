@@ -86,7 +86,6 @@ public class BirthDataServiceTest {
         Assert.assertEquals(204, response.getStatusCodeValue());
     }
 
-
     @Test
     public void testFileOutput() throws IOException {
         birthDataService.setWriteToLocalFile(true);
