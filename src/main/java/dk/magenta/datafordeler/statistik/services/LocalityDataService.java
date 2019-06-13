@@ -7,13 +7,17 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
+import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +39,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-
+/**
+ * This might be a naive implementation, but so far it does not look like it
+ * It does not take bitemporality or noe to many relations on locality into account
+ */
 @RestController
 @RequestMapping("/statistik/locality_data")
 public class LocalityDataService extends StatisticsService {
@@ -51,7 +58,7 @@ public class LocalityDataService extends StatisticsService {
 
     @PostConstruct
     public void init() {
-        this.setWriteToLocalFile(false);
+        this.setWriteToLocalFile(true);
     }
 
 
@@ -73,6 +80,13 @@ public class LocalityDataService extends StatisticsService {
             loggerHelper.info("Access denied: " + e.getMessage());
             throw (e);
         }
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        log.info("Service called");
+        super.handleRequest(request, response, ServiceName.LOCALITY);
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/")
@@ -133,9 +147,9 @@ public class LocalityDataService extends StatisticsService {
                 String LokKortNavn = localityEntity.getAbbreviation().size()>0 ? localityEntity.getAbbreviation().iterator().next().getName() : "";
                 String localityName = localityEntity.getName().size()>0 ? localityEntity.getName().iterator().next().getName() : "";
                 Integer LokTypeKod = localityEntity.getType().size()>0 ? localityEntity.getType().iterator().next().getType() : 0;
-                String LokTypeNavn = TypeCodeToName(LokTypeKod);
-                String LokStatusKod = "?";
-                String LokStatusNavn = "?";
+                String LokTypeNavn = typeCodeToName(LokTypeKod);
+                String LokStatusKod = typeCodeToStatusCode(LokTypeKod);
+                String LokStatusNavn = typeCodeToStatusName(LokTypeKod);
 
                 HashMap<String, String> csvRow = new HashMap<>();
                 csvRow.put(MUNICIPALITY_CODE, Integer.toString(KomKod));
@@ -206,25 +220,104 @@ public class LocalityDataService extends StatisticsService {
     }
 
 
-    private static String TypeCodeToName(Integer typeCode) {
+    private static String typeCodeToName(Integer typeCode) {
         switch(typeCode) {
             case 1:
                 return "By";
             case 2:
-                return "Bygd";
+                return "Nedlagt by";
             case 3:
-                return "Mineområde";
+                return "Bygd";
+            case 4:
+                return "Nedlagt bygd";
             case 5:
-                return "Station";
+                return "Fåreholdersted";
+            case 6:
+                return "Nedlagt fåreholdersted";
             case 7:
-                return "Fårehold";
+                return "Minestation";
             case 8:
+                return "Nedlagt minestation";
+            case 9:
+                return "Station";
+            case 10:
+                return "Nedlagt station";
+            case 11:
+                return "Lufthavn";
+            case 12:
+                return "Nedlagt lufthavn";
+            case 13:
                 return "Byudvikling";
             default:
                 return "Ukendt";
         }
     }
 
+    private static String typeCodeToStatusCode(Integer typeCode) {
+        switch(typeCode) {
+            case 1:
+                return "15";
+            case 2:
+                return "20";
+            case 3:
+                return "15";
+            case 4:
+                return "20";
+            case 5:
+                return "15";
+            case 6:
+                return "20";
+            case 7:
+                return "15";
+            case 8:
+                return "20";
+            case 9:
+                return "15";
+            case 10:
+                return "20";
+            case 11:
+                return "15";
+            case 12:
+                return "20";
+            case 13:
+                return "15";
+            default:
+                return "20";
+        }
+    }
+
+    private static String typeCodeToStatusName(Integer typeCode) {
+        switch(typeCode) {
+            case 1:
+                return "Aktiv";
+            case 2:
+                return "Nedlagt";
+            case 3:
+                return "Aktiv";
+            case 4:
+                return "Nedlagt";
+            case 5:
+                return "Aktiv";
+            case 6:
+                return "Nedlagt";
+            case 7:
+                return "Aktiv";
+            case 8:
+                return "Nedlagt";
+            case 9:
+                return "Aktiv";
+            case 10:
+                return "Nedlagt";
+            case 11:
+                return "Aktiv";
+            case 12:
+                return "Nedlagt";
+            case 13:
+                return "Aktiv";
+            default:
+                return "Nedlagt";
+        }
+    }
 
 
 
@@ -299,4 +392,24 @@ public class LocalityDataService extends StatisticsService {
         filter.effectAt = OffsetDateTime.now();
         return filter;
     }
+
+
+    private static Comparator bitemporalComparator = Comparator.comparing(PersonStatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getDafoUpdated)
+            .thenComparing(DatabaseEntry::getId);
+
+
+    /**
+     * Find the newest unclosed record from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null &&
+                r.getOriginDate() != null).max(bitemporalComparator).orElse(null);
+    }
+
+
 }

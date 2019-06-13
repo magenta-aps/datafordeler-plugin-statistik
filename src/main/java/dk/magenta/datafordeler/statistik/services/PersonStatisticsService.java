@@ -20,6 +20,8 @@ import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,9 +32,13 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.Comparator.naturalOrder;
+import static java.util.stream.Collectors.toSet;
+
 public abstract class PersonStatisticsService extends StatisticsService {
 
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
+    private Logger log = LogManager.getLogger(PersonStatisticsService.class.getCanonicalName());
 
     protected String[] requiredParameters() {
         return new String[]{};
@@ -62,10 +68,12 @@ public abstract class PersonStatisticsService extends StatisticsService {
                 Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
                 concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
             }
+            log.info("Start writing persons");
 
             if (concatenation != null) {
                 //final Counter counter = new Counter();
                 if (outputStream != null) {
+                    log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
                         /*counter.count++;
                         if (counter.count > 100) {
@@ -76,7 +84,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
                     });
                 }
             }
-
+            log.info("Done writing persons");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -141,12 +149,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     public static <R extends CprBitemporalRecord> Set<R> filterRecordsByEffect(Collection<R> records, OffsetDateTime effectAt) {
-        HashSet<R> filtered = new HashSet<>();
-        for (R record : records) {
-            if (record.getBitemporality().containsEffect(effectAt, effectAt)) {
-                filtered.add(record);
-            }
-        }
+        HashSet<R> filtered = (HashSet<R>) records.stream().filter(r -> effectAt==null || r.getBitemporality().containsEffect(effectAt, effectAt)).collect(toSet());
         return filtered;
     }
 
@@ -171,6 +174,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     private static Comparator bitemporalComparator = Comparator.comparing(PersonStatisticsService::getBitemporality, BitemporalityComparator.ALL)
+            .thenComparing(CprNontemporalRecord::getOriginDate, Comparator.nullsLast(naturalOrder()))
             .thenComparing(CprNontemporalRecord::getDafoUpdated)
             .thenComparing(DatabaseEntry::getId);
 
@@ -179,6 +183,55 @@ public abstract class PersonStatisticsService extends StatisticsService {
         recordList.sort(bitemporalComparator);
         return recordList;
     }
+
+
+
+
+    /**
+     * Find the most important registration according to "bitemporalComparator"
+     * Records with a missing OriginDate is removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findMostImportant(Collection<R> records) {
+        return (R) records.stream().max(bitemporalComparator).orElse(null);
+    }
+
+    /**
+     * Find the newest unclosed record from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null).max(bitemporalComparator).orElse(null);
+    }
+
+    /**
+     * Find the newest unclosed record with specified effect from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosedWithSpecifiedEffect(Collection<R> records, OffsetDateTime effectAt) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null && r.getBitemporality().containsEffect(effectAt, effectAt)).max(bitemporalComparator).orElse(null);
+    }
+
+    /**
+     *
+     * @param records
+     * @param effectAt
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestAfterFilterOnEffect(Collection<R> records, OffsetDateTime effectAt) {
+        return (R) records.stream().filter(r -> (effectAt == null || r.getBitemporality().containsEffect(effectAt, effectAt))).max(bitemporalComparator).orElse(null);
+    }
+
+
 
     public static CprBitemporality getBitemporality(CprBitemporalRecord record) {
         return record.getBitemporality();

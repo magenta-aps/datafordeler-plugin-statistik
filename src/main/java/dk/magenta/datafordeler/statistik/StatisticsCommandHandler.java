@@ -45,6 +45,8 @@ public class StatisticsCommandHandler extends CommandHandler {
     @Autowired
     private DeathDataService deathDataService;
     @Autowired
+    private CivilStatusDataService civilStatusDataService;
+    @Autowired
     private MovementDataService movementDataService;
     @Autowired
     private StatusDataService statusDataService;
@@ -123,6 +125,9 @@ public class StatisticsCommandHandler extends CommandHandler {
                         case DEATH:
                             StatisticsCommandHandler.this.deathDataService.run(filter, outputStream);
                             break;
+                        case CIVILSTATUS:
+                            StatisticsCommandHandler.this.civilStatusDataService.run(filter, outputStream);
+                            break;
                         case MOVEMENT:
                             StatisticsCommandHandler.this.movementDataService.run(filter, outputStream);
                             break;
@@ -130,6 +135,9 @@ public class StatisticsCommandHandler extends CommandHandler {
                             StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
                             break;
                         case ROAD:
+                            StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
+                            break;
+                        case LOCALITY:
                             StatisticsCommandHandler.this.statusDataService.run(filter, outputStream);
                             break;
                     }

@@ -34,6 +34,10 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ *  This might be a naive implementation, but so far it does not look like it
+ *  It does not take bitemporality or noe to many relations on roadentity into account
+ */
 @RestController
 @RequestMapping("/statistik/road_data")
 public class RoadDataService extends StatisticsService {
@@ -49,7 +53,7 @@ public class RoadDataService extends StatisticsService {
 
     @PostConstruct
     public void init() {
-        this.setWriteToLocalFile(false);
+        this.setWriteToLocalFile(true);
     }
 
 
@@ -78,6 +82,15 @@ public class RoadDataService extends StatisticsService {
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.ROAD);
     }
+
+
+    @RequestMapping(method = RequestMethod.GET, path = "/")
+    public void get(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        log.info("Service called");
+        super.handleRequest(request, response, ServiceName.ROAD);
+    }
+
 
     @Override
     protected List<String> getColumnNames() {

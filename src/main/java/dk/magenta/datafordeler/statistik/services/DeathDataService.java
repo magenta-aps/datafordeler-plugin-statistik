@@ -55,16 +55,17 @@ public class DeathDataService extends PersonStatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        log.info("Service called");
         super.handleRequest(request, response, ServiceName.DEATH);
     }
 
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                STATUS_CODE, DEATH_DATE, PROD_DATE, FILE_DATE, PNR, BIRTHDAY_YEAR,
+                STATUS_CODE, DEATH_DATE, PROD_DATE, FILE_DATE, PNR, CIVIL_STATUS, BIRTHDAY_YEAR,
                 MOTHER_PNR, FATHER_PNR, SPOUSE_PNR,
                 EFFECTIVE_PNR, CITIZENSHIP_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, MUNICIPALITY_CODE,
-                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, DOOR_NUMBER, BNR
+                LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, BNR
         });
     }
 
@@ -122,24 +123,21 @@ public class DeathDataService extends PersonStatisticsService {
         OffsetDateTime deathEffectTime = null;
         OffsetDateTime deathRegistrationTime = null;
         LocalDate deathFileTime = null;
-        for (PersonStatusDataRecord statusDataRecord : sortRecords(person.getStatus())) {
-            if (statusDataRecord.getBitemporality().registrationTo == null) {
-                item.put(STATUS_CODE, Integer.toString(statusDataRecord.getStatus()));
-                if (statusDataRecord.getStatus() == 90) {
-                    OffsetDateTime thisdeathEffectTime = statusDataRecord.getEffectFrom();
-                    if (deathEffectTime == null || thisdeathEffectTime == null || thisdeathEffectTime.isBefore(deathEffectTime)) {
-                        deathEffectTime = thisdeathEffectTime;
-                    }
-                    OffsetDateTime thisDeathRegistrationTime = statusDataRecord.getRegistrationFrom();
-                    if (deathRegistrationTime == null || thisDeathRegistrationTime == null || thisDeathRegistrationTime.isBefore(deathRegistrationTime)) {
-                        deathRegistrationTime = thisDeathRegistrationTime;
-                    }
+        PersonStatusDataRecord statusDataRecord = findNewestUnclosed(person.getStatus());
+        item.put(STATUS_CODE, Integer.toString(statusDataRecord.getStatus()));
+        if (statusDataRecord.getStatus() == 90) {
+            OffsetDateTime thisdeathEffectTime = statusDataRecord.getEffectFrom();
+            if (deathEffectTime == null || thisdeathEffectTime == null || thisdeathEffectTime.isBefore(deathEffectTime)) {
+                deathEffectTime = thisdeathEffectTime;
+            }
+            OffsetDateTime thisDeathRegistrationTime = statusDataRecord.getRegistrationFrom();
+            if (deathRegistrationTime == null || thisDeathRegistrationTime == null || thisDeathRegistrationTime.isBefore(deathRegistrationTime)) {
+                deathRegistrationTime = thisDeathRegistrationTime;
+            }
 
-                    LocalDate thisDeathFileTime = statusDataRecord.getOriginDate();
-                    if (deathFileTime == null || thisDeathFileTime.isBefore(deathFileTime)) {
-                        deathFileTime = thisDeathFileTime;
-                    }
-                }
+            LocalDate thisDeathFileTime = statusDataRecord.getOriginDate();
+            if (deathFileTime == null || thisDeathFileTime.isBefore(deathFileTime)) {
+                deathFileTime = thisDeathFileTime;
             }
         }
 
@@ -147,7 +145,7 @@ public class DeathDataService extends PersonStatisticsService {
                 deathEffectTime == null ||
                         (filter.after != null && deathEffectTime.isBefore(filter.after)) ||
                         (filter.registrationAfter != null && deathRegistrationTime.isBefore(filter.registrationAfter))
-                ) {
+        ) {
             return Collections.emptyMap();
         }
 
@@ -163,85 +161,84 @@ public class DeathDataService extends PersonStatisticsService {
 
         filter.effectAt = deathEffectTime;
 
+        CivilStatusDataRecord civilStateRecord = findNewestAfterFilterOnEffect(person.getCivilstatus(), deathEffectTime.minusDays(4));
+        if (civilStateRecord != null) {
+            item.put(CIVIL_STATUS, civilStateRecord.getCivilStatus());
+        }
+        PersonNumberDataRecord personNumberDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getPersonNumber(), deathEffectTime);
+        if (personNumberDataRecord != null) {
+            item.put(EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
+        }
 
-        for (PersonNumberDataRecord personNumberDataRecord : sortRecords(person.getPersonNumber())) {
-            if (personNumberDataRecord.getBitemporality().registrationTo == null && personNumberDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(EFFECTIVE_PNR, personNumberDataRecord.getCprNumber());
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), deathEffectTime);
+        if (birthPlaceDataRecord != null) {
+            item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
+            item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
+        }
+
+        BirthTimeDataRecord birthTimeDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthTime(), deathEffectTime);
+        if (birthTimeDataRecord != null) {
+            LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
+            if (birthDatetime != null) {
+                item.put(BIRTHDAY_YEAR, Integer.toString(birthDatetime.getYear()));
             }
         }
 
-        for (BirthPlaceDataRecord birthPlaceDataRecord : sortRecords(person.getBirthPlace())) {
-            if (birthPlaceDataRecord.getBitemporality().registrationTo == null && birthPlaceDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
-                item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
-                item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
-            }
-        }
-        for (BirthTimeDataRecord birthTimeDataRecord : sortRecords(person.getBirthTime())) {
-            if (birthTimeDataRecord.getBitemporality().registrationTo == null && birthTimeDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                LocalDateTime birthDatetime = birthTimeDataRecord.getBirthDatetime();
-                if (birthDatetime != null) {
-                    item.put(BIRTHDAY_YEAR, Integer.toString(birthDatetime.getYear()));
-                }
-            }
-        }
 
-        for (CitizenshipDataRecord citizenshipDataRecord : sortRecords(person.getCitizenship())) {
-            if (citizenshipDataRecord.getBitemporality().registrationTo == null && citizenshipDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
-            }
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), deathEffectTime);
+        if (citizenshipDataRecord != null) {
+            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
         }
 
         int municipalityCode = 0;
-        for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
-            if (addressDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime) && addressDataRecord.getReplacedby() == null) {
-                municipalityCode = addressDataRecord.getMunicipalityCode();
-                item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
-                item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
-                item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
-                item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
-                item.put(DOOR_NUMBER, addressDataRecord.getDoor());
-                item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-                Lookup lookup = lookupService.doLookup(
-                        addressDataRecord.getMunicipalityCode(),
-                        addressDataRecord.getRoadCode(),
-                        addressDataRecord.getHouseNumber()
-                );
-                if (lookup != null) {
-                    if (lookup.localityName != null) {
-                        item.put(LOCALITY_NAME, lookup.localityName);
-                    }
-                    if (lookup.localityAbbrev != null) {
-                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                    }
-                    if (lookup.localityCode != 0) {
-                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
-                    }
+        AddressDataRecord addressDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getAddress(), deathEffectTime);
+        if (addressDataRecord != null) {
+            municipalityCode = addressDataRecord.getMunicipalityCode();
+            item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
+            item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+            item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+            item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
+            item.put(DOOR_NUMBER, addressDataRecord.getDoor());
+            item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+            Lookup lookup = lookupService.doLookup(
+                    addressDataRecord.getMunicipalityCode(),
+                    addressDataRecord.getRoadCode(),
+                    addressDataRecord.getHouseNumber()
+            );
+            if (lookup != null) {
+                if (lookup.localityName != null) {
+                    item.put(LOCALITY_NAME, lookup.localityName);
+                }
+                if (lookup.localityAbbrev != null) {
+                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                }
+                if (lookup.localityCode != 0) {
+                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
                 }
             }
         }
+
         if (municipalityCode < 955 || municipalityCode > 961) {
             return null;
         }
 
-        for (ParentDataRecord motherRecord : sortRecords(person.getMother())) {
-            if (motherRecord.getBitemporality().registrationTo == null && motherRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(MOTHER_PNR, motherRecord.getCprNumber());
-            }
+        ParentDataRecord motherRecord = findNewestUnclosedWithSpecifiedEffect(person.getMother(), deathEffectTime);
+        if (motherRecord != null) {
+            item.put(MOTHER_PNR, motherRecord.getCprNumber());
         }
-        for (ParentDataRecord fatherRecord : sortRecords(person.getFather())) {
-            if (fatherRecord.getBitemporality().registrationTo == null && fatherRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(FATHER_PNR, fatherRecord.getCprNumber());
-            }
+
+        ParentDataRecord fatherRecord = findNewestUnclosedWithSpecifiedEffect(person.getFather(), deathEffectTime);
+        if (fatherRecord != null) {
+            item.put(FATHER_PNR, fatherRecord.getCprNumber());
         }
-        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(person.getCivilstatus())) {
-            if (civilStatusDataRecord.getBitemporality().registrationTo == null && civilStatusDataRecord.getBitemporality().containsEffect(deathEffectTime, deathEffectTime)) {
-                item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
-            }
+
+        CivilStatusDataRecord civilStatusDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCivilstatus(), deathEffectTime);
+        if (civilStatusDataRecord != null) {
+            item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
         }
 
         replaceMapValues(item, null, "");
         return item;
     }
-
 }
