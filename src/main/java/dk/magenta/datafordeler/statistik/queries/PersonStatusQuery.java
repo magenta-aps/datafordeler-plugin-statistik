@@ -1,72 +1,60 @@
 package dk.magenta.datafordeler.statistik.queries;
 
-import dk.magenta.datafordeler.core.database.Effect;
+import dk.magenta.datafordeler.core.database.BaseLookupDefinition;
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonAddressData;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonStatusData;
-import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.records.person.data.AddressDataRecord;
+import dk.magenta.datafordeler.cpr.records.person.data.PersonStatusDataRecord;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-public class PersonStatusQuery extends PersonQuery {
+public class PersonStatusQuery extends PersonStatisticsQuery {
 
-    private OffsetDateTime livingInGreenlandOn = null;
 
-    public void setLivingInGreenlandOn(LocalDateTime livingInGreenlandOn) {
-        this.livingInGreenlandOn = livingInGreenlandOn.atZone(StatisticsService.cprDataOffset).toOffsetDateTime();
+    public PersonStatusQuery(HttpServletRequest request) {
+        super(request);
     }
 
-    public void setLivingInGreenlandOn(OffsetDateTime livingInGreenlandOn) {
-        this.livingInGreenlandOn = livingInGreenlandOn;
+    public PersonStatusQuery(Filter filter) {
+        super(filter);
     }
 
     @Override
-    public LookupDefinition getLookupDefinition() {
-        LookupDefinition lookupDefinition = super.getLookupDefinition();
+    public BaseLookupDefinition getLookupDefinition() {
+        BaseLookupDefinition lookupDefinition = super.getLookupDefinition();
         lookupDefinition.setMatchNulls(true);
 
-        if (this.livingInGreenlandOn != null) {
-            ArrayList<FieldDefinition> fieldDefinitions = new ArrayList<>();
-            fieldDefinitions.add(lookupDefinition.put(
-                    PersonBaseData.DB_FIELD_ADDRESS + LookupDefinition.separator + PersonAddressData.DB_FIELD_MUNICIPALITY_CODE,
-                    900,
-                    Integer.class,
-                    LookupDefinition.Operator.GTE
-            ));
-            fieldDefinitions.add(lookupDefinition.put(
-                    PersonBaseData.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusData.DB_FIELD_STATUS,
-                    90,
-                    Integer.class,
-                    LookupDefinition.Operator.NE
-            ));
+        ArrayList<FieldDefinition> fieldDefinitions = new ArrayList<>();
+        FieldDefinition addressDefinition = new FieldDefinition(
+                PersonEntity.DB_FIELD_ADDRESS + LookupDefinition.separator + AddressDataRecord.DB_FIELD_MUNICIPALITY_CODE,
+                900,
+                Integer.class,
+                LookupDefinition.Operator.GTE
+        );
+        addressDefinition.and(PersonEntity.DB_FIELD_ADDRESS + LookupDefinition.separator + AddressDataRecord.DB_FIELD_UNDONE,
+                false,
+                Boolean.class,
+                LookupDefinition.Operator.EQ);
 
-            for (FieldDefinition fieldDefinition : fieldDefinitions) {
-                fieldDefinition.and(
-                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
-                        this.livingInGreenlandOn,
-                        OffsetDateTime.class,
-                        LookupDefinition.Operator.LTE
-                ).or(
-                        LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_FROM,
-                        null,
-                        OffsetDateTime.class
-                );
+        fieldDefinitions.add(addressDefinition);
 
-                fieldDefinition.and(
-                        LookupDefinition.effectref + LookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
-                        this.livingInGreenlandOn,
-                        OffsetDateTime.class
-                ).or(
-                        LookupDefinition.effectref + lookupDefinition.separator + Effect.DB_FIELD_EFFECT_TO,
-                        null,
-                        OffsetDateTime.class
-                );
-            }
+/*
+        FieldDefinition statusDefinition = new FieldDefinition(
+                PersonEntity.DB_FIELD_STATUS + LookupDefinition.separator + PersonStatusDataRecord.DB_FIELD_STATUS,
+                Arrays.asList(50, 60, 80, 90),
+                Integer.class,
+                LookupDefinition.Operator.NE
+        );
+        fieldDefinitions.add(statusDefinition);
+*/
+        for (FieldDefinition fieldDefinition : fieldDefinitions) {
+            applyRegistrationTimes(fieldDefinition);
+            applyEffectTimes(fieldDefinition);
+            lookupDefinition.put(fieldDefinition);
         }
 
         return lookupDefinition;

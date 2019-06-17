@@ -1,6 +1,8 @@
 package dk.magenta.datafordeler.statistik;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.MovementDataService;
@@ -22,10 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -36,19 +35,26 @@ public class MovementDataServiceTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private PersonTestsUtils testsUtils;
+    private TestUtils testsUtils;
 
-    /*@Before
-    public void initialize() throws Exception {
-        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/tmp.txt"));
-        //testsUtils.loadPersonData(new File("/home/lars/tmp/download/1608116792.txt"));
-    }*/
+    @Autowired
+    private MovementDataService movementDataService;
+
+    @Autowired
+    private SessionManager sessionManager;
+
+    @Autowired
+    private TestUtil testUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Before
     public void initialize() throws Exception {
+        testsUtils.deleteAll();
         testsUtils.setPath();
-        testsUtils.loadPersonData("movedperson.txt");
         testsUtils.loadGladdrregData();
+        testsUtils.loadPersonData("movedperson.txt");
     }
 
     @After
@@ -59,31 +65,40 @@ public class MovementDataServiceTest {
 
     @Test
     public void testService() throws Exception {
-        StatisticsService.isFileOn = false;
+        movementDataService.setWriteToLocalFile(false);
         TestUserDetails testUserDetails = new TestUserDetails();
 
         HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(403, response.getStatusCodeValue());
+        ResponseEntity<String> response;// = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
+        //Assert.assertEquals(403, response.getStatusCodeValue());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
-
+/*
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
-
-        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
+*/
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=1900-01-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
+        //response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2017-11-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
+        System.out.println(response.getStatusCodeValue());
         Assert.assertNotNull(response.getBody());
+
+        System.out.println(testUtil.csvToJsonString(response.getBody().trim()));
+
         Assert.assertFalse(response.getBody().isEmpty());
-        Assert.assertEquals("\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
-                response.getBody().trim()
+        String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\";\"\";\"0955\";\"\";\"0042\";\"0005\";\"01\";\"tv\";\"1234\"\n"+
+                "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
         );
     }
 
     @Test
     public void testFileOutput() throws IOException {
-        StatisticsService.isFileOn = true;
+        movementDataService.setWriteToLocalFile(true);
 
         TestUserDetails testUserDetails = new TestUserDetails();
 
@@ -92,12 +107,13 @@ public class MovementDataServiceTest {
         Assert.assertEquals(403, response.getStatusCodeValue());
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
         response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
         Assert.assertEquals(400, response.getStatusCodeValue());
 
-        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2018-01-01", HttpMethod.GET, httpEntity, String.class);
+        response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2016-01-01", HttpMethod.GET, httpEntity, String.class);
         Assert.assertNull(response.getBody());
 
         Assert.assertEquals(200, response.getStatusCodeValue());
@@ -109,13 +125,14 @@ public class MovementDataServiceTest {
         String contents = InputStreamReader.readInputStream(
                 fileInputStream,"UTF-8"
         );
-        fileInputStream.close();
 
+        String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
+                        "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\";\"\";\"0955\";\"\";\"0042\";\"0005\";\"01\";\"tv\";\"1234\"\n"+
+                        "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
 
         Assert.assertEquals(
-                "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                        "\"0101001234\";\"2000\";;\"05\";\"9516\";;\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"01-03-2012\";\"5390\";;;;;;;;;\"955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"",
-                contents.trim()
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(contents.trim())
         );
     }
 

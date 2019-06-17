@@ -1,11 +1,12 @@
 package dk.magenta.datafordeler.statistik.queries;
 
+import dk.magenta.datafordeler.core.database.BaseLookupDefinition;
 import dk.magenta.datafordeler.core.database.FieldDefinition;
 import dk.magenta.datafordeler.core.database.LookupDefinition;
-import dk.magenta.datafordeler.cpr.data.person.data.PersonBaseData;
+import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.statistik.utils.Filter;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
 
 public class PersonMoveQuery extends PersonStatisticsQuery {
 
@@ -13,21 +14,20 @@ public class PersonMoveQuery extends PersonStatisticsQuery {
         super(request);
     }
 
+    public PersonMoveQuery(Filter filter) {
+        super(filter);
+    }
+
     @Override
-    public LookupDefinition getLookupDefinition() {
-        LookupDefinition lookupDefinition = super.getLookupDefinition();
+    public BaseLookupDefinition getLookupDefinition() {
+        BaseLookupDefinition lookupDefinition = super.getLookupDefinition();
         lookupDefinition.setMatchNulls(true);
 
-        HashSet<FieldDefinition> fieldDefinitions = new HashSet<>();
-        fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
-        //fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_FOREIGN_ADDRESS, null, Integer.class, LookupDefinition.Operator.NE));
-        fieldDefinitions.add(lookupDefinition.put(PersonBaseData.DB_FIELD_MIGRATION, null, Integer.class, LookupDefinition.Operator.NE));
-        lookupDefinition.orDefinitions();
+        FieldDefinition addressDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_ADDRESS);
+        FieldDefinition migrationDefinition = this.fromPath(LookupDefinition.entityref + LookupDefinition.separator + PersonEntity.DB_FIELD_FOREIGN_ADDRESS_EMIGRATION);
 
-        for (FieldDefinition fieldDefinition : fieldDefinitions) {
-            this.applyRegistrationTimes(fieldDefinition);
-            this.applyEffectTimes(fieldDefinition);
-        }
+        addressDefinition.or(migrationDefinition);
+        lookupDefinition.put(addressDefinition);
 
         return lookupDefinition;
     }

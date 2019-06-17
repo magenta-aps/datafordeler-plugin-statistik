@@ -6,55 +6,40 @@ import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import dk.magenta.datafordeler.core.database.Effect;
-import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
-import dk.magenta.datafordeler.cpr.CprRolesDefinition;
-import dk.magenta.datafordeler.cpr.data.person.PersonEffect;
-import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
-import dk.magenta.datafordeler.cpr.data.person.PersonQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
-import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.io.OutputStream;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class StatisticsService {
 
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
 
-    private class Counter {
-        public long count = 0;
-    }
-
     public static String PATH_FILE = null;
 
     static {
-        StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        //StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
+        StatisticsService.PATH_FILE = "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) {
             folder.mkdirs();
@@ -65,12 +50,16 @@ public abstract class StatisticsService {
         return new String[]{};
     }
 
+    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
+        return this.getDafoUserManager().getUserFromRequest(request);
+    }
 
-    protected void get(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException {
 
-
+    public abstract int run(Filter filter, OutputStream outputStream);
+    
+    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
@@ -86,28 +75,45 @@ public abstract class StatisticsService {
         secondarySession.setDefaultReadOnly(true);
 
         try {
-            PersonQuery personQuery = this.getQuery(request);
-            personQuery.applyFilters(primarySession);
-            Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, personQuery, PersonEntity.class);
+            response.setContentType("text/csv");
+            String outputDescription = null;
+            OutputStream outputStream = null;
 
-            final Counter counter = new Counter();
-            int written = this.writeItems(this.formatItems(personEntities, secondarySession, filter), response, serviceName, item -> {
-                counter.count++;
-                if (counter.count > 100) {
-                    primarySession.clear();
-                    secondarySession.clear();
-                    counter.count = 0;
+            if (this.getWriteToLocalFile()) {
+                //Get current date time
+
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+                String formatDateTime = now.format(formatter);
+
+                if (PATH_FILE != null) {
+                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime + ".csv");
+                    file.createNewFile();
+                    outputStream = new FileOutputStream(file);
+                    outputDescription = "Written to file " + file.getCanonicalPath();
                 }
-            });
-            if (written == 0) {
-                response.sendError(HttpStatus.NO_CONTENT.value());
+
+            } else {
+                response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
+                outputStream = response.getOutputStream();
+                outputDescription = "Written to response";
             }
+
+            if (outputStream != null) {
+                int written = this.run(filter, outputStream);
+                this.getLogger().info(outputDescription);
+                if (written == 0) {
+                    response.sendError(HttpStatus.NO_CONTENT.value());
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             primarySession.close();
             secondarySession.close();
         }
+
     }
 
     protected abstract List<String> getColumnNames();
@@ -120,8 +126,6 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
-
     protected Filter getFilter(HttpServletRequest request) {
         return new Filter(request);
     }
@@ -130,19 +134,39 @@ public abstract class StatisticsService {
     public enum ServiceName {
         BIRTH,
         DEATH,
+        CIVILSTATUS,
         MOVEMENT,
-        STATUS;
+        STATUS,
+        ADDRESS,
+        ROAD,
+        LOCALITY;
     }
 
-    public static boolean isFileOn = true;
+    private boolean writeToLocalFile = true;
+
+    public void setWriteToLocalFile(boolean writeToLocalFile) {
+        this.writeToLocalFile = writeToLocalFile;
+    }
+
+    public boolean getWriteToLocalFile() {
+        return this.writeToLocalFile;
+    }
+    //TODO: is the person living in Greenland?
+    //TODO: how can control the deletion of the file? could it be with an expiration date flag?
+    //TODO: Can limit the IP address in order to access the endpoints?
 
     public static final String INCLUSION_DATE_PARAMETER = "inclusionDate";
     public static final String BEFORE_DATE_PARAMETER = "beforeDate";
     public static final String AFTER_DATE_PARAMETER = "afterDate";
     public static final String EFFECT_DATE_PARAMETER = "effectDate";
+    public static final String ONLY_PNR = "pnr";
 
     public static final String REGISTRATION_AFTER = "registrationAfter";
     public static final String REGISTRATION_BEFORE = "registrationBefore";
+    public static final String REGISTRATION_AT = "registrationAt";
+
+    public static final String ORIGIN_AFTER = "originAfter";
+    public static final String ORIGIN_BEFORE = "originBefore";
 
     //Column names for person
     public static final String PNR = "Pnr";
@@ -151,6 +175,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
     public static final String FIRST_NAME = "Fornavn";
+    public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";
     public static final String EFFECTIVE_PNR = "PnrGaeld";
     public static final String STATUS_CODE = "Status";
@@ -160,12 +185,14 @@ public abstract class StatisticsService {
     public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
     public static final String PROD_DATE = "ProdDto";
+    public static final String FILE_DATE = "ProdFilDto";
     public static final String MOVE_PROD_DATE = "FlytProdDto";
     public static final String MUNICIPALITY_CODE = "KomKod";
     public static final String LOCALITY_NAME = "LokNavn";
     public static final String LOCALITY_CODE = "LokKode";
     public static final String LOCALITY_ABBREVIATION = "LokKortNavn";
     public static final String ROAD_CODE = "VejKod";
+    public static final String ROAD_NAME = "VejNavn";
     public static final String HOUSE_NUMBER = "HusNr";
     public static final String DOOR_NUMBER = "SideDoer";
     public static final String FLOOR_NUMBER = "Etage";
@@ -173,8 +200,16 @@ public abstract class StatisticsService {
     public static final String MOVING_IN_DATE = "TilFlyDto";
     public static final String MOVE_DATE = "FlyDto";
     public static final String POST_CODE = "Postnr";
+    public static final String POST_DISTRICT = "PostDistrikt";
     public static final String CHURCH = "Kirke";
+    public static final String BYGDE = "Bygde";
 
+    public static final String MUNICIPALITY_SHORT_NAME = "KomKortNavn";
+    public static final String MUNICIPALITY_NAME = "KomNavn";
+    public static final String LOC_TYPE_CODE = "LokTypeKod";
+    public static final String LOC_TYPE_NAME = "LokTypeNavn";
+    public static final String LOC_STATUS_CODE = "LokStatusKod";
+    public static final String LOC_STATUS_NAME = "LokStatusNavn";
 
     public static final String ORIGIN_MUNICIPALITY_CODE = "FraKomKod";
     public static final String ORIGIN_LOCALITY_NAME = "FraLokKortNavn";
@@ -206,18 +241,13 @@ public abstract class StatisticsService {
     //Column names for  spouse person
     public static final String SPOUSE_PNR = "AegtePnr";
 
+    //Column names for  guardian person
+    public static final String NO_OF_GUARDIANS = "Guardians";
+    public static final String GUARDIAN_PNR = "GuardianPnr";
 
-    protected PersonQuery getQuery(HttpServletRequest request) {
-        OffsetDateTime livingInGreenlandAtDate = Query.parseDateTime(request.getParameter(INCLUSION_DATE_PARAMETER));
-        PersonQuery personQuery = new PersonQuery();
-        if (livingInGreenlandAtDate != null) {
-            personQuery.setEffectFrom(livingInGreenlandAtDate);
-            personQuery.setEffectTo(livingInGreenlandAtDate);
-        }
-        return personQuery;
-    }
+    public static final String PROTECTION_TYPE = "ProtectionType";
 
-    protected int writeItems(Iterator<Map<String, String>> items, HttpServletResponse response, ServiceName serviceName, Consumer<Object> afterEach) throws IOException {
+    protected int writeItems(Iterator<Map<String, String>> items, OutputStream outputStream, Consumer<Object> afterEach) throws IOException {
         CsvSchema.Builder builder = new CsvSchema.Builder();
         builder.setColumnSeparator(';');
 
@@ -237,32 +267,9 @@ public abstract class StatisticsService {
         int written = 0;
 
         if (items.hasNext()) {
-            response.setContentType("text/csv");
-
-
-            SequenceWriter writer = null;
             ObjectWriter writerobj = mapper.writer(schema);
-            String outputDescription = null;
-            
 
-            if (isFileOn) {
-                //Get current date time
-                LocalDateTime now = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-                String formatDateTime = now.format(formatter);
-                if (PATH_FILE != null) {
-                    System.out.println(PATH_FILE);
-                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime.toString() + ".csv");
-                    file.createNewFile();
-                    writer = writerobj.writeValues(file);
-                    outputDescription = "Written to file " + file.getCanonicalPath();
-                }
-
-            } else {
-                writer = writerobj.writeValues(response.getOutputStream());
-                outputDescription = "Written to response";
-            }
-
+            SequenceWriter writer = writerobj.writeValues(outputStream);
             for (written = 0; items.hasNext(); written++) {
                 Object item = items.next();
                 if (item != null) {
@@ -271,17 +278,8 @@ public abstract class StatisticsService {
                 afterEach.accept(item);
             }
             writer.close();
-            System.out.println(outputDescription);
         }
-
         return written;
-    }
-
-    public Iterator<Map<String, String>> formatItems(Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
-        LookupService lookupService = new LookupService(lookupSession);
-        return personEntities.flatMap(
-                personEntity -> formatPerson(personEntity, lookupSession, lookupService, filter).stream()
-        ).iterator();
     }
 
     protected void requireParameter(String parameterName, String parameterValue) throws MissingParameterException {
@@ -291,6 +289,17 @@ public abstract class StatisticsService {
     }
 
     protected static DateTimeFormatter dmyFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    protected String formatPnr(String pnr) {
+        if (pnr == null || pnr.isEmpty() || pnr.equals("0000000000")) {
+            return "";
+        }
+        return pnr;
+    }
+
+    protected static String formatMunicipalityCode(Integer municipalityCode) {
+        return municipalityCode != null ? String.format("%04d", municipalityCode) : null;
+    }
 
     protected static String formatRoadCode(Integer roadCode) {
         return roadCode != null ? String.format("%04d", roadCode) : null;
@@ -305,7 +314,7 @@ public abstract class StatisticsService {
     }
 
     protected static String formatHouseNnr(String houseNr) {
-        if (houseNr == null || houseNr.equals("0")) return "";
+        if (houseNr == null || houseNr.isEmpty()) return "";
         return StringUtils.leftPad(houseNr, 4, '0');
     }
 
@@ -314,32 +323,62 @@ public abstract class StatisticsService {
         return String.format("%04d", localityCode);
     }
 
+    private static Pattern onlyDigits = Pattern.compile("^\\s*[0-9]+$");
+
+    protected static String formatFloor(String floor) {
+        if (floor == null || floor.isEmpty()) return "";
+        Matcher m = onlyDigits.matcher(floor);
+        if (m.find()) {
+            return StringUtils.leftPad(floor, 2, '0');
+        }
+        return floor;
+    }
+
+    protected static String formatDoor(String door) {
+        if (door == null || door.isEmpty()) return "";
+        Matcher m = onlyDigits.matcher(door);
+        if (m.find()) {
+            return StringUtils.leftPad(door, 4, '0');
+        }
+        return door;
+    }
+
     protected static String string(int value) {
         return Integer.toString(value);
     }
 
-    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-        try {
-            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-        } catch (AccessDeniedException e) {
-            loggerHelper.info("Access denied: " + e.getMessage());
-            throw (e);
-        }
+    protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
+
+    private static ZoneId timezone = ZoneId.systemDefault();
+
+    protected String formatTime(OffsetDateTime time) {
+        if (time == null) return "";
+        return this.formatTime(time.atZoneSameInstant(timezone));
     }
 
-    public class EffectComparator<T extends Effect> implements Comparator<T> {
-        @Override
-        public int compare(T o1, T o2) {
-            int c = o1.compareTo(o2);
-            if (c == 0) {
-                c = o1.getRegistration().compareTo(o2.getRegistration());
+    protected String formatTime(ZonedDateTime time) {
+        if (time == null) return "";
+        return this.formatTime(time.toLocalDate());
+    }
+
+    protected String formatTime(LocalDate time) {
+        if (time == null) return "";
+        return time.format(dmyFormatter);
+    }
+
+    public static LocalDate convertDate(OffsetDateTime date) {
+        if (date != null) {
+            return date.atZoneSameInstant(timezone).toLocalDate();
+        }
+        return null;
+    }
+
+    protected static void replaceMapValues(Map<String, String> map, String search, String replace) {
+        for (String key : map.keySet()) {
+            if (Objects.equals(map.get(key), search)) {
+                map.put(key, replace);
             }
-            return c;
         }
     }
-
-    public final EffectComparator<PersonEffect> personComparator = new EffectComparator<PersonEffect>();
 
 }
-
-
