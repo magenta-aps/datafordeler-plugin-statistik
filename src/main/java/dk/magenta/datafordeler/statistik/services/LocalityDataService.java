@@ -18,7 +18,7 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
-import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
+import dk.magenta.datafordeler.geo.data.locality.GeoLocalityEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -134,9 +134,9 @@ public class LocalityDataService extends StatisticsService {
             secondarySession.setDefaultReadOnly(true);
 
             List<Map<String, String>> concatenation = new ArrayList<>();
-            List<LocalityEntity> localityEntities = QueryManager.getAllEntities(primarySession, LocalityEntity.class);
+            List<GeoLocalityEntity> localityEntities = QueryManager.getAllEntities(primarySession, GeoLocalityEntity.class);
             HashMap<String, Map<String, String>> cache = new HashMap<>();
-            for (LocalityEntity localityEntity : localityEntities) {
+            for (GeoLocalityEntity localityEntity : localityEntities) {
 
                 //The testdataset indicates that we can expect to find one of each record
                 Integer KomKod = localityEntity.getMunicipality().iterator().next().getCode();
