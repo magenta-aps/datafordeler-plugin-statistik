@@ -11,11 +11,14 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.statistik.services.CivilStatusDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.hibernate.Session;
+import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -83,7 +86,7 @@ public class CivilStatusDataServiceTest {
 
 
     @Test
-    public void testServiceMarried() throws JsonProcessingException {
+    public void testServiceMarried() throws JsonProcessingException, JSONException {
         civilStatusDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -101,9 +104,9 @@ public class CivilStatusDataServiceTest {
                 "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
                 "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
-        Assert.assertEquals(
+        JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
-                testUtil.csvToJsonString(response.getBody().trim())
+                testUtil.csvToJsonString(response.getBody().trim()), JSONCompareMode.LENIENT
         );
 
         response = restTemplate.exchange("/statistik/civilstate_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -112,9 +115,9 @@ public class CivilStatusDataServiceTest {
         expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
                 "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
-        Assert.assertEquals(
+        JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
-                testUtil.csvToJsonString(response.getBody().trim())
+                testUtil.csvToJsonString(response.getBody().trim()), JSONCompareMode.LENIENT
         );
 
         response = restTemplate.exchange("/statistik/civilstate_data/?registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -126,9 +129,9 @@ public class CivilStatusDataServiceTest {
                 "\"F\";\"12-05-1995\";\"5100\";\"11-09-1991\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
                 "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
-        Assert.assertEquals(
+        JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
-                testUtil.csvToJsonString(response.getBody().trim())
+                testUtil.csvToJsonString(response.getBody().trim()), JSONCompareMode.LENIENT
         );
     }
 
@@ -156,7 +159,7 @@ public class CivilStatusDataServiceTest {
 
 
     @Test
-    public void testFileOutput() throws IOException {
+    public void testFileOutput() throws IOException, JSONException {
         civilStatusDataService.setWriteToLocalFile(true);
         ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(403, response.getStatusCodeValue());
@@ -184,9 +187,10 @@ public class CivilStatusDataServiceTest {
                 "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
                 "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
-        Assert.assertEquals(
+
+        JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
-                testUtil.csvToJsonString(contents.trim())
+                testUtil.csvToJsonString(contents.trim()), JSONCompareMode.LENIENT
         );
     }
 }
