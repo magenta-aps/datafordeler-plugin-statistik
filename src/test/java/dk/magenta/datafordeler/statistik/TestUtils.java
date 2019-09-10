@@ -20,7 +20,7 @@ import dk.magenta.datafordeler.gladdrreg.data.municipality.MunicipalityRegistrat
 import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeEntity;
 import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeEntityManager;
 import dk.magenta.datafordeler.gladdrreg.data.postalcode.PostalCodeRegistration;
-import dk.magenta.datafordeler.gladdrreg.data.road.RoadEntity;
+import dk.magenta.datafordeler.gladdrreg.data.road.GladdrregRoadEntity;
 import dk.magenta.datafordeler.gladdrreg.data.road.RoadRegistration;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.apache.commons.io.FileUtils;
@@ -282,7 +282,7 @@ public class TestUtils {
 
     private void loadRoad(Session session) throws DataFordelerException, IOException {
         InputStream testData = TestUtils.class.getResourceAsStream("/road.json");
-        dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager roadEntityManager = (dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(RoadEntity.schema);
+        dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager roadEntityManager = (dk.magenta.datafordeler.gladdrreg.data.road.RoadEntityManager) gladdrregPlugin.getRegisterManager().getEntityManager(GladdrregRoadEntity.schema);
         List<? extends Registration> regs = roadEntityManager.parseData(testData, new ImportMetadata());
         testData.close();
         for (Registration registration : regs) {
@@ -349,7 +349,7 @@ public class TestUtils {
     public void deleteAll() {
         this.deleteAll(PersonEntity.class);
         this.deleteAll(LocalityEntity.class);
-        this.deleteAll(RoadEntity.class);
+        this.deleteAll(GladdrregRoadEntity.class);
         this.deleteAll(MunicipalityEntity.class);
         this.deleteAll(PostalCodeEntity.class);
     }

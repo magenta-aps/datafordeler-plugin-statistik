@@ -15,8 +15,8 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressEntity;
 import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressRoadRecord;
-import dk.magenta.datafordeler.geo.data.locality.LocalityEntity;
-import dk.magenta.datafordeler.geo.data.road.RoadEntity;
+import dk.magenta.datafordeler.geo.data.locality.GeoLocalityEntity;
+import dk.magenta.datafordeler.geo.data.road.GeoRoadEntity;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -132,27 +132,27 @@ public class RoadDataService extends StatisticsService {
             List<Map<String, String>> concatenation = new ArrayList<>();
 
             String hql = "SELECT DISTINCT roadEntity,roadMunicipality.code,accessAddressPostcode.postcode ,roadName.name, locality " +
-                    "FROM "+RoadEntity.class.getCanonicalName()+" roadEntity "+
-                    "JOIN roadEntity."+RoadEntity.DB_FIELD_IDENTIFICATION+" roadIdentification "+
+                    "FROM "+GeoRoadEntity.class.getCanonicalName()+" roadEntity "+
+                    "JOIN roadEntity."+GeoRoadEntity.DB_FIELD_IDENTIFICATION+" roadIdentification "+
                     "LEFT JOIN "+ AccessAddressRoadRecord.class.getCanonicalName()+" accessAddressRoad ON accessAddressRoad.reference = roadIdentification " +
                     "JOIN accessAddressRoad."+AccessAddressRoadRecord.DB_FIELD_ENTITY+" accessAddress "+
                     "LEFT JOIN accessAddress."+AccessAddressEntity.DB_FIELD_POSTCODE+" accessAddressPostcode "+
-                    "JOIN roadEntity."+RoadEntity.DB_FIELD_MUNICIPALITY+" roadMunicipality " +
-                    "JOIN roadEntity."+RoadEntity.DB_FIELD_NAME+" roadName " +
+                    "JOIN roadEntity."+GeoRoadEntity.DB_FIELD_MUNICIPALITY+" roadMunicipality " +
+                    "JOIN roadEntity."+GeoRoadEntity.DB_FIELD_NAME+" roadName " +
                     "LEFT JOIN accessAddress."+AccessAddressEntity.DB_FIELD_POSTCODE+" accessAddressPostcode "+
-                    "JOIN roadEntity."+RoadEntity.DB_FIELD_LOCALITY+" roadLocality " +
-                    "JOIN " + LocalityEntity.class.getCanonicalName()+" locality ON roadLocality.reference = locality."+LocalityEntity.DB_FIELD_IDENTIFICATION+" "+
-                    "JOIN locality."+LocalityEntity.DB_FIELD_NAME+" localityName" +
+                    "JOIN roadEntity."+GeoRoadEntity.DB_FIELD_LOCALITY+" roadLocality " +
+                    "JOIN " + GeoLocalityEntity.class.getCanonicalName()+" locality ON roadLocality.reference = locality."+GeoLocalityEntity.DB_FIELD_IDENTIFICATION+" "+
+                    "JOIN locality."+GeoLocalityEntity.DB_FIELD_NAME+" localityName" +
                     "";
 
             Query query = secondarySession.createQuery(hql);
             for (Object item : query.getResultList()) {
                 Object[] items = (Object[]) item;
-                RoadEntity roadEntity = (RoadEntity) items[0];
+                GeoRoadEntity roadEntity = (GeoRoadEntity) items[0];
                 Integer municipalityCode = (Integer) items[1];
                 Integer postcode = (Integer) items[2];
                 String roadName = (String) items[3];
-                LocalityEntity locality = (LocalityEntity) items[4];
+                GeoLocalityEntity locality = (GeoLocalityEntity) items[4];
                 HashMap<String, String> csvRow = new HashMap<>();
                 csvRow.put(MUNICIPALITY_CODE, municipalityCode+"");
                 csvRow.put(LOCALITY_CODE, locality.getCode()+"");
