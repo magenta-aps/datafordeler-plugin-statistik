@@ -63,7 +63,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
             Stream<Map<String, String>> concatenation = null;
 
             for (PersonRecordQuery query : queries) {
-                //this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
                 concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
@@ -71,16 +70,9 @@ public abstract class PersonStatisticsService extends StatisticsService {
             log.info("Start writing persons");
 
             if (concatenation != null) {
-                //final Counter counter = new Counter();
                 if (outputStream != null) {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
-                        /*counter.count++;
-                        if (counter.count > 100) {
-                            primarySession.clear();
-                            secondarySession.clear();
-                            counter.count = 0;
-                        }*/
                     });
                 }
             }
@@ -99,10 +91,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     protected PersonRecordQuery getQuery(Filter filter) {
         PersonRecordQuery personQuery = new PersonRecordQuery();
-        /*if (filter.livingInGreenlandAtDate != null) {
-            personQuery.setEffectFrom(filter.livingInGreenlandAtDate);
-            personQuery.setEffectTo(filter.livingInGreenlandAtDate);
-        }*/
         if (filter.onlyPnr != null) {
             for (String pnr : filter.onlyPnr) {
                 personQuery.addPersonnummer(pnr);

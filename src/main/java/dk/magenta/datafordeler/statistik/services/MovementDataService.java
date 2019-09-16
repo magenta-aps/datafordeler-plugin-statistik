@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.core.util.Bitemporality;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
@@ -29,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*Created by Efrin 06-04-2018*/
 
@@ -117,6 +117,9 @@ public class MovementDataService extends PersonStatisticsService {
         HashMap<OffsetDateTime, CprBitemporalRecord> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
 
+        //Make a list of all moving-events
+        List<PersonEventDataRecord> eventListMove = person.getEvent().stream().filter(event -> "A01".equals(event.getEventId())).collect(Collectors.toList());
+
         for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
             OffsetDateTime effectDate = addressDataRecord.getEffectFrom();
             // Undone entries don't count
@@ -128,6 +131,11 @@ public class MovementDataService extends PersonStatisticsService {
             }
             // Corrected records will be represented by their correctors
             if (addressDataRecord.getCorrectors().size() > 0) {
+                continue;
+            }
+
+            //If this addressregistration has a sameas, it mean that is is just a close and reopen based on new timeintervals
+            if (addressDataRecord.getSameAs() != null) {
                 continue;
             }
 
@@ -173,31 +181,15 @@ public class MovementDataService extends PersonStatisticsService {
             CprBitemporalRecord c = (CprBitemporalRecord) currentAddress.getCorrectionof();
             if (c != null) {
                 regFrom = c.getRegistrationFrom();
-            }/* else if (!currentAddress.getCorrectors().isEmpty()) {
-                continue;
-            }*/
-            boolean filtered = (current != null && currentAddress.getRegistrationFrom() != null) &&
-                    (filter.after == null || !current.isBefore(filter.after)) &&
-                    (filter.before == null || !current.isAfter(filter.before)) &&
-                    (filter.registrationAfter == null || !regFrom.isBefore(filter.registrationAfter)) &&
-                    (filter.registrationBefore == null || !regFrom.isAfter(filter.registrationBefore)) &&
-                    (filter.originAfter == null || !currentAddress.getOriginDate().isBefore(filter.originAfter)) &&
-                    (filter.originBefore == null || !currentAddress.getOriginDate().isAfter(filter.originBefore));
-
-            Bitemporality bitemporality = new Bitemporality(
-                    regFrom,
-                    currentAddress.getBitemporality().registrationTo,
-                    currentAddress.getBitemporality().effectFrom,
-                    currentAddress.getBitemporality().effectTo
-            );
-
+            }
+            final OffsetDateTime firstRegFrom = regFrom;
 
             if (
                     (current != null && currentAddress.getRegistrationFrom() != null) &&
                             (filter.after == null || !current.isBefore(filter.after)) &&
                             (filter.before == null || !current.isAfter(filter.before)) &&
-                            (filter.registrationAfter == null || !regFrom.isBefore(filter.registrationAfter)) &&
-                            (filter.registrationBefore == null || !regFrom.isAfter(filter.registrationBefore)) &&
+                            (filter.registrationAfter == null || !firstRegFrom.isBefore(filter.registrationAfter)) &&
+                            (filter.registrationBefore == null || !firstRegFrom.isAfter(filter.registrationBefore)) &&
                             (filter.originAfter == null || !currentAddress.getOriginDate().isBefore(filter.originAfter)) &&
                             (filter.originBefore == null || !currentAddress.getOriginDate().isAfter(filter.originBefore))
                     ) {
@@ -236,7 +228,7 @@ public class MovementDataService extends PersonStatisticsService {
                         item.put(DESTINATION_DOOR_NUMBER, formatDoor(currentDomesticAddress.getDoor()));
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, formatTime(current));
-                        item.put(PROD_DATE, formatTime(regFrom));
+                        item.put(PROD_DATE, formatTime(firstRegFrom));
                         item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
 
                         Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
@@ -250,7 +242,11 @@ public class MovementDataService extends PersonStatisticsService {
                         item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
                     }
                 }
-                moves.put(current, item);
+
+                //Make sure to only add the moving to the report if there is recieved a moving event at the same time
+                if(eventListMove.stream().anyMatch(event -> event.getTimestamp().equals(firstRegFrom))) {
+                    moves.put(current, item);
+                }
             }
         }
 
