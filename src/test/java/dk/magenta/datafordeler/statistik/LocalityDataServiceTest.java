@@ -48,7 +48,6 @@ public class LocalityDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadGeoLocalityData("Lokalitet_test.json");
-        testsUtils.loadGeoRoadData("Vejmidte_test.json");
     }
 
     @Test
