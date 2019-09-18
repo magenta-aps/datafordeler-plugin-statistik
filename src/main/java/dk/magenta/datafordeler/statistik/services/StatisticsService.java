@@ -174,6 +174,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
+    public static final String AUTHORITY_CODE_TEXT = "MynKodTxt";
     public static final String FIRST_NAME = "Fornavn";
     public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";

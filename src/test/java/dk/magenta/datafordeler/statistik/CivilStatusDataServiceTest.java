@@ -8,6 +8,7 @@ import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.statistik.services.CivilStatusDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
 import org.hibernate.Session;
@@ -65,7 +66,8 @@ public class CivilStatusDataServiceTest {
     @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
-        testsUtils.loadPersonData("marriedperson.txt");
+        testsUtils.loadPersonData("marriedperson2.txt");
+        testsUtils.loadPersonData("marriedperson3.txt");
         testsUtils.loadGladdrregData();
     }
 
@@ -75,18 +77,31 @@ public class CivilStatusDataServiceTest {
         testsUtils.deleteAll();
     }
 
+    /**
+     * This is just a test of what has been initiated by the cpr module
+     * @throws JsonProcessingException
+     */
     @Test
     public void testMarriageInitiated() throws JsonProcessingException {
 
         Session session = sessionManager.getSessionFactory().openSession();
-        List<PersonEntity> personEntities = QueryManager.getAllEntities(session, PersonEntity.class);
+        PersonRecordQuery query = new PersonRecordQuery();
+        query.setPersonnummer("0101011234");
+        List<PersonEntity> personEntities = QueryManager.getAllEntities(session, query,PersonEntity.class);
+        Assert.assertEquals(1, personEntities.size());
         PersonEntity personEntity = personEntities.get(0);
+        Assert.assertEquals(5, personEntity.getCivilstatus().size());
+
+        query.setPersonnummer("0101011235");
+        personEntities = QueryManager.getAllEntities(session, query,PersonEntity.class);
+        Assert.assertEquals(1, personEntities.size());
+        personEntity = personEntities.get(0);
         Assert.assertEquals(4, personEntity.getCivilstatus().size());
     }
 
 
     @Test
-    public void testServiceMarried() throws JsonProcessingException, JSONException {
+    public void testCivilStateChangeWithCivilstateFilter() throws JsonProcessingException, JSONException {
         civilStatusDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -100,20 +115,23 @@ public class CivilStatusDataServiceTest {
         response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=G&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
-        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";;;\"23-09-1991\";\"0101011234\";\"1111111111\";\"0\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"09-08-2019\";\"0101011234\";\"1111111112\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"03-09-2019\";\"0101011234\";\"1111111114\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"15-03-2018\";;\"15-03-2018\";\"0101011235\";\"1111111111\";\"340\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"";
 
         JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim()), JSONCompareMode.LENIENT
         );
 
-        response = restTemplate.exchange("/statistik/civilstate_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        response = restTemplate.exchange("/statistik/civilstate_data/?registrationAfter=2019-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
-        expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+        expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";\"09-08-2019\";;\"09-08-2019\";\"0101011234\";\"1111111112\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"03-09-2019\";\"0101011234\";\"1111111114\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
 
         JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
@@ -123,11 +141,12 @@ public class CivilStatusDataServiceTest {
         response = restTemplate.exchange("/statistik/civilstate_data/?registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
-        expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
-                "\"F\";\"12-05-1995\";\"5100\";\"11-09-1991\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+        expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";;;\"23-09-1991\";\"0101011234\";\"1111111111\";\"0\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"09-08-2019\";\"0101011234\";\"1111111112\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"03-09-2019\";\"0101011234\";\"1111111114\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"15-03-2018\";;\"15-03-2018\";\"0101011235\";\"1111111111\";\"340\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"\n" +
+                "\"F\";\"16-12-2018\";;\"16-12-2018\";\"0101011235\";\"1111111111\";\"1350\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"";
 
         JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
@@ -137,7 +156,7 @@ public class CivilStatusDataServiceTest {
 
 
     @Test
-    public void testServiceWidow() throws JsonProcessingException {
+    public void testCivilStateChangeWithPnr0101011234() throws JsonProcessingException {
 
         civilStatusDataService.setWriteToLocalFile(false);
         testUserDetails = new TestUserDetails();
@@ -145,11 +164,35 @@ public class CivilStatusDataServiceTest {
         testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?CivSt=E&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?pnr=0101011234&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response body", response.getBody());
-        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"E\";\"02-08-2018\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";;;\"23-09-1991\";\"0101011234\";\"1111111111\";\"0\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"09-08-2019\";\"0101011234\";\"1111111112\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"03-09-2019\";\"0101011234\";\"1111111114\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
+        );
+    }
+
+    @Test
+    public void testCivilStateChangeWithPnr0101011235() throws JsonProcessingException {
+
+        civilStatusDataService.setWriteToLocalFile(false);
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/civilstate_data/?pnr=0101011235&registrationAfter=1980-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response body", response.getBody());
+        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";\"15-03-2018\";;\"15-03-2018\";\"0101011235\";\"1111111111\";\"340\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"\n" +
+                "\"F\";\"16-12-2018\";;\"16-12-2018\";\"0101011235\";\"1111111111\";\"1350\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
@@ -183,9 +226,11 @@ public class CivilStatusDataServiceTest {
         );
         fileInputStream.close();
 
-        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"authority\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
-                "\"G\";\"05-10-1990\";;\"22-05-1989\";\"0123456789\";\"0202501111\";\"1316\";;\"9507\";\"\";\"0\";;;;;;;;\n" +
-                "\"G\";\"01-03-1998\";\"5100\";\"23-09-1991\";\"0123456789\";\"0303501111\";\"1316\";\"955\";\"9507\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+        String expected = "\"CivSt\";\"CivDto\";\"StatKod\";\"ProdDto\";\"Pnr\";\"AegtePnr\";\"MynKodTxt\";\"KomKod\";\"FoedMynKod\";\"FoedMynTxt\";\"FoedMynKodTxt\";\"LokNavn\";\"LokKortNavn\";\"LokKode\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\"\n" +
+                "\"G\";;;\"23-09-1991\";\"0101011234\";\"1111111111\";\"0\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"09-08-2019\";\"0101011234\";\"1111111112\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"09-08-2019\";;\"03-09-2019\";\"0101011234\";\"1111111114\";\"657\";\"955\";\"9504\";\"\";\"0\";\"Paamiut\";\"PAA\";\"0500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"\n" +
+                "\"G\";\"15-03-2018\";;\"15-03-2018\";\"0101011235\";\"1111111111\";\"340\";\"340\";\"9504\";\"\";\"0\";;;;\"0368\";\"0012\";\"\";\"\";\"\"";
 
 
         JSONAssert.assertEquals(
