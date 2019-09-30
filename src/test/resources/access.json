@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 8323,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -51.703695344999971,
+          64.189803138000059
+        ]
+      },
+      "properties": {
+        "OBJECTID": 8323,
+        "BlokNavn": "House of Testing!",
+        "BNummer": "B-3197B",
+        "Creator": "IRKS",
+        "CreationDate": 1535035685000,
+        "Editor": "TELDWST",
+        "EditDate": 1535539327000,
+        "ObjektStatus": 2,
+        "HusNummer": "18",
+        "KommuneKode": 956,
+        "LokalitetsKode": "0600",
+        "Postnummer": 3900,
+        "Vejkode": "0254",
+        "DataKilde": 1,
+        "AdgangsadresseSumiffik": "{69231C66-F37A-4F78-80C1-E379BFEE165D}",
+        "bygning_id": "{AF3550F5-2998-404D-B784-A70C4DEB2A18}",
+        "GlobalID": "{2E3776BF-05C2-433C-ADB9-8A07DF6B3E8F}"
+      }
+    }
+  ]
+}

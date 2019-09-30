@@ -1,0 +1,138 @@
+{
+  "displayFieldName": "",
+  "fieldAliases": {
+    "OBJECTID": "OBJECTID",
+    "Enhedsnummer": "Enhedsnummer",
+    "access_adress_id": "access_adress_id",
+    "Creator": "Creator",
+    "CreationDate": "CreationDate",
+    "Editor": "Editor",
+    "EditDate": "EditDate",
+    "Datakilde": "Datakilde",
+    "Enhedsanvendelse": "Enhedsanvendelse",
+    "Etage": "Etage",
+    "Objektstatus": "Objektstatus",
+    "Dor_lejlighedsnummer": "Dør-/lejlighedsnummer",
+    "EnhedsadresseSumiffik": "EnhedsadresseSumiffik",
+    "GlobalID": "GlobalID"
+  },
+  "fields": [
+    {
+      "name": "OBJECTID",
+      "type": "esriFieldTypeOID",
+      "alias": "OBJECTID"
+    },
+    {
+      "name": "Enhedsnummer",
+      "type": "esriFieldTypeString",
+      "alias": "Enhedsnummer",
+      "length": 20
+    },
+    {
+      "name": "access_adress_id",
+      "type": "esriFieldTypeGUID",
+      "alias": "access_adress_id",
+      "length": 38
+    },
+    {
+      "name": "Creator",
+      "type": "esriFieldTypeString",
+      "alias": "Creator",
+      "length": 255
+    },
+    {
+      "name": "CreationDate",
+      "type": "esriFieldTypeDate",
+      "alias": "CreationDate",
+      "length": 8
+    },
+    {
+      "name": "Editor",
+      "type": "esriFieldTypeString",
+      "alias": "Editor",
+      "length": 255
+    },
+    {
+      "name": "EditDate",
+      "type": "esriFieldTypeDate",
+      "alias": "EditDate",
+      "length": 8
+    },
+    {
+      "name": "Datakilde",
+      "type": "esriFieldTypeSmallInteger",
+      "alias": "Datakilde"
+    },
+    {
+      "name": "Enhedsanvendelse",
+      "type": "esriFieldTypeSmallInteger",
+      "alias": "Enhedsanvendelse"
+    },
+    {
+      "name": "Etage",
+      "type": "esriFieldTypeSmallInteger",
+      "alias": "Etage"
+    },
+    {
+      "name": "Objektstatus",
+      "type": "esriFieldTypeSmallInteger",
+      "alias": "Objektstatus"
+    },
+    {
+      "name": "Dor_lejlighedsnummer",
+      "type": "esriFieldTypeString",
+      "alias": "Dør-/lejlighedsnummer",
+      "length": 30
+    },
+    {
+      "name": "EnhedsadresseSumiffik",
+      "type": "esriFieldTypeString",
+      "alias": "EnhedsadresseSumiffik",
+      "length": 38
+    },
+    {
+      "name": "GlobalID",
+      "type": "esriFieldTypeGlobalID",
+      "alias": "GlobalID",
+      "length": 38
+    }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 36491,
+        "Enhedsnummer": "5678",
+        "access_adress_id": "{2E3776BF-05C2-433C-ADB9-8A07DF6B3E8F}",
+        "Creator": "TELDWST",
+        "CreationDate": 1535538077000,
+        "Editor": "TELDWST",
+        "EditDate": 1535538077000,
+        "Datakilde": 1,
+        "Enhedsanvendelse": 1,
+        "Etage": "kld",
+        "Objektstatus": 2,
+        "Dor_lejlighedsnummer": "2",
+        "EnhedsadresseSumiffik": "{EE4805F1-96AB-45A7-B045-ED4D3C28364C}",
+        "GlobalID": "{1B3AC64B-C28D-40B2-A106-16CEE7C188B8}"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 36494,
+        "Enhedsnummer": "5678",
+        "access_adress_id": "{2E3776BF-05C2-433C-ADB9-8A07DF6B3E8F}",
+        "Creator": "TELDWST",
+        "CreationDate": 1535538077000,
+        "Editor": "TELDWST",
+        "EditDate": 1535538077000,
+        "Datakilde": 1,
+        "Enhedsanvendelse": 1,
+        "Etage": "kld",
+        "Objektstatus": 2,
+        "Dor_lejlighedsnummer": "1",
+        "EnhedsadresseSumiffik": "{EE4805F1-96AB-45A7-B045-ED4D3C28364D}",
+        "GlobalID": "{1B3AC64B-C28D-40B2-A106-16CEE7C188B9}"
+      }
+    }
+  ]
+}
