@@ -14,6 +14,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.person.data.AddressDataRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.NameDataRecord;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
 import dk.magenta.datafordeler.statistik.utils.LookupService;
@@ -175,7 +177,7 @@ public class AddressDataService extends PersonStatisticsService {
     //---
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
 
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
@@ -184,21 +186,21 @@ public class AddressDataService extends PersonStatisticsService {
         List<AddressDataRecord> records = sortRecords(person.getAddress());
         for (AddressDataRecord addressData : records) {
             if (addressData.getBitemporality().registrationTo == null && addressData.getBitemporality().containsEffect(effectTime, effectTime)) {
-                Lookup lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode(), addressData.getHouseNumber());
-                item.put(ROAD_NAME, lookup.roadName);
+                GeoLookupDTO lookup = lookupService.doLookup(addressData.getMunicipalityCode(), addressData.getRoadCode(), addressData.getHouseNumber());
+                item.put(ROAD_NAME, lookup.getRoadName());
                 item.put(HOUSE_NUMBER, addressData.getHouseNumber());
                 item.put(FLOOR_NUMBER, addressData.getFloor());
                 item.put(DOOR_NUMBER, addressData.getDoor());
-                item.put(POST_CODE, Integer.toString(lookup.postalCode));
-                item.put(POST_DISTRICT, lookup.postalDistrict);
+                item.put(POST_CODE, Integer.toString(lookup.getPostalCode()));
+                item.put(POST_DISTRICT, lookup.getPostalDistrict());
                 String bnr = addressData.getBuildingNumber();
                 if (bnr == null || bnr.isEmpty()) {
-                    bnr = lookup.bNumber;
+                    bnr = lookup.getbNumber();
                 }
                 item.put(BNR, bnr);
 
-                if (lookup.postalCode == 0) {
-                    System.out.println("Failed to lookup postalcode on " + addressData.getMunicipalityCode() + "|" + addressData.getRoadCode() + " (" + lookup.roadName + ")");
+                if (lookup.getPostalCode() == 0) {
+                    log.error("Failed to lookup postalcode on " + addressData.getMunicipalityCode() + "|" + addressData.getRoadCode() + " (" + lookup.getRoadName() + ")");
                 }
             }
         }

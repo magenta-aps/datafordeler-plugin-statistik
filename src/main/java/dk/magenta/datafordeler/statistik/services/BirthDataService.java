@@ -11,6 +11,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
@@ -114,7 +116,7 @@ public class BirthDataService extends PersonStatisticsService {
 
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>(this.formatPersonByRecord(person, session, lookupService, filter));
         if (item.isEmpty()) {
             return Collections.emptyList();
@@ -124,7 +126,7 @@ public class BirthDataService extends PersonStatisticsService {
     }
 
 
-    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
         item.put(OWN_PREFIX + PNR, person.getPersonnummer());
 
@@ -228,7 +230,7 @@ public class BirthDataService extends PersonStatisticsService {
         return item;
     }
 
-    private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, LookupService lookupService, Filter filter, OffsetDateTime birthEffectTime, boolean excludeIfNonGreenlandic) throws Exclude {
+    private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, GeoLookupService lookupService, Filter filter, OffsetDateTime birthEffectTime, boolean excludeIfNonGreenlandic) throws Exclude {
         HashMap<String, String> item = new HashMap<>();
 
         Filter filterf = new Filter();
@@ -246,7 +248,7 @@ public class BirthDataService extends PersonStatisticsService {
             log.warn("NOT GL ADD " + addressDataRecord.getId());
             throw new Exclude();
         }
-        Lookup lookup = lookupService.doLookup(
+        GeoLookupDTO lookup = lookupService.doLookup(
                 addressDataRecord.getMunicipalityCode(),
                 addressDataRecord.getRoadCode(),
                 addressDataRecord.getHouseNumber()
@@ -258,14 +260,14 @@ public class BirthDataService extends PersonStatisticsService {
         item.put(prefix + DOOR_NUMBER, addressDataRecord.getDoor());
         item.put(prefix + BNR, formatBnr(addressDataRecord.getBuildingNumber()));
 
-        if (lookup.localityName != null) {
-            item.put(prefix + LOCALITY_NAME, lookup.localityName);
+        if (lookup.getLocalityName() != null) {
+            item.put(prefix + LOCALITY_NAME, lookup.getLocalityName());
         }
-        if (lookup.localityAbbrev != null) {
-            item.put(prefix + LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+        if (lookup.getLocalityAbbrev() != null) {
+            item.put(prefix + LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
         }
-        if (lookup.localityCode != 0) {
-            item.put(prefix + LOCALITY_CODE, Integer.toString(lookup.localityCode));
+        if (lookup.getLocalityCode() != null) {
+            item.put(prefix + LOCALITY_CODE, lookup.getLocalityCode());
         }
 
         CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), filter.effectAt);

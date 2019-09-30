@@ -9,6 +9,8 @@ import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonDeathQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
@@ -105,7 +107,7 @@ public class DeathDataService extends PersonStatisticsService {
 
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         Map<String, String> itemMap = this.formatPersonByRecord(person, session, lookupService, filter);
         if (itemMap == null || itemMap.isEmpty()) {
             return Collections.emptyList();
@@ -115,7 +117,7 @@ public class DeathDataService extends PersonStatisticsService {
         return Collections.singletonList(item);
     }
 
-    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
 
         HashMap<String, String> item = new HashMap<>();
         item.put(PNR, person.getPersonnummer());
@@ -201,20 +203,22 @@ public class DeathDataService extends PersonStatisticsService {
             item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
             item.put(DOOR_NUMBER, addressDataRecord.getDoor());
             item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-            Lookup lookup = lookupService.doLookup(
+            GeoLookupDTO lookup = lookupService.doLookup(
                     addressDataRecord.getMunicipalityCode(),
                     addressDataRecord.getRoadCode(),
                     addressDataRecord.getHouseNumber()
             );
             if (lookup != null) {
-                if (lookup.localityName != null) {
-                    item.put(LOCALITY_NAME, lookup.localityName);
-                }
-                if (lookup.localityAbbrev != null) {
-                    item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                }
-                if (lookup.localityCode != 0) {
-                    item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+                if (lookup != null) {
+                    if (lookup.getLocalityName() != null) {
+                        item.put(LOCALITY_NAME, lookup.getLocalityName());
+                    }
+                    if (lookup.getLocalityAbbrev() != null) {
+                        item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
+                    }
+                    if (lookup.getLocalityCode() != null) {
+                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.getLocalityCode()));
+                    }
                 }
             }
         }

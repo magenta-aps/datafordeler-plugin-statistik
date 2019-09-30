@@ -323,6 +323,10 @@ public abstract class StatisticsService {
         return String.format("%04d", localityCode);
     }
 
+    protected static String formatLocalityCode(String localityCode) {
+        return String.format("%04d", localityCode);
+    }
+
     private static Pattern onlyDigits = Pattern.compile("^\\s*[0-9]+$");
 
     protected static String formatFloor(String floor) {

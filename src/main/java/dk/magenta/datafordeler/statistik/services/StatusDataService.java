@@ -12,6 +12,8 @@ import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.Lookup;
@@ -107,11 +109,11 @@ public class StatusDataService extends PersonStatisticsService {
     }
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         return Collections.singletonList(this.formatPersonByRecord(person, session, lookupService, filter));
     }
 
-    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected Map<String, String> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         HashMap<String, String> item = new HashMap<>();
 
         item.put(PNR, formatPnr(person.getPersonnummer()));
@@ -194,16 +196,16 @@ public class StatusDataService extends PersonStatisticsService {
             item.put(FLOOR_NUMBER, formatFloor(addressDataRecord.getFloor()));
 
             // Use the lookup service to extract locality & postcode data from a municipality code and road code
-            Lookup lookup = lookupService.doLookup(
+            GeoLookupDTO lookup = lookupService.doLookup(
                     addressDataRecord.getMunicipalityCode(),
                     addressDataRecord.getRoadCode(),
                     addressDataRecord.getHouseNumber()
             );
             if (lookup != null) {
-                item.put(LOCALITY_NAME, lookup.localityName);
-                item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
-                item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
-                item.put(POST_CODE, Integer.toString(lookup.postalCode));
+                item.put(LOCALITY_NAME, lookup.getLocalityName());
+                item.put(LOCALITY_CODE, formatLocalityCode(lookup.getLocalityCode()));
+                item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
+                item.put(POST_CODE, Integer.toString(lookup.getPostalCode()));
             }
         }
 
