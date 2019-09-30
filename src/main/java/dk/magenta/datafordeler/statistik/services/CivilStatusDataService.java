@@ -193,7 +193,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
                         item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
                     }
                     if (lookup.getLocalityCode() != null) {
-                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.getLocalityCode()));
+                        item.put(LOCALITY_CODE, lookup.getLocalityCode());
                     }
                 }
             }
