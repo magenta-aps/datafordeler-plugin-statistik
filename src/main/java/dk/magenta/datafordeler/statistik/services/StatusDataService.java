@@ -203,7 +203,7 @@ public class StatusDataService extends PersonStatisticsService {
             );
             if (lookup != null) {
                 item.put(LOCALITY_NAME, lookup.getLocalityName());
-                item.put(LOCALITY_CODE, formatLocalityCode(lookup.getLocalityCode()));
+                item.put(LOCALITY_CODE, lookup.getLocalityCode());
                 item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
                 item.put(POST_CODE, Integer.toString(lookup.getPostalCode()));
             }
