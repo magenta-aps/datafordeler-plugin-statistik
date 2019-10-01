@@ -17,8 +17,6 @@ import dk.magenta.datafordeler.cpr.records.person.data.NameDataRecord;
 import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.Lookup;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
