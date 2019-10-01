@@ -3,6 +3,7 @@ package dk.magenta.datafordeler.statistik;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.AddressDataService;
@@ -26,7 +27,10 @@ import org.springframework.util.MultiValueMap;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class AddressDataServiceTest {
+public class AddressDataServiceTest extends TestBase {
+
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -45,7 +49,7 @@ public class AddressDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadPersonData("bornperson.txt");
-        testsUtils.loadGladdrregData();
+        this.loadAllGeoAdress(sessionManager);
     }
 
     @Test
@@ -64,7 +68,7 @@ public class AddressDataServiceTest {
 
         response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
         String expected = "\"Pnr\";\"Fornavn\";\"Mellemnavn\";\"Efternavn\";\"Bnr\";\"VejNavn\";\"HusNr\";\"Etage\";\"SideDoer\";\"Postnr\";\"PostDistrikt\"\n" +
-                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";;\"5\";\"1\";\"tv\";\"0\";\n";
+                "\"0101001234\";\"Tester Testmember\";;\"Testersen\";\"1234\";\"Qarsaalik\";\"18\";\"1\";\"tv\";\"3900\";\"Nuuk\";\n";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
