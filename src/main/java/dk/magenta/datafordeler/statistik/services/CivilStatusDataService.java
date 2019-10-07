@@ -8,11 +8,11 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.Lookup;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -109,7 +109,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         List<Map<String, String>> itemMap = this.formatPersonByRecord(person, session, lookupService, (CivilStatusFilter) filter);
         if (itemMap == null || itemMap.isEmpty()) {
             return Collections.emptyList();
@@ -117,7 +117,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
         return itemMap;
     }
 
-    protected List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, CivilStatusFilter filter) {
+    protected List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, CivilStatusFilter filter) {
 
         List<Map<String, String>> itemMap = new ArrayList<Map<String, String>>();
 
@@ -178,20 +178,20 @@ public class CivilStatusDataService extends PersonStatisticsService {
                 item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
                 item.put(DOOR_NUMBER, addressDataRecord.getDoor());
                 item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-                Lookup lookup = lookupService.doLookup(
+                GeoLookupDTO lookup = lookupService.doLookup(
                         addressDataRecord.getMunicipalityCode(),
                         addressDataRecord.getRoadCode(),
                         addressDataRecord.getHouseNumber()
                 );
                 if (lookup != null) {
-                    if (lookup.localityName != null) {
-                        item.put(LOCALITY_NAME, lookup.localityName);
+                    if (lookup.getLocalityName() != null) {
+                        item.put(LOCALITY_NAME, lookup.getLocalityName());
                     }
-                    if (lookup.localityAbbrev != null) {
-                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                    if (lookup.getLocalityAbbrev() != null) {
+                        item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
                     }
-                    if (lookup.localityCode != 0) {
-                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+                    if (lookup.getLocalityCode() != null) {
+                        item.put(LOCALITY_CODE, lookup.getLocalityCode());
                     }
                 }
             }

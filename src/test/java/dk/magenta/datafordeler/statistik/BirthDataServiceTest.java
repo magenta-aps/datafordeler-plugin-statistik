@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.BirthDataService;
@@ -29,7 +30,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class BirthDataServiceTest {
+public class BirthDataServiceTest extends TestBase {
+
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -49,7 +53,7 @@ public class BirthDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadPersonData("bornperson.txt");
-        testsUtils.loadGladdrregData();
+        this.loadAllGeoAdress(sessionManager);
     }
 
     @After
@@ -75,7 +79,7 @@ public class BirthDataServiceTest {
 
         Assert.assertNotNull("Response contains a body", response);
         String expected = "\"B_Pnr\";\"B_FoedAar\";\"B_PnrGaeld\";\"B_FoedMynKod\";\"B_FoedMynTxt\";\"B_FoedMynKodTxt\";\"B_StatKod\";\"B_ProdDto\";\"B_ProdFilDto\";\"M_Pnr\";\"M_FoedMynKod\";\"M_FoedMynTxt\";\"M_FoedMynKodTxt\";\"M_StatKod\";\"M_KomKod\";\"M_LokNavn\";\"M_LokKode\";\"M_VejKod\";\"M_HusNr\";\"M_Etage\";\"M_SideDoer\";\"M_Bnr\";\"F_Pnr\";\"F_FoedMynKod\";\"F_FoedMynTxt\";\"F_FoedMynKodTxt\";\"F_StatKod\";\"F_KomKod\";\"F_LokNavn\";\"F_LokKode\";\"F_VejKod\";\"F_HusNr\";\"F_Etage\";\"F_SideDoer\";\"F_Bnr\"\n" +
-                        "\"0101001234\";\"2000\";;\"9516\";\"\";\"0\";;\"13-01-2000\";\"\";\"2903641234\";\"6666\";\"\";;\"5100\";\"955\";\"Paamiut\";\"500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"0101641234\";\"8888\";\"\";;\"5100\";\"955\";\"Paamiut\";\"500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+                        "\"0101001234\";\"2000\";;\"9516\";\"\";\"0\";;\"13-01-2000\";\"\";\"2903641234\";\"6666\";\"\";;\"5100\";\"956\";\"Nuuk\";\"0600\";\"0254\";\"0018\";\"1\";\"tv\";\"1234\";\"0101641234\";\"8888\";\"\";;\"5100\";\"956\";\"Nuuk\";\"0600\";\"0254\";\"0018\";\"1\";\"tv\";\"1234\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
@@ -112,7 +116,7 @@ public class BirthDataServiceTest {
         fileInputStream.close();
 
         String expected = "\"B_Pnr\";\"B_FoedAar\";\"B_PnrGaeld\";\"B_FoedMynKod\";\"B_FoedMynTxt\";\"B_FoedMynKodTxt\";\"B_StatKod\";\"B_ProdDto\";\"B_ProdFilDto\";\"M_Pnr\";\"M_FoedMynKod\";\"M_FoedMynTxt\";\"M_FoedMynKodTxt\";\"M_StatKod\";\"M_KomKod\";\"M_LokNavn\";\"M_LokKode\";\"M_VejKod\";\"M_HusNr\";\"M_Etage\";\"M_SideDoer\";\"M_Bnr\";\"F_Pnr\";\"F_FoedMynKod\";\"F_FoedMynTxt\";\"F_FoedMynKodTxt\";\"F_StatKod\";\"F_KomKod\";\"F_LokNavn\";\"F_LokKode\";\"F_VejKod\";\"F_HusNr\";\"F_Etage\";\"F_SideDoer\";\"F_Bnr\"\n" +
-                "\"0101001234\";\"2000\";;\"9516\";\"\";\"0\";;\"13-01-2000\";\"\";\"2903641234\";\"6666\";\"\";;\"5100\";\"955\";\"Paamiut\";\"500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\";\"0101641234\";\"8888\";\"\";;\"5100\";\"955\";\"Paamiut\";\"500\";\"0001\";\"0005\";\"1\";\"tv\";\"1234\"";
+                "\"0101001234\";\"2000\";;\"9516\";\"\";\"0\";;\"13-01-2000\";\"\";\"2903641234\";\"6666\";\"\";;\"5100\";\"956\";\"Nuuk\";\"0600\";\"0254\";\"0018\";\"1\";\"tv\";\"1234\";\"0101641234\";\"8888\";\"\";;\"5100\";\"956\";\"Nuuk\";\"0600\";\"0254\";\"0018\";\"1\";\"tv\";\"1234\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(contents.trim())

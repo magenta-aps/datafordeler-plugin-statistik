@@ -69,12 +69,6 @@
         </dependency>
         <dependency>
             <groupId>dk.magenta.datafordeler</groupId>
-            <artifactId>datafordeler-plugin-gladdrreg</artifactId>
-            <version>1.1</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>dk.magenta.datafordeler</groupId>
             <artifactId>datafordeler-plugin-cpr</artifactId>
             <version>1.1</version>
             <scope>compile</scope>

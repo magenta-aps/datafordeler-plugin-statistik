@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
+import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
@@ -28,7 +29,10 @@ import java.io.IOException;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class StatusDataServiceTest {
+public class StatusDataServiceTest extends TestBase {
+
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -39,7 +43,7 @@ public class StatusDataServiceTest {
     @Autowired
     private StatusDataService statusDataService;
 
-    TestUserDetails testUserDetails;
+    private TestUserDetails testUserDetails;
 
     @Autowired
     private TestUtil testUtil;
@@ -48,7 +52,7 @@ public class StatusDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadPersonData("statusperson.txt");
-        testsUtils.loadGladdrregData();
+        this.loadAllGeoAdress(sessionManager);
     }
 
     @After
@@ -74,7 +78,7 @@ public class StatusDataServiceTest {
         Assert.assertNotNull("Response contains a body", response);
 
         String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"ProtectionType\"\n" +
-                "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
+                "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0956\";\"Nuuk\";\"0600\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3900\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
@@ -108,7 +112,7 @@ public class StatusDataServiceTest {
         fileInputStream.close();
 
         String expected = "\"Pnr\";\"FoedAar\";\"Fornavn\";\"Efternavn\";\"Status\";\"FoedMynKod\";\"FoedMynTxt\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"CivSt\";\"AegtePnr\";\"KomKod\";\"LokNavn\";\"LokKode\";\"LokKortNavn\";\"VejKod\";\"HusNr\";\"Etage\";\"SideDoer\";\"Bnr\";\"TilFlyDto\";\"FlytProdDto\";\"Postnr\";\"CivDto\";\"CivProdDto\";\"Kirke\";\"ProtectionType\"\n" +
-                "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0955\";\"Paamiut\";\"0500\";\"PAA\";\"0001\";\"0005\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3982\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
+                "\"0101001234\";\"2000\";\"Tester Testmember\";\"Testersen\";\"05\";\"9516\";\"\";\"5100\";\"2903641234\";\"0101641234\";\"G\";\"0202994321\";\"0956\";\"Nuuk\";\"0600\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\";\"30-08-2016\";\"31-08-2016\";\"3900\";\"12-10-2017\";\"13-10-2017\";\"F\";\"1\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(contents.trim())

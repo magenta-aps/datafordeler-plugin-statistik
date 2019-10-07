@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 11851,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -51.703646010999933,
+              64.189756356000032
+            ],
+            [
+              -51.703579022999975,
+              64.189812308000057
+            ],
+            [
+              -51.703744797999946,
+              64.189849911000067
+            ],
+            [
+              -51.703811615999939,
+              64.189793959000042
+            ],
+            [
+              -51.703646010999933,
+              64.189756356000032
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 11851,
+        "B_nummer": "B-3197B",
+        "Creator": "thard_nukissiorfiit",
+        "CreationDate": 1506701556000,
+        "Editor": "TELDWST",
+        "EditDate": 1535538676000,
+        "a_nummer": null,
+        "BygningSumiffik": "{DC2CAE1B-1F98-44FF-AE8F-6A52556B13FD}",
+        "location_id": "{F0966470-F09F-474D-A820-E8A46ED6FCC7}",
+        "GlobalID": "{AF3550F5-2998-404D-B784-A70C4DEB2A18}",
+        "SHAPE.STArea()": 1.178636921395082e-08,
+        "SHAPE.STLength()": 0.00051423889574690588
+      }
+    }
+  ]
+}

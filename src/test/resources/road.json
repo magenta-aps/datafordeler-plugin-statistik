@@ -1,43 +1,107 @@
 {
-  "95fcfa597030a16f89782eefc6a87260f97b1b2ca6874233aaad8e9c88d3d1fe": {
-    "virkninger": [
-      {
-        "data": [
-          {
-            "sumiffiik": "{041a95ee-9d04-458b-ae73-0475d9765db5}",
-            "state": {
-              "uuid": "3a205cdf-f044-4853-a613-a156471e7c72",
-              "domaene": "https://data.gl/gladdreg/state/1/rest/"
-            },
-            "code": 1,
-            "registration_user": null,
-            "cpr_name": null,
-            "location": {
-              "uuid": "4d9cd2a0-89f1-4acc-a259-4fd139006d87",
-              "domaene": "https://data.gl/gladdreg/locality/1/rest/"
-            },
-            "note": null,
-            "municipality": {
-              "uuid": "f792151b-f509-4173-aa5d-2f237cca1784",
-              "domaene": "https://data.gl/gladdreg/municipality/1/rest/"
-            },
-            "shortname": "Aadarujuup Aqq.",
-            "alternate_name": null,
-            "name": "Aadarujuup Aqquserna",
-            "sumiffiik_domain": "https://data.gl/najugaq/road",
-            "active": true
-          }
-        ],
-        "virkningTil": null,
-        "virkningFra": "2017-09-19T10:45:05.591Z"
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 423,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -51.703480338999952,
+            64.18905828000004
+          ],
+          [
+            -51.703593586999943,
+            64.189100093000036
+          ],
+          [
+            -51.703861729999971,
+            64.189202452000075
+          ],
+          [
+            -51.704058000999964,
+            64.189279222000039
+          ],
+          [
+            -51.704239611999981,
+            64.189329858000065
+          ],
+          [
+            -51.704348368999945,
+            64.189348718000076
+          ],
+          [
+            -51.704520413999944,
+            64.18935497700005
+          ],
+          [
+            -51.704644300999973,
+            64.189337328000079
+          ],
+          [
+            -51.70472491299995,
+            64.189317914000071
+          ],
+          [
+            -51.704774002999955,
+            64.189289318000078
+          ],
+          [
+            -51.704892608999955,
+            64.18920160600004
+          ],
+          [
+            -51.704968430999941,
+            64.189171894000083
+          ],
+          [
+            -51.705106451999939,
+            64.18915157400005
+          ],
+          [
+            -51.705301184999939,
+            64.189119134000066
+          ],
+          [
+            -51.705419860999939,
+            64.189082843000051
+          ],
+          [
+            -51.705528496999932,
+            64.189015999000048
+          ],
+          [
+            -51.705660009999974,
+            64.188909826000042
+          ],
+          [
+            -51.70578738599994,
+            64.188810943000078
+          ]
+        ]
+      },
+      "properties": {
+        "OBJECTID": 423,
+        "Vejnavn": "Qarsaalik",
+        "Vejkode": "0254",
+        "Creator": "IRKS",
+        "CreationDate": 1535035685000,
+        "Editor": "IRKS",
+        "EditDate": 1535035685000,
+        "Kommunekode": 956,
+        "Lokalitetskode": "0600",
+        "Vejadresseringsnavn": "Qarsaalik",
+        "VejmidteSumiffik": "{961FFC61-8B04-45F3-80FD-509B0676FEF6}",
+        "GlobalID": "{E1274F15-9E2B-4B6E-8B7D-C8078DF65AA2}",
+        "SHAPE.STLength()": 0.002502235841752457
       }
-    ],
-    "checksum": "95fcfa597030a16f89782eefc6a87260f97b1b2ca6874233aaad8e9c88d3d1fe",
-    "entity": {
-      "uuid": "e4dc6c09-baae-40b1-8696-57771b2f7a81",
-      "domaene": "https://data.gl/gladdreg/road/1/rest/"
-    },
-    "registreringTil": null,
-    "registreringFra": "2017-09-19T10:45:05.591Z"
-  }
+    }
+  ]
 }
