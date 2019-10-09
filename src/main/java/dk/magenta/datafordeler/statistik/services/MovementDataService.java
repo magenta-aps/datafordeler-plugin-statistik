@@ -118,7 +118,8 @@ public class MovementDataService extends PersonStatisticsService {
         // Map of effectTime to registrationTime (when this move was first registered)
 
         //Make a list of all moving-events
-        List<PersonEventDataRecord> eventListMove = person.getEvent().stream().filter(event -> "A01".equals(event.getEventId())).collect(Collectors.toList());
+        List<PersonEventDataRecord> eventListMove = person.getEvent().stream().filter(event -> "A01".equals(event.getEventId()) ||
+                "A05".equals(event.getEventId()) || "A06".equals(event.getEventId())).collect(Collectors.toList());
 
         for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
             OffsetDateTime effectDate = addressDataRecord.getEffectFrom();
