@@ -115,7 +115,7 @@ public class MovementDataServiceTest extends TestBase {
 
         Assert.assertFalse(response.getBody().isEmpty());
         String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                "\"0101011235\";\"2005\";;\"05\";;;\"1111111112\";\"1111111111\";;\"09-05-2019\";\"\";\"11-04-2019\";;\"0956\";\"NUK\";\"0243\";\"\";\"\";\"\";\"1654\";;\"0957\";\"\";\"0102\";\"0002\";\"\";\"\";\"\"";
+                "\"0101011235\";\"2005\";;\"05\";;;\"1111111112\";\"1111111111\";;\"09-05-2019\";\"\";\"11-04-2019\";;\"0956\";\"\";\"0243\";\"\";\"\";\"\";\"1654\";;\"0957\";\"\";\"0102\";\"0002\";\"\";\"\";\"\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
@@ -146,16 +146,17 @@ public class MovementDataServiceTest extends TestBase {
         Assert.assertFalse(response.getBody().isEmpty());
         String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
                 "\"0101011236\";\"1982\";;\"05\";\"9509\";;\"1111111111\";\"111111111\";\"\";\"21-05-2019\";\"\";\"14-02-2019\";;\"0957\";\"\";\"0125\";\"0056\";\"\";\"O-1\";\"\";;\"0957\";\"\";\"0125\";\"0056\";\"\";\"1-1\";\"\"\n" +
-                "\"0101011236\";\"1982\";;\"05\";\"9509\";;\"1111111111\";\"111111111\";\"\";\"11-02-2019\";\"\";\"01-02-2019\";;\"0956\";\"NUK\";\"0204\";\"009A\";\"\";\"0402\";\"\";;\"0957\";\"\";\"0125\";\"0056\";\"\";\"O-1\";\"\"\n" +
-                "\"0101011236\";\"1982\";;\"05\";\"9509\";;\"1111111111\";\"111111111\";\"\";\"11-02-2019\";\"\";\"01-02-2016\";;\"0956\";\"NUK\";\"0282\";\"0003\";\"\";\"C013\";\"\";;\"0956\";\"NUK\";\"0204\";\"009A\";\"\";\"0402\";\"\"";
+                "\"0101011236\";\"1982\";;\"05\";\"9509\";;\"1111111111\";\"111111111\";\"\";\"11-02-2019\";\"\";\"01-02-2019\";;\"0956\";\"\";\"0204\";\"009A\";\"\";\"0402\";\"\";;\"0957\";\"\";\"0125\";\"0056\";\"\";\"O-1\";\"\"\n" +
+                "\"0101011236\";\"1982\";;\"05\";\"9509\";;\"1111111111\";\"111111111\";\"\";\"11-02-2019\";\"\";\"01-02-2016\";;\"0956\";\"\";\"0282\";\"0003\";\"\";\"C013\";\"\";;\"0956\";\"\";\"0204\";\"009A\";\"\";\"0402\";\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
         );
     }
 
+
     @Test
-    public void testFileOutput() throws IOException {
+    public void testMovedPersonFileOutput() throws IOException {
         movementDataService.setWriteToLocalFile(true);
 
         TestUserDetails testUserDetails = new TestUserDetails();
@@ -185,8 +186,8 @@ public class MovementDataServiceTest extends TestBase {
         );
 
         String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                        "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1111111111\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\"\n"+
-                        "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1111111111\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\"";
+                "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1111111111\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\"\n"+
+                "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1111111111\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),

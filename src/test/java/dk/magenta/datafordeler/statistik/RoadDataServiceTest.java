@@ -54,12 +54,12 @@ public class RoadDataServiceTest {
 
     }
 
-    //@Test
+    @Test
     public void testDummy() {
     }
 
     //WE have no testdata and this is not considered ar real unittest
-    @Test
+    //@Test
     public void testService() throws JsonProcessingException {
         roadDataService.setWriteToLocalFile(false);
 
@@ -75,7 +75,8 @@ public class RoadDataServiceTest {
         Assert.assertEquals(200, response.getStatusCodeValue());
         assertNotNull("Response contains a body", response);
         String expected = "\"KomKod\";\"LokKode\";\"VejKod\";\"VejNavn\";\"Bygde\";\"Postnr\";\"Void\"\n" +
-                "\"960\";\"1700\";\"257\";\"Qaanaaq\";\"Qaanaaq\";\"3971\";";
+                "\"960\";\"1700\";\"257\";\"Qaanaaq\";\"Qaanaaq\";\"3971\";" +
+                "\"956\";\"0600\";\"254\";\"Qarsaalik\";\"Nuuk\";\"3900\";";;
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
