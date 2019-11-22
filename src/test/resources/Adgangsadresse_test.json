@@ -1,0 +1,98 @@
+{
+  "type" : "FeatureCollection",
+  "crs" : {
+    "type" : "name",
+    "properties" : {
+      "name" : "EPSG:4326"
+    }
+  },
+  "features" : [
+    {
+      "type" : "Feature",
+      "id" : 1,
+      "geometry" : {
+        "type" : "Point",
+        "coordinates" : [
+          -55.596765011999935,
+          72.88345767900006
+        ]
+      },
+      "properties" : {
+        "OBJECTID" : 1,
+        "BNummer" : "B-807",
+        "Creator" : "IRKS",
+        "CreationDate" : 1535035685000,
+        "Editor" : "COREDATA",
+        "EditDate" : 1537427527000,
+        "ObjektStatus" : 2,
+        "HusNummer" : "807",
+        "KommuneKode" : 960,
+        "LokalitetsKode" : "1603",
+        "Postnummer" : 3962,
+        "Vejkode" : "0005",
+        "DataKilde" : 1,
+        "bygning_id" : "{41947F6E-7404-4A95-9A83-18F70B6CAE77}",
+        "GlobalID" : "{CC6C206C-C9CD-4829-B206-F647DC1E7260}",
+        "AdgangsadresseSumiffik" : "{19E9F00E-E5BE-4A34-A7EA-8693795A8814}"
+      }
+    },
+    {
+      "type" : "Feature",
+      "id" : 726,
+      "geometry" : {
+        "type" : "Point",
+        "coordinates" : [
+          -69.230660850999982,
+          77.466494610000041
+        ]
+      },
+      "properties" : {
+        "OBJECTID" : 726,
+        "BNummer" : "B-93",
+        "Creator" : "IRKS",
+        "CreationDate" : 1535035685000,
+        "Editor" : "COREDATA",
+        "EditDate" : 1537427530000,
+        "ObjektStatus" : 2,
+        "HusNummer" : "93",
+        "KommuneKode" : 960,
+        "LokalitetsKode" : "1700",
+        "Postnummer" : 3971,
+        "Vejkode" : "0257",
+        "DataKilde" : 1,
+        "bygning_id" : "{BC361236-D7B4-47F7-B5B7-ADD1AECB5556}",
+        "GlobalID" : "{40E1F9A6-54B4-4653-9D5D-2546AA0C1CD4}",
+        "AdgangsadresseSumiffik" : "{37CC0BDF-C317-4734-9B0B-686B04B077A5}"
+      }
+    },
+    {
+      "type" : "Feature",
+      "id" : 22233,
+      "geometry" : {
+        "type" : "Point",
+        "coordinates" : [
+          -51.677624482999931,
+          64.166050992000066
+        ]
+      },
+      "properties" : {
+        "OBJECTID" : 22233,
+        "BNummer" : "B-4065",
+        "Creator" : "asiaqpeli@knno.local",
+        "CreationDate" : 1541598733000,
+        "Editor" : "asiaqpeli@knno.local",
+        "EditDate" : 1542386055000,
+        "ObjektStatus" : 2,
+        "HusNummer" : "17",
+        "KommuneKode" : 956,
+        "LokalitetsKode" : "0600",
+        "Postnummer" : 3905,
+        "Vejkode" : "0343",
+        "DataKilde" : null,
+        "bygning_id" : "{00B8646E-32B1-4924-AA77-BC684324E53A}",
+        "GlobalID" : "{FEF9AAAE-8FAE-4AE7-A701-CF66E82A64BC}",
+        "AdgangsadresseSumiffik" : null
+      }
+    }
+  ]
+}
