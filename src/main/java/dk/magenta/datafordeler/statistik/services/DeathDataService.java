@@ -123,7 +123,8 @@ public class DeathDataService extends PersonStatisticsService {
         OffsetDateTime deathEffectTime = null;
         OffsetDateTime deathRegistrationTime = null;
         LocalDate deathFileTime = null;
-        PersonStatusDataRecord statusDataRecord = findNewestUnclosed(person.getStatus());
+
+        PersonStatusDataRecord statusDataRecord = findNewestUnclosedOnRegistartionAndEffect(person.getStatus());
         item.put(STATUS_CODE, Integer.toString(statusDataRecord.getStatus()));
         if (statusDataRecord.getStatus() == 90) {
             OffsetDateTime thisdeathEffectTime = statusDataRecord.getEffectFrom();
