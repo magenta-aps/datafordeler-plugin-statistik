@@ -29,7 +29,7 @@ import java.io.IOException;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class MovementDataServiceTest {
+public class MovementDataServiceTest extends TestBase {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -53,7 +53,7 @@ public class MovementDataServiceTest {
     public void initialize() throws Exception {
         testsUtils.deleteAll();
         testsUtils.setPath();
-        testsUtils.loadGladdrregData();
+        this.loadAllGeoAdress(sessionManager);
         testsUtils.loadPersonData("movedperson.txt");
     }
 
@@ -69,27 +69,21 @@ public class MovementDataServiceTest {
         TestUserDetails testUserDetails = new TestUserDetails();
 
         HttpEntity<String> httpEntity = new HttpEntity<>("", new HttpHeaders());
-        ResponseEntity<String> response;// = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
-        //Assert.assertEquals(403, response.getStatusCodeValue());
+        ResponseEntity<String> response;
 
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
-/*
-        response = restTemplate.exchange("/statistik/movement_data/", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertEquals(400, response.getStatusCodeValue());
-*/
+
         response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=1900-01-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
-        //response = restTemplate.exchange("/statistik/movement_data/?registrationAfter=2017-11-01&registrationBefore=2018-08-01", HttpMethod.GET, httpEntity, String.class);
-        System.out.println(response.getStatusCodeValue());
         Assert.assertNotNull(response.getBody());
 
         System.out.println(testUtil.csvToJsonString(response.getBody().trim()));
 
         Assert.assertFalse(response.getBody().isEmpty());
         String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\";\"\";\"0955\";\"\";\"0042\";\"0005\";\"01\";\"tv\";\"1234\"\n"+
-                "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
+                "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\"\n"+
+                "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\"";
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),
                 testUtil.csvToJsonString(response.getBody().trim())
@@ -127,8 +121,8 @@ public class MovementDataServiceTest {
         );
 
         String expected = "\"Pnr\";\"FoedAar\";\"PnrGaeld\";\"Status\";\"FoedMynKod\";\"StatKod\";\"M_Pnr\";\"F_Pnr\";\"AegtePnr\";\"ProdDto\";\"ProdFilDto\";\"FlyDto\";\"FraLand\";\"FraKomKod\";\"FraLokKortNavn\";\"FraVejKod\";\"FraHusNr\";\"FraEtage\";\"FraSideDoer\";\"FraBnr\";\"TilLand\";\"TilKomKod\";\"TilLokKortNavn\";\"TilVejKod\";\"TilHusNr\";\"TilEtage\";\"TilSideDoer\";\"TilBnr\"\n" +
-                        "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\";\"\";\"0955\";\"\";\"0042\";\"0005\";\"01\";\"tv\";\"1234\"\n"+
-                        "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0955\";\"PAA\";\"0001\";\"0002\";\"\";\"\";\"5678\"";
+                        "\"0101001234\";\"2000\";\"\";\"05\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"31-08-2016\";\"\";\"31-08-2016\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"01\";\"tv\";\"1234\"\n"+
+                        "\"0101001234\";\"2000\";\"\";\"\";\"9516\";\"\";\"2903641234\";\"0101641234\";\"1012291422\";\"01-03-2018\";\"\";\"01-03-2012\";\"0\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"\";\"0956\";\"NUK\";\"0254\";\"0018\";\"\";\"\";\"5678\"";
 
         Assert.assertEquals(
                 testUtil.csvToJsonString(expected),

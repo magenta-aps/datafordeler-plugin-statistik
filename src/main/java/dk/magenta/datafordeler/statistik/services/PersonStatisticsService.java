@@ -17,9 +17,9 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -95,7 +95,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
         return 0;
     }
 
-    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
+    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter);
 
     protected PersonRecordQuery getQuery(Filter filter) {
         PersonRecordQuery personQuery = new PersonRecordQuery();
@@ -116,7 +116,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     public Stream<Map<String, String>> formatItems(Session personSession, Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
-        LookupService lookupService = new LookupService(lookupSession);
+        GeoLookupService lookupService = new GeoLookupService(lookupSession);
         return personEntities.flatMap(
                 personEntity -> {
                     List<Map<String, String>> output = formatPerson(personEntity, lookupSession, lookupService, filter);
