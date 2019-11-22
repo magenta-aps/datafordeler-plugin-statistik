@@ -189,8 +189,9 @@ public class BirthDataService extends PersonStatisticsService {
         //Find the newest mother registration
         ParentDataRecord motherRecord = findMostImportant(person.getMother());
 
-        item.put(MOTHER_PREFIX + PNR, motherRecord.getCprNumber());
+
         if (motherRecord != null && !motherRecord.getCprNumber().isEmpty() && !motherRecord.getCprNumber().equals("0000000000")) {
+            item.put(MOTHER_PREFIX + PNR, motherRecord.getCprNumber());
             PersonEntity mother = QueryManager.getEntity(session, PersonEntity.generateUUID(motherRecord.getCprNumber()), PersonEntity.class);
             if (mother != null) {
                 try {
