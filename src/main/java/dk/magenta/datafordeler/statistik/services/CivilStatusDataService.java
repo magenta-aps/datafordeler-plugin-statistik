@@ -146,10 +146,17 @@ public class CivilStatusDataService extends PersonStatisticsService {
             civilStatusCollection = person.getCivilstatus();
         }
 
-        //Make a list of all civil-state-changes
-        List<PersonEventDataRecord> eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
-                "A20".equals(event.getEventId()) ||  "A20".equals(event.getEventId()) ||
-                "A21".equals(event.getEventId()) ||  "A23".equals(event.getEventId())).collect(Collectors.toList());
+        List<PersonEventDataRecord> eventListCivilState;
+        if(filter.getEventName()==null) {
+            //Make a list of all civil-state-changes
+            eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
+                    "A20".equals(event.getEventId()) || "A21".equals(event.getEventId()) ||
+                    "A23".equals(event.getEventId())).collect(Collectors.toList());
+        } else {
+            eventListCivilState = person.getEvent().stream().filter(event -> filter.getEventName().equals(event.getEventId())).collect(Collectors.toList());
+        }
+
+
 
 
         // A19 - vielse
