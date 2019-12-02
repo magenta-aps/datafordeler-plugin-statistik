@@ -192,8 +192,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
 
             AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), mariageEffectTime);
+            int municipalityCode = 0;
             if (addressDataRecord != null) {
-                int municipalityCode = addressDataRecord.getMunicipalityCode();
+                municipalityCode = addressDataRecord.getMunicipalityCode();
+
                 item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
                 item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
                 item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
@@ -222,10 +224,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             if (citizenshipDataRecord != null) {
                 item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
             }
-
-            replaceMapValues(item, null, "");
-            itemMap.add(item);
-
+            if(municipalityCode > 950) {
+                replaceMapValues(item, null, "");
+                itemMap.add(item);
+            }
         }
         return itemMap;
     }
