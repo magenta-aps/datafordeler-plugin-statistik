@@ -46,10 +46,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        return this.getDafoUserManager().getUserFromRequest(request);
-    }
-
     public int run(Filter filter, OutputStream outputStream) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
