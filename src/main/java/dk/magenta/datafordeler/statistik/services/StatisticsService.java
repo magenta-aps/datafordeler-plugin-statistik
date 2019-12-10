@@ -12,6 +12,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -72,10 +74,50 @@ public abstract class StatisticsService {
 
 
     public abstract int run(Filter filter, OutputStream outputStream);
-    
+
+
+    /**
+     * Get is used for either returning a frontpage, og starting the generation of a report
+     *
+     * @param request
+     * @param response
+     * @param serviceName
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
+        DafoUserDetails user;
+        boolean isPost = "POST".equals(request.getMethod());
+        if(isPost) {
+            String formToken = request.getParameter("token");
+            if (formToken != null) {
+                user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+            } else {
+                return;
+            }
+        } else {
+            //If the showfrontpage flag is set, only show that
+            String showfrontpage= request.getParameter("showfrontpage");
+            if(Boolean.parseBoolean(showfrontpage)) {
+                IOUtils.copy(
+                        StatisticsService.class.getResourceAsStream("/generalServiceForm.html"),
+                        response.getWriter(), StandardCharsets.UTF_8
+                );
+                return;
+            } else {
+                user = this.getDafoUserManager().getUserFromRequest(request);
+            }
+        }
+
+
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getUser(request);
+        //DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);

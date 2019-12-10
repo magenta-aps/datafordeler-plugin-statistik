@@ -55,10 +55,41 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
     private Logger log = LogManager.getLogger(CivilStatusDataService.class.getCanonicalName());
 
-
+    /**
+     * Calls handlerequest in super with the ID of the report as a parameter
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        super.handleRequest(request, response, ServiceName.CIVILSTATUS);
+    }
+
+    /**
+     * Post is used for starting the generation of a report
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/")
+    public void handlePost(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.CIVILSTATUS);
     }
 

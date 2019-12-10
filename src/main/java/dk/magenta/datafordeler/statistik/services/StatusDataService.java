@@ -65,9 +65,41 @@ public class StatusDataService extends PersonStatisticsService {
         return this.cprPlugin;
     }
 
+    /**
+     * Calls handlerequest in super with the ID of the report as a parameter
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/")
-    public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName)
+    public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        super.handleRequest(request, response, ServiceName.STATUS);
+    }
+
+    /**
+     * Post is used for starting the generation of a report
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/")
+    public void handlePost(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.STATUS);
     }
 
