@@ -92,14 +92,12 @@ public abstract class StatisticsService {
      * @throws InvalidCertificateException
      */
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
-        DafoUserDetails user;
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
         boolean isPost = "POST".equals(request.getMethod());
         if(isPost) {
             String formToken = request.getParameter("token");
             if (formToken != null) {
                 user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
-            } else {
-                return;
             }
         } else {
             //If the showfrontpage flag is set, only show that
@@ -110,11 +108,8 @@ public abstract class StatisticsService {
                         response.getWriter(), StandardCharsets.UTF_8
                 );
                 return;
-            } else {
-                user = this.getDafoUserManager().getUserFromRequest(request);
             }
         }
-
 
         // Check that the user has access to CPR data
         //DafoUserDetails user = this.getUser(request);

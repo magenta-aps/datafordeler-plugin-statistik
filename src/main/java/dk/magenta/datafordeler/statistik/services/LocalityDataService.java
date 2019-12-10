@@ -65,15 +65,6 @@ public class LocalityDataService extends StatisticsService {
 
     private Logger log = LogManager.getLogger(GeoLookupService.class);
 
-    @Override
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        String formToken = request.getParameter("token");
-        if (formToken != null) {
-            return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
-        }
-        return super.getUser(request);
-    }
-
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
         try {
             loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
