@@ -37,7 +37,6 @@ public abstract class StatisticsService {
     public static String PATH_FILE = null;
 
     static {
-        //StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
         StatisticsService.PATH_FILE = "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) {
@@ -49,8 +48,26 @@ public abstract class StatisticsService {
         return new String[]{};
     }
 
+    /**
+     * If the request is a get-request we look for the Header "Authorization" to fund the user-rights
+     * If the request is a Post-request we look for the parameter "token" to fund the user-rights
+     * @param request
+     * @return
+     * @throws InvalidTokenException
+     * @throws AccessDeniedException
+     * @throws InvalidCertificateException
+     */
     protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        return this.getDafoUserManager().getUserFromRequest(request);
+        boolean isPost = "POST".equals(request.getMethod());
+        if(isPost) {
+            String formToken = request.getParameter("token");
+            if (formToken != null) {
+                return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+            }
+        } else {
+            return this.getDafoUserManager().getUserFromRequest(request);
+        }
+        return null;
     }
 
 
@@ -74,7 +91,6 @@ public abstract class StatisticsService {
         secondarySession.setDefaultReadOnly(true);
 
         try {
-            response.setContentType("text/csv");
             String outputDescription = null;
             OutputStream outputStream = null;
 
@@ -93,6 +109,7 @@ public abstract class StatisticsService {
                 }
 
             } else {
+                response.setContentType("text/csv");
                 response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
                 outputStream = response.getOutputStream();
                 outputDescription = "Written to response";
@@ -107,7 +124,7 @@ public abstract class StatisticsService {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            loggerHelper.error("Failed creating report", e);
         } finally {
             primarySession.close();
             secondarySession.close();
@@ -131,14 +148,30 @@ public abstract class StatisticsService {
 
 
     public enum ServiceName {
-        BIRTH,
-        DEATH,
-        CIVILSTATUS,
-        MOVEMENT,
-        STATUS,
-        ADDRESS,
-        ROAD,
-        LOCALITY;
+        BIRTH("birth"),
+        DEATH("death"),
+        CIVILSTATUS("civilstatus"),
+        MOVEMENT("movement"),
+        STATUS("status"),
+        ADDRESS("address"),
+        ROAD("road"),
+        LOCALITY("locality");
+
+        private final String identifier;
+
+        ServiceName(String identifier) {
+            this.identifier = identifier;
+        }
+
+        public String getIdentifier() {
+            return this.identifier;
+        }
+
+        public static Optional<ServiceName> fromText(String text) {
+            return Arrays.stream(values())
+                    .filter(bl -> bl.identifier.equalsIgnoreCase(text))
+                    .findFirst();
+        }
     }
 
     private boolean writeToLocalFile = true;
@@ -181,6 +214,7 @@ public abstract class StatisticsService {
     public static final String STATUS_CODE = "Status";
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
+    public static final String EVENT_NAME = "Event";
     public static final String CIVIL_STATUS_DATE = "CivDto";
     public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
