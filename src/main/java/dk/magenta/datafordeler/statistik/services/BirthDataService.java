@@ -15,7 +15,8 @@ import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import org.apache.commons.io.IOUtils;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
 
@@ -94,6 +94,15 @@ public class BirthDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.BIRTH);
+
+        try(Session session = sessionManager.getSessionFactory().openSession()) {
+            ReportAssignment report = new ReportAssignment();
+            report.setTemplateName(ServiceName.BIRTH.name());
+            ReportSync repSync = new ReportSync(session);
+            response.getWriter().print(ServiceName.BIRTH.name()+"_"+repSync.startReport(report));
+        } catch(Exception e) {
+            log.error("Failed generating id for report", e);
+        }
     }
 
     private static final String OWN_PREFIX = "B_";
