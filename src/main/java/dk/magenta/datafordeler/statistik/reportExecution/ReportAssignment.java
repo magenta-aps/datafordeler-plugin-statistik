@@ -25,7 +25,7 @@ public class ReportAssignment extends DatabaseEntry {
     @UpdateTimestamp
     private LocalDateTime updateDateTime;
 
-    @Column(name = DB_FIELD_REPORTTEMPLATENAME, nullable = false, unique = true)
+    @Column(name = DB_FIELD_REPORTTEMPLATENAME, nullable = false)
     private String reportTemplateName;
 
 
