@@ -10,9 +10,6 @@ public class ReportSync {
 
     private Logger log = LogManager.getLogger(ReportSync.class);
 
-    @Autowired
-    SessionManager sessionManager;
-
     private Session session;
 
     public ReportSync(Session session) {
@@ -23,11 +20,11 @@ public class ReportSync {
         return this.session;
     }
 
-    /**
-     * Create subscriptions by adding them to the table of subscriptions
-     * @param reportAssignments
-     */
-    public String startReport(ReportAssignment reportAssignments) {
+
+    ReportAssignment reportAssignments;
+
+    public String setReportProgressObject(ReportAssignment reportAssignments) {
+        this.reportAssignments = reportAssignments;
         this.log.info("Collected these numbers for subscription: "+reportAssignments);
         session.beginTransaction();
         session.save(reportAssignments);
@@ -35,4 +32,20 @@ public class ReportSync {
         session.getTransaction().commit();
         return uuid;
     }
+
+
+    /**
+     * Create subscriptions by adding them to the table of subscriptions
+     * @param reportStatus
+     */
+    public void setReportStatus(ReportProgressStatus reportStatus) {
+        this.log.info("Collected these numbers for subscription: "+reportAssignments);
+        session.beginTransaction();
+        reportAssignments.setStatus(reportStatus);
+        session.update(reportAssignments);
+        String uuid = reportAssignments.getUuid().toString();
+        session.getTransaction().commit();
+
+    }
+
 }

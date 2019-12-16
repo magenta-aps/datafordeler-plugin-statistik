@@ -19,6 +19,7 @@ import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
@@ -77,10 +78,12 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
         } catch (Exception e) {
             log.error("Failed generating report", e);
+            repSync.setReportStatus(ReportProgressStatus.failed);
         } finally {
             primarySession.close();
             secondarySession.close();
             log.info("Done writing report");
+            repSync.setReportStatus(ReportProgressStatus.done);
         }
         return 0;
     }

@@ -12,6 +12,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.io.IOUtils;
@@ -130,11 +131,6 @@ public abstract class StatisticsService {
         }
         Filter filter = this.getFilter(request);
 
-        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
-
-        primarySession.setDefaultReadOnly(true);
-        secondarySession.setDefaultReadOnly(true);
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
             String outputDescription = null;
@@ -142,7 +138,8 @@ public abstract class StatisticsService {
             ReportAssignment report = new ReportAssignment();
             report.setTemplateName(serviceName.name());
             ReportSync repSync = new ReportSync(reportProgressSession);
-            String reportuUuid = repSync.startReport(report);
+            String reportuUuid = repSync.setReportProgressObject(report);
+            repSync.setReportStatus(ReportProgressStatus.started);
 
             if (this.getWriteToLocalFile()) {
 
@@ -172,9 +169,6 @@ public abstract class StatisticsService {
 
         } catch (Exception e) {
             loggerHelper.error("Failed creating report", e);
-        } finally {
-            primarySession.close();
-            secondarySession.close();
         }
 
     }
