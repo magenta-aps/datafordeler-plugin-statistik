@@ -10,6 +10,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.ReportNameValidator;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,14 +79,11 @@ public class DownloadService extends StatisticsService {
         this.checkAndLogAccess(loggerHelper);
 
         String reportId = request.getParameter("reportId");
-        String regex = ".*?_([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})";
-        Pattern splitter = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-        Matcher matcher = splitter.matcher(reportId);
 
         // obtains response's output stream
         OutputStream outStream = response.getOutputStream();
 
-        if (!matcher.matches()) {
+        if (!ReportNameValidator.validateReportName(reportId)) {
             outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
             outStream.close();
             return;
