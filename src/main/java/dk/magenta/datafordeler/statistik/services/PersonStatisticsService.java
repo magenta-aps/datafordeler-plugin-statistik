@@ -69,13 +69,13 @@ public abstract class PersonStatisticsService extends StatisticsService {
                 if (outputStream != null) {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
+                        log.info("Done writing persons");
                     });
                 }
             }
-            log.info("Done writing persons");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed generating report", e);
         } finally {
             primarySession.close();
             secondarySession.close();

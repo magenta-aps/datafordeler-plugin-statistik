@@ -1,12 +1,10 @@
 package dk.magenta.datafordeler.statistik.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.core.util.ListHashMap;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
@@ -15,6 +13,8 @@ import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonStatusQuery;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -101,6 +101,15 @@ public class StatusDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.STATUS);
+
+        try(Session session = sessionManager.getSessionFactory().openSession()) {
+            ReportAssignment report = new ReportAssignment();
+            report.setTemplateName(ServiceName.STATUS.name());
+            ReportSync repSync = new ReportSync(session);
+            response.getWriter().print(repSync.startReport(report));
+        } catch(Exception e) {
+            log.error("Failed generating id for report", e);
+        }
     }
 
     @Override

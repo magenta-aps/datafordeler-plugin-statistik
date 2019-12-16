@@ -11,6 +11,8 @@ import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
@@ -91,6 +93,15 @@ public class CivilStatusDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.CIVILSTATUS);
+
+        try(Session session = sessionManager.getSessionFactory().openSession()) {
+            ReportAssignment report = new ReportAssignment();
+            report.setTemplateName(ServiceName.CIVILSTATUS.name());
+            ReportSync repSync = new ReportSync(session);
+            response.getWriter().print(repSync.startReport(report));
+        } catch(Exception e) {
+            log.error("Failed generating id for report", e);
+        }
     }
 
     @Override

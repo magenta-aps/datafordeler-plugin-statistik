@@ -25,11 +25,11 @@ public class ReportAssignment extends DatabaseEntry {
     @UpdateTimestamp
     private LocalDateTime updateDateTime;
 
-    @Column(name = DB_FIELD_REPORTTEMPLATENAME, nullable = false)
+    @Column(name = DB_FIELD_REPORTTEMPLATENAME, nullable = false, unique = false)
     private String reportTemplateName;
 
 
-    @Column(name = DB_FIELD_REPORTUUID, unique = true)
+    @Column(name = DB_FIELD_REPORTUUID, nullable = false, unique = true)
     private UUID uuid;
 
     public ReportAssignment() {
