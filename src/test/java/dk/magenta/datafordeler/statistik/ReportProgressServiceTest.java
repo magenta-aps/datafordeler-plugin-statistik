@@ -43,7 +43,7 @@ public class ReportProgressServiceTest extends TestBase {
             ReportSync repSync = new ReportSync(sessionSync);
             ReportAssignment report = new ReportAssignment();
             report.setTemplateName("birthreport");
-            repSync.startReport(report);
+            repSync.setReportProgressObject(report);
         }
 
 
