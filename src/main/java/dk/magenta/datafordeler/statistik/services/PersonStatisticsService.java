@@ -19,6 +19,7 @@ import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +47,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    public int run(Filter filter, OutputStream outputStream) {
+    public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
         final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
@@ -79,6 +80,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
         } finally {
             primarySession.close();
             secondarySession.close();
+            log.info("Done writing report");
         }
         return 0;
     }

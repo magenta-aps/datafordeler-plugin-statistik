@@ -11,11 +11,15 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +41,11 @@ public abstract class StatisticsService {
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
 
     public static String PATH_FILE = null;
+
+    @Autowired
+    SessionManager sessionManager;
+
+    private Logger log = LogManager.getLogger(StatisticsService.class);
 
     static {
         StatisticsService.PATH_FILE = "statistik";
@@ -73,7 +82,7 @@ public abstract class StatisticsService {
     }
 
 
-    public abstract int run(Filter filter, OutputStream outputStream);
+    public abstract int run(Filter filter, OutputStream outputStream, ReportSync repSync);
 
 
     /**
@@ -127,19 +136,20 @@ public abstract class StatisticsService {
         primarySession.setDefaultReadOnly(true);
         secondarySession.setDefaultReadOnly(true);
 
-        try {
+        try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
             String outputDescription = null;
             OutputStream outputStream = null;
+            ReportAssignment report = new ReportAssignment();
+            report.setTemplateName(serviceName.name());
+            ReportSync repSync = new ReportSync(reportProgressSession);
+            String reportuUuid = repSync.startReport(report);
 
             if (this.getWriteToLocalFile()) {
-                //Get current date time
 
-                LocalDateTime now = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-                String formatDateTime = now.format(formatter);
+                response.getWriter().print(serviceName.name()+"_"+reportuUuid);
 
                 if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime + ".csv");
+                    File file = new File(PATH_FILE, serviceName.name() + "_" + reportuUuid + ".csv");
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
@@ -153,7 +163,7 @@ public abstract class StatisticsService {
             }
 
             if (outputStream != null) {
-                int written = this.run(filter, outputStream);
+                int written = this.run(filter, outputStream, repSync);
                 this.getLogger().info(outputDescription);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());

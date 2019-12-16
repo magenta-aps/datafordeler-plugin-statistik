@@ -90,15 +90,6 @@ public class DeathDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.DEATH);
-
-        try(Session session = sessionManager.getSessionFactory().openSession()) {
-            ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(ServiceName.DEATH.name());
-            ReportSync repSync = new ReportSync(session);
-            response.getWriter().print(repSync.startReport(report));
-        } catch(Exception e) {
-            log.error("Failed generating id for report", e);
-        }
     }
 
     @Override

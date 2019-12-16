@@ -73,15 +73,6 @@ public class RoadDataService extends StatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.ROAD);
-
-        try(Session session = sessionManager.getSessionFactory().openSession()) {
-            ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(ServiceName.ROAD.name());
-            ReportSync repSync = new ReportSync(session);
-            response.getWriter().print(repSync.startReport(report));
-        } catch(Exception e) {
-            log.error("Failed generating id for report", e);
-        }
     }
 
 
@@ -120,7 +111,7 @@ public class RoadDataService extends StatisticsService {
         return this.log;
     }
 
-    public int run(Filter filter, OutputStream outputStream) {
+    public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
         final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();

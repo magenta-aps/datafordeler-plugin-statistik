@@ -94,15 +94,6 @@ public class BirthDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.BIRTH);
-
-        try(Session session = sessionManager.getSessionFactory().openSession()) {
-            ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(ServiceName.BIRTH.name());
-            ReportSync repSync = new ReportSync(session);
-            response.getWriter().print(ServiceName.BIRTH.name()+"_"+repSync.startReport(report));
-        } catch(Exception e) {
-            log.error("Failed generating id for report", e);
-        }
     }
 
     private static final String OWN_PREFIX = "B_";
