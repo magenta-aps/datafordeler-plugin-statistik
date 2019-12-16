@@ -8,6 +8,7 @@ import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.DeathDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.utils.ReportNameValidator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -106,9 +107,9 @@ public class DeathDataServiceTest extends TestBase {
         response = restTemplate.exchange("/statistik/death_data/?registrationAfter=2017-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
         Assert.assertEquals(200, response.getStatusCodeValue());
-        Assert.assertNull(response.getBody());
+        Assert.assertTrue(ReportNameValidator.validateReportName(response.getBody()));
 
-        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("death"));
+        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("DEATH"));
         Assert.assertEquals(1, deathFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + deathFiles[0]);
