@@ -139,6 +139,12 @@ public abstract class StatisticsService {
             report.setTemplateName(serviceName.name());
             ReportSync repSync = new ReportSync(reportProgressSession);
             String reportuUuid = repSync.setReportProgressObject(report);
+            if(reportuUuid==null) {
+                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.getWriter().print("Execution of this report is rejected, another report is currently getting generated");
+                return;
+            }
+
             repSync.setReportStatus(ReportProgressStatus.started);
 
             if (this.getWriteToLocalFile()) {

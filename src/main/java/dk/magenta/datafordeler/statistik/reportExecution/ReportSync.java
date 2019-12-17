@@ -1,18 +1,12 @@
 package dk.magenta.datafordeler.statistik.reportExecution;
 
-import dk.magenta.datafordeler.core.database.QueryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.jpa.QueryHints;
 
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-
 
 public class ReportSync {
 
@@ -31,14 +25,7 @@ public class ReportSync {
 
     public String setReportProgressObject(ReportAssignment reportAssignments) {
         this.reportAssignments = reportAssignments;
-        this.log.info("Collected these numbers for subscription: "+reportAssignments);
-
-        /*HashMap hmp = new HashMap();
-        hmp.put(ReportAssignment.DB_FIELD_REPORTTEMPLATENAME, reportAssignments.getTemplateName());
-        hmp.put(ReportAssignment.DB_FIELD_REPORTID_STATUS, ReportProgressStatus.done);*/
-
-
-
+        this.log.info("Starting progress of reportsync: "+reportAssignments);
 
         CriteriaBuilder builder = session.getCriteriaBuilder();
         CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
@@ -51,9 +38,6 @@ public class ReportSync {
 
         TypedQuery<ReportAssignment> query = session.createQuery(criteria);
         query.setHint(QueryHints.HINT_CACHEABLE, true);
-
-        List ll = QueryManager.getAllItems(session, ReportAssignment.class);
-
 
         if(query.getResultList().size() > 0) {
             return null;
@@ -80,5 +64,4 @@ public class ReportSync {
         session.getTransaction().commit();
 
     }
-
 }
