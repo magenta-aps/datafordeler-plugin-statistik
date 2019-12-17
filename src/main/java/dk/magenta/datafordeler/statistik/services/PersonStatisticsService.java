@@ -50,13 +50,12 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
 
-        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
 
-        primarySession.setDefaultReadOnly(true);
-        secondarySession.setDefaultReadOnly(true);
+        try(final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
+            final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();) {
 
-        try {
+            primarySession.setDefaultReadOnly(true);
+            secondarySession.setDefaultReadOnly(true);
             List<PersonRecordQuery> queries = this.getQueryList(filter);
             Stream<Map<String, String>> concatenation = null;
 
@@ -80,8 +79,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
             log.error("Failed generating report", e);
             repSync.setReportStatus(ReportProgressStatus.failed);
         } finally {
-            primarySession.close();
-            secondarySession.close();
             log.info("Done writing report");
             repSync.setReportStatus(ReportProgressStatus.done);
         }

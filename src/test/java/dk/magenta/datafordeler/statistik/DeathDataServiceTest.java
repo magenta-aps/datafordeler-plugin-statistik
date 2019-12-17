@@ -61,6 +61,7 @@ public class DeathDataServiceTest extends TestBase {
         testsUtils.setPath();
         testsUtils.loadPersonData("deadperson.txt");
         this.loadAllGeoAdress(sessionManager);
+        deathDataService.setUseTimeintervallimit(false);
     }
 
     @After

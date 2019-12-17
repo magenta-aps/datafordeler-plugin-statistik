@@ -58,6 +58,7 @@ public class AddressDataServiceTest extends TestBase {
         testsUtils.setPath();
         testsUtils.loadPersonData("bornperson.txt");
         this.loadAllGeoAdress(sessionManager);
+        addressDataService.setUseTimeintervallimit(false);
     }
 
     @Test

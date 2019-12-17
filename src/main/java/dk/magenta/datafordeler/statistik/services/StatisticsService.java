@@ -129,10 +129,9 @@ public abstract class StatisticsService {
         for (String required : this.requiredParameters()) {
             this.requireParameter(required, request.getParameter(required));
         }
-        Filter filter = this.getFilter(request);
-
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+            Filter filter = this.getFilter(request);
             String outputDescription = null;
             OutputStream outputStream = null;
             ReportAssignment report = new ReportAssignment();
@@ -189,8 +188,8 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected Filter getFilter(HttpServletRequest request) {
-        return new Filter(request);
+    protected Filter getFilter(HttpServletRequest request) throws Exception {
+        return new Filter(request, timeintervallimit);
     }
 
 
@@ -202,7 +201,8 @@ public abstract class StatisticsService {
         STATUS("status"),
         ADDRESS("address"),
         ROAD("road"),
-        LOCALITY("locality");
+        LOCALITY("locality"),
+        ALL("all");
 
         private final String identifier;
 
@@ -225,6 +225,12 @@ public abstract class StatisticsService {
 
     public void setWriteToLocalFile(boolean writeToLocalFile) {
         this.writeToLocalFile = writeToLocalFile;
+    }
+
+    protected boolean timeintervallimit = true;
+
+    public void setUseTimeintervallimit(boolean timeintervallimit) {
+        this.timeintervallimit = timeintervallimit;
     }
 
     public boolean getWriteToLocalFile() {

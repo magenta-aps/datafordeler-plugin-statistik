@@ -69,6 +69,7 @@ public class CivilStatusDataServiceTest extends TestBase {
         testsUtils.loadPersonData("marriedperson2.txt");
         testsUtils.loadPersonData("marriedperson3.txt");
         this.loadAllGeoAdress(sessionManager);
+        civilStatusDataService.setUseTimeintervallimit(false);
     }
 
     @After

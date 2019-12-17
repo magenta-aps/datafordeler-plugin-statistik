@@ -105,8 +105,8 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     @Override
-    protected Filter getFilter(HttpServletRequest request) {
-        return new CivilStatusFilter(request);
+    protected Filter getFilter(HttpServletRequest request) throws Exception {
+        return new CivilStatusFilter(request, this.timeintervallimit);
     }
 
     @Override
@@ -130,7 +130,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     protected String[] requiredParameters() {
-        return new String[]{};
+        return new String[]{"registrationAfter"};
     }
 
     @Override

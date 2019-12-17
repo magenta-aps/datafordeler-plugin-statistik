@@ -20,6 +20,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -30,6 +31,7 @@ import java.io.IOException;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class StatusDataServiceTest extends TestBase {
 
     @Autowired
@@ -54,6 +56,7 @@ public class StatusDataServiceTest extends TestBase {
         testsUtils.setPath();
         testsUtils.loadPersonData("statusperson.txt");
         this.loadAllGeoAdress(sessionManager);
+        statusDataService.setUseTimeintervallimit(false);
     }
 
     @After

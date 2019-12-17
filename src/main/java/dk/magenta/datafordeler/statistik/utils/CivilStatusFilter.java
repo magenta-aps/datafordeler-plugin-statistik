@@ -9,8 +9,8 @@ public class CivilStatusFilter extends Filter {
     private String eventName;
 
 
-    public CivilStatusFilter(HttpServletRequest request) {
-        super(request);
+    public CivilStatusFilter(HttpServletRequest request, boolean timeintervallimit) throws Exception {
+        super(request, timeintervallimit);
         this.civilStatus = request.getParameter(StatisticsService.CIVIL_STATUS);
         this.eventName = request.getParameter(StatisticsService.EVENT_NAME);
     }
