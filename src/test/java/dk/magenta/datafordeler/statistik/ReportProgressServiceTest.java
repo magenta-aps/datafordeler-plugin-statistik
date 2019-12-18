@@ -1,14 +1,22 @@
 package dk.magenta.datafordeler.statistik;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
+import dk.magenta.datafordeler.core.exception.AccessDeniedException;
+import dk.magenta.datafordeler.core.exception.AccessRequiredException;
+import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.services.BirthDataService;
-import dk.magenta.datafordeler.statistik.utils.ReportNameValidator;
+import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.utils.Filter;
+import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,6 +33,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -87,10 +96,10 @@ public class ReportProgressServiceTest extends TestBase {
 
     @Test
     public void testReportnameValidation() throws IOException {
-        Assert.assertTrue(ReportNameValidator.validateReportName("REPORTNAME_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
-        Assert.assertTrue(ReportNameValidator.validateReportName("T_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821c"));
-        Assert.assertFalse(ReportNameValidator.validateReportName("REPORTNAMEf7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
-        Assert.assertFalse(ReportNameValidator.validateReportName("REPORTNAME_f7dcb5b32-4590-4e24-9cb1-b01f5bf1821"));
+        Assert.assertTrue(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
+        Assert.assertTrue(ReportValidationAndConversion.validateReportName("T_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821c"));
+        Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAMEf7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
+        Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b32-4590-4e24-9cb1-b01f5bf1821"));
     }
 
 

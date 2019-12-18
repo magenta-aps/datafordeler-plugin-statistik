@@ -151,7 +151,7 @@ public abstract class StatisticsService {
                 response.getWriter().print(serviceName.name()+"_"+reportuUuid);
 
                 if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, serviceName.name() + "_" + reportuUuid + ".csv");
+                    File file = new File(PATH_FILE, repSync.getReportfilename() + ".csv");
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();

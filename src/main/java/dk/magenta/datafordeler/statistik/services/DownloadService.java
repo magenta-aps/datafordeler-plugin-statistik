@@ -10,7 +10,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.ReportNameValidator;
+import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -83,7 +81,7 @@ public class DownloadService extends StatisticsService {
         // obtains response's output stream
         OutputStream outStream = response.getOutputStream();
 
-        if (!ReportNameValidator.validateReportName(reportId)) {
+        if (!ReportValidationAndConversion.validateReportName(reportId)) {
             outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
             outStream.close();
             return;

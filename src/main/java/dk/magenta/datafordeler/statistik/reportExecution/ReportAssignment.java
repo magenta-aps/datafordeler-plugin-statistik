@@ -17,6 +17,13 @@ public class ReportAssignment extends DatabaseEntry {
     public static final String DB_FIELD_REPORTUUID = "reportUuid";
     public static final String  DB_FIELD_REPORT_STATUS = "reportStatus";
     public static final String  DB_FIELD_REPORTID_REASON = "reportIdReason";
+    public static final String  DB_FIELD_REPORT_FILE_NAME = "reportFileName";
+
+
+    public ReportAssignment() {
+        this.uuid = UUID.randomUUID();
+        this.reportStatus = ReportProgressStatus.started;
+    }
 
 
     @CreationTimestamp
@@ -28,18 +35,27 @@ public class ReportAssignment extends DatabaseEntry {
     @Column(name = DB_FIELD_REPORTTEMPLATENAME, nullable = false, unique = false)
     private String reportTemplateName;
 
+    public String getTemplateName() {
+        return this.reportTemplateName;
+    }
+
+    public void setTemplateName(String reportTemplateName) {
+        this.reportTemplateName = reportTemplateName;
+    }
+
 
     @Column(name = DB_FIELD_REPORTUUID, nullable = false, unique = true)
     private UUID uuid;
 
-    public ReportAssignment() {
-        this.uuid = UUID.randomUUID();
-        this.reportStatus = ReportProgressStatus.started;
-    }
-
     public UUID getUuid() {
         return this.uuid;
     }
+
+    @Column(name = DB_FIELD_REPORT_FILE_NAME, nullable = false, unique = true)
+    public String getFilename() {
+        return this.reportTemplateName + "_" + this.uuid;
+    }
+
 
     @Column(name = DB_FIELD_REPORTID_REASON, length = 30, nullable = true, unique = false)
     private String reason;
@@ -48,13 +64,7 @@ public class ReportAssignment extends DatabaseEntry {
     @Enumerated(EnumType.ORDINAL)
     private ReportProgressStatus reportStatus;
 
-    public String getTemplateName() {
-        return this.reportTemplateName;
-    }
 
-    public void setTemplateName(String reportTemplateName) {
-        this.reportTemplateName = reportTemplateName;
-    }
 
 
     public String getReason() {
