@@ -8,6 +8,8 @@ import dk.magenta.datafordeler.core.exception.InvalidTokenException;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
@@ -40,8 +42,6 @@ public class DownloadService extends StatisticsService {
 
     private Logger log = LogManager.getLogger(DownloadService.class);
 
-
-
     @RequestMapping(method = RequestMethod.GET, path = "/")
     protected void doGet(HttpServletRequest request,
                           HttpServletResponse response) throws IOException {
@@ -66,14 +66,15 @@ public class DownloadService extends StatisticsService {
             user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
         }
 
-        // Check that the user has access to CPR data
-        //DafoUserDetails user = this.getUser(request);
+        // Add current user to LoggerHelper
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
 
         log.info(this.getClass().getSimpleName());
         log.info(request.getParameterMap());
 
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
+
+        // Check that the user has access to CPR data
         this.checkAndLogAccess(loggerHelper);
 
         String reportId = request.getParameter("reportId");
@@ -88,7 +89,7 @@ public class DownloadService extends StatisticsService {
         }
 
         // reads input file from an absolute path
-        String filePath = reportId+".csv";
+        String filePath = reportId+".zip";
         File downloadFile = new File(StatisticsService.PATH_FILE, filePath);
         if (!downloadFile.exists()) {
             outStream.write("Report does not exist".getBytes(StandardCharsets.UTF_8));
@@ -147,6 +148,12 @@ public class DownloadService extends StatisticsService {
 
     @Override
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-
+        try {
+            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
+            loggerHelper.getUser().checkHasSystemRole(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        } catch (AccessDeniedException e) {
+            loggerHelper.info("Access denied: " + e.getMessage());
+            throw (e);
+        }
     }
 }
