@@ -21,7 +21,7 @@ public class ReportValidationAndConversion {
     }
 
 
-    public static synchronized void convertFileToEncryptedZip(String reportName, ArrayList<File> filesToAdd) throws ZipException {
+    public static synchronized void convertFileToEncryptedZip(File reportName, ArrayList<File> filesToAdd) throws ZipException {
         //This is name and path of zip file to be created
         ZipFile zipFile = new ZipFile(reportName);
 

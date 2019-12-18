@@ -86,10 +86,10 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
             //Add files to be archived into zip file
             ArrayList<File> filesToAdd = new ArrayList<File>();
-            filesToAdd.add(new File(repSync.getReportfilename() + ".csv"));
+            filesToAdd.add(new File(PATH_FILE,repSync.getReportfilename() + ".csv"));
 
             try {
-                ReportValidationAndConversion.convertFileToEncryptedZip(repSync.getReportfilename()+".zip", filesToAdd);
+                ReportValidationAndConversion.convertFileToEncryptedZip(new File(PATH_FILE,repSync.getReportfilename()+".zip"), filesToAdd);
             } catch (ZipException e) {
                 log.error("Unable to encrypt reportfile", e);
             }
