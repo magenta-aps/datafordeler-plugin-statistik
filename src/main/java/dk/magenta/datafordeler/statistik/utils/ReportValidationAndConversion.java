@@ -21,7 +21,7 @@ public class ReportValidationAndConversion {
     }
 
 
-    public static synchronized void convertFileToEncryptedZip(File reportName, ArrayList<File> filesToAdd) throws ZipException {
+    public static synchronized void convertFileToEncryptedZip(File reportName, ArrayList<File> filesToAdd, String password) throws ZipException {
         //This is name and path of zip file to be created
         ZipFile zipFile = new ZipFile(reportName);
 
@@ -36,7 +36,7 @@ public class ReportValidationAndConversion {
         parameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
 
         //Set password
-        parameters.setPassword("testing");
+        parameters.setPassword(password);
 
         //Now add files to the zip file
         zipFile.addFiles(filesToAdd, parameters);

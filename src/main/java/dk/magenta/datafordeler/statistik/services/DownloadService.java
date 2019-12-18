@@ -13,6 +13,7 @@ import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
+import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -60,6 +62,8 @@ public class DownloadService extends StatisticsService {
     protected void doPost(HttpServletRequest request,
                          HttpServletResponse response) throws IOException, AccessDeniedException, AccessRequiredException, InvalidTokenException {
 
+        String password = request.getParameter("password");
+
         String formToken = request.getParameter("token");
         DafoUserDetails user = null;
         if (formToken != null) {
@@ -82,10 +86,26 @@ public class DownloadService extends StatisticsService {
         // obtains response's output stream
         OutputStream outStream = response.getOutputStream();
 
+        if(password.length()<=8) {
+            outStream.write("Password must be at least 8 characters".getBytes(StandardCharsets.UTF_8));
+            outStream.close();
+            return;
+        }
+
         if (!ReportValidationAndConversion.validateReportName(reportId)) {
             outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
             outStream.close();
             return;
+        }
+
+        //Add files to be archived into zip file
+        ArrayList<File> filesToAdd = new ArrayList<File>();
+        filesToAdd.add(new File(PATH_FILE,reportId + ".csv"));
+
+        try {
+            ReportValidationAndConversion.convertFileToEncryptedZip(new File(PATH_FILE,reportId+".zip"), filesToAdd, password);
+        } catch (ZipException e) {
+            log.error("Unable to encrypt reportfile", e);
         }
 
         // reads input file from an absolute path
