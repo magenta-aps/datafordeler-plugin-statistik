@@ -86,7 +86,7 @@ public class DownloadService extends StatisticsService {
         // obtains response's output stream
         OutputStream outStream = response.getOutputStream();
 
-        if(password.length()<=8) {
+        if(password.length()<8) {
             outStream.write("Password must be at least 8 characters".getBytes(StandardCharsets.UTF_8));
             outStream.close();
             return;
