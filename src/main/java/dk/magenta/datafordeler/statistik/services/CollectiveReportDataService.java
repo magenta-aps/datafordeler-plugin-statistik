@@ -93,7 +93,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
             ReportExecutor executor = new ReportExecutor();
 
-            ReportRunner simular = new ReportRunner(5);
+            ReportRunner simular = new ReportRunner(5, sessionManager);
             executor.execute(simular);
 
             System.out.println(" WAITING STARTED:"+new Date());
@@ -138,37 +138,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
     }
-
-
-    @Bean
-    public TaskExecutor taskExecutor() {
-        return new ReportExecutor(); // Or use another one of your liking
-    }
-
-    @Bean
-    public CommandLineRunner schedulingRunner(TaskExecutor executor) {
-        return new CommandLineRunner() {
-            public void run(String... args) throws Exception {
-                executor.execute(new ReportRunner(5));
-            }
-        };
-    }
-
-
-
-
-    protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
-
-        ReportExecutor executor = new ReportExecutor();
-
-        new CommandLineRunner() {
-            public void run(String... args) throws Exception {
-                executor.execute(new ReportRunner(5));
-            }
-        };
-
-    }
-
 
 
     /**
