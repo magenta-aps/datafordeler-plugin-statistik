@@ -15,6 +15,7 @@ public class ReportAssignment extends DatabaseEntry {
 
     public static final String DB_FIELD_REPORTTEMPLATENAME = "reportTemplateName";
     public static final String DB_FIELD_REPORTUUID = "reportUuid";
+    public static final String DB_FIELD_COLLECTIONUUID = "collectionUuid";
     public static final String  DB_FIELD_REPORT_STATUS = "reportStatus";
     public static final String  DB_FIELD_REPORTID_REASON = "reportIdReason";
     public static final String  DB_FIELD_REPORT_FILE_NAME = "reportFileName";
@@ -24,11 +25,13 @@ public class ReportAssignment extends DatabaseEntry {
 
     public ReportAssignment() {
         this.reportUuid = UUID.randomUUID().toString();
+        this.collectionUuid = UUID.randomUUID().toString();
         this.reportStatus = ReportProgressStatus.started;
     }
 
-    public ReportAssignment(String reportuUuid) {
-        this.reportUuid = reportuUuid;
+    public ReportAssignment(String collectionUuid) {
+        this.collectionUuid = collectionUuid;
+        this.reportUuid = UUID.randomUUID().toString();
         this.reportStatus = ReportProgressStatus.started;
     }
 
@@ -56,6 +59,13 @@ public class ReportAssignment extends DatabaseEntry {
 
     public String getReportUuid() {
         return this.reportUuid;
+    }
+
+    @Column(name = DB_FIELD_COLLECTIONUUID, nullable = false)
+    private String collectionUuid;
+
+    public String getCollectionUuid() {
+        return this.collectionUuid;
     }
 
     @Column(name = DB_FIELD_REGISTRATIONAFTER)

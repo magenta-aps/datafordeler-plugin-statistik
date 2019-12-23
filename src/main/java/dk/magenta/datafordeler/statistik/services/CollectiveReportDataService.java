@@ -93,7 +93,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
             criteria.select(page);
             criteria.where(builder.and(
-                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORTUUID), request.getParameter("uuid")),
+                    builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), request.getParameter("collectionUuid")),
                     builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
             ));
 
@@ -114,9 +114,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(registrationAfter!=null) {
                     paramAppender+="registrationAfter="+registrationAfter+"&";
                 }
-                String uuid = request.getParameter("uuid");
-                if(uuid!=null) {
-                    paramAppender+="uuid="+uuid+"&";
+                String collectionUuid = request.getParameter("collectionUuid");
+                if(collectionUuid!=null) {
+                    paramAppender+="collectionUuid="+collectionUuid+"&";
                 }
 
                 paramAppender+="token="+formToken;
@@ -155,7 +155,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
 
-        String currentUuid = "";
+        String currentcollectionUuid = "";
 
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
@@ -174,16 +174,16 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             report.setReportStatus(ReportProgressStatus.started);
 
             reportProgressSession.save(report);
-            String uuid = report.getReportUuid();
+            String collectionUuid = report.getCollectionUuid();
 
-            ReportAssignment report2 = new ReportAssignment(uuid);
+            ReportAssignment report2 = new ReportAssignment(collectionUuid);
             report2.setTemplateName(ServiceName.DEATH.getIdentifier());
             report2.setRegistrationBefore(registrationBefore);
             report2.setRegistrationAfter(registrationAfter);
             report2.setReportStatus(ReportProgressStatus.started);
 
 
-            ReportAssignment report3 = new ReportAssignment(uuid);
+            ReportAssignment report3 = new ReportAssignment(collectionUuid);
             report3.setTemplateName(ServiceName.MOVEMENT.getIdentifier());
             report3.setRegistrationBefore(registrationBefore);
             report3.setRegistrationAfter(registrationAfter);
@@ -193,12 +193,12 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             reportProgressSession.save(report2);
             reportProgressSession.save(report3);
             reportProgressSession.getTransaction().commit();
-            currentUuid = uuid;
+            currentcollectionUuid = collectionUuid;
 
         }
 
         String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
-        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"uuid="+currentUuid+"&token="+formToken);
+        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
 
     }
 
