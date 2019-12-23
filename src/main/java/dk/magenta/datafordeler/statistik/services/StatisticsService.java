@@ -103,8 +103,7 @@ public abstract class StatisticsService {
      */
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
-        boolean isPost = "POST".equals(request.getMethod());
-        if(isPost) {
+        if(user.isAnonymous() && request.getParameter("token")!=null) {
             String formToken = request.getParameter("token");
             if (formToken != null) {
                 user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);

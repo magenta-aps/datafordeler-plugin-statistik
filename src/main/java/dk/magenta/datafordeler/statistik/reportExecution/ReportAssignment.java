@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = CprPlugin.DEBUG_TABLE_PREFIX + "cpr_report_assignment_list")
+@Table(name = CprPlugin.DEBUG_TABLE_PREFIX + "report_assignment_list")
 public class ReportAssignment extends DatabaseEntry {
 
     public static final String DB_FIELD_REPORTTEMPLATENAME = "reportTemplateName";
@@ -18,6 +18,8 @@ public class ReportAssignment extends DatabaseEntry {
     public static final String  DB_FIELD_REPORT_STATUS = "reportStatus";
     public static final String  DB_FIELD_REPORTID_REASON = "reportIdReason";
     public static final String  DB_FIELD_REPORT_FILE_NAME = "reportFileName";
+    public static final String  DB_FIELD_REGISTRATIONAFTER = "registrationAfter";
+    public static final String  DB_FIELD_REGISTRATIONBEFORE = "registrationBefore";
 
 
     public ReportAssignment() {
@@ -49,6 +51,28 @@ public class ReportAssignment extends DatabaseEntry {
 
     public UUID getUuid() {
         return this.uuid;
+    }
+
+    @Column(name = DB_FIELD_REGISTRATIONAFTER)
+    private String registrationAfter;
+
+    public String getRegistrationAfter() {
+        return this.registrationAfter;
+    }
+
+    public void setRegistrationAfter(String registrationAfter) {
+        this.registrationAfter = registrationAfter;
+    }
+
+    @Column(name = DB_FIELD_REGISTRATIONBEFORE)
+    private String registrationBefore;
+
+    public String getRegistrationBefore() {
+        return this.registrationBefore;
+    }
+
+    public void setRegistrationBefore(String registrationBefore) {
+        this.registrationBefore = registrationBefore;
     }
 
     @Column(name = DB_FIELD_REPORT_FILE_NAME, nullable = false, unique = true)
