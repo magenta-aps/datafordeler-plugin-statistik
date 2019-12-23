@@ -23,7 +23,12 @@ public class ReportAssignment extends DatabaseEntry {
 
 
     public ReportAssignment() {
-        this.uuid = UUID.randomUUID();
+        this.reportUuid = UUID.randomUUID().toString();
+        this.reportStatus = ReportProgressStatus.started;
+    }
+
+    public ReportAssignment(String reportuUuid) {
+        this.reportUuid = reportuUuid;
         this.reportStatus = ReportProgressStatus.started;
     }
 
@@ -46,11 +51,11 @@ public class ReportAssignment extends DatabaseEntry {
     }
 
 
-    @Column(name = DB_FIELD_REPORTUUID, nullable = false, unique = true)
-    private UUID uuid;
+    @Column(name = DB_FIELD_REPORTUUID, nullable = false)
+    private String reportUuid;
 
-    public UUID getUuid() {
-        return this.uuid;
+    public String getReportUuid() {
+        return this.reportUuid;
     }
 
     @Column(name = DB_FIELD_REGISTRATIONAFTER)
@@ -75,9 +80,9 @@ public class ReportAssignment extends DatabaseEntry {
         this.registrationBefore = registrationBefore;
     }
 
-    @Column(name = DB_FIELD_REPORT_FILE_NAME, nullable = false, unique = true)
+    @Column(name = DB_FIELD_REPORT_FILE_NAME, nullable = false)
     public String getFilename() {
-        return this.reportTemplateName + "_" + this.uuid;
+        return this.reportTemplateName + "_" + this.reportUuid;
     }
 
 

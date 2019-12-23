@@ -14,18 +14,25 @@ import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
+import org.hibernate.jpa.QueryHints;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
@@ -73,6 +80,59 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         super.handleRequest(request, response, ServiceName.BIRTH);
     }
 
+
+    @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
+    public void getOther(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        //super.handleRequest(request, response, ServiceName.BIRTH);
+
+        try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+
+            CriteriaBuilder builder = reportProgressSession.getCriteriaBuilder();
+            CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+            Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+            criteria.select(page);
+            criteria.where(builder.and(
+                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORTUUID), request.getParameter("uuid")),
+                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
+            ));
+
+            TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
+            query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+            if(query.getResultList().size() > 0) {
+
+                String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+
+                String paramAppender = "";
+
+                String registrationBefore = query.getResultList().get(0).getRegistrationBefore();
+                if(registrationBefore!=null) {
+                    paramAppender+="registrationBefore="+registrationBefore+"&";
+                }
+                String registrationAfter = query.getResultList().get(0).getRegistrationAfter();
+                if(registrationAfter!=null) {
+                    paramAppender+="registrationAfter="+registrationAfter+"&";
+                }
+                paramAppender+="token="+formToken;
+
+                response.sendRedirect("/statistik/"+query.getResultList().get(0).getTemplateName()+"/?"+paramAppender);
+            } else {
+                response.sendRedirect("/statistik/done/");
+            }
+        }
+    }
+
+
+    @RequestMapping(method = RequestMethod.GET, path = "/done/")
+    public void getDone(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+
+        response.getOutputStream().write("DONEIT".getBytes());
+
+    }
+
+
     /**
      * Post is used for starting the generation of a report
      * @param request
@@ -90,49 +150,50 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     public void handlePost(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
 
-
+        String currentUuid = "";
 
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
+            reportProgressSession.beginTransaction();
+
+            String registrationAfter = request.getParameter("registrationAfter");
+            String registrationBefore = request.getParameter("registrationBefore");
+
             String outputDescription = null;
             OutputStream outputStream = null;
             ReportAssignment report = new ReportAssignment();
-            report.setTemplateName("ALL1");
-            ReportSync repSync = new ReportSync(reportProgressSession);
-            String reportuUuid = repSync.setReportProgressObject(report);
-            repSync.setReportStatus(ReportProgressStatus.started);
+            report.setTemplateName(ServiceName.BIRTH.getIdentifier());
+            report.setRegistrationBefore(registrationBefore);
+            report.setRegistrationAfter(registrationAfter);
+            report.setReportStatus(ReportProgressStatus.started);
+
+            reportProgressSession.save(report);
+            String uuid = report.getReportUuid();
+
+            ReportAssignment report2 = new ReportAssignment(uuid);
+            report2.setTemplateName(ServiceName.DEATH.getIdentifier());
+            report2.setRegistrationBefore(registrationBefore);
+            report2.setRegistrationAfter(registrationAfter);
+            report2.setReportStatus(ReportProgressStatus.started);
 
 
-            report = new ReportAssignment();
-            report.setTemplateName("ALL2");
-            repSync = new ReportSync(reportProgressSession);
-            reportuUuid = repSync.setReportProgressObject(report);
-            repSync.setReportStatus(ReportProgressStatus.started);
+            ReportAssignment report3 = new ReportAssignment(uuid);
+            report3.setTemplateName(ServiceName.MOVEMENT.getIdentifier());
+            report3.setRegistrationBefore(registrationBefore);
+            report3.setRegistrationAfter(registrationAfter);
+            report3.setReportStatus(ReportProgressStatus.started);
 
-            report = new ReportAssignment();
-            report.setTemplateName("ALL3");
-            repSync = new ReportSync(reportProgressSession);
-            reportuUuid = repSync.setReportProgressObject(report);
-            repSync.setReportStatus(ReportProgressStatus.started);
+            reportProgressSession.save(report);
+            reportProgressSession.save(report2);
+            reportProgressSession.save(report3);
+            reportProgressSession.getTransaction().commit();
+            currentUuid = uuid;
 
         }
 
-
-
-
-
-        /*super.handleRequest(request, response, ServiceName.BIRTH);
-
-
-
-
         String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
-
-        String registrationAfter = request.getParameter("registrationAfter");
-        String registrationBefore = request.getParameter("registrationBefore");
-        response.sendRedirect("/statistik/death_data/?"+"registrationAfter="+registrationAfter+"&registrationBefore="+registrationBefore+"&token="+formToken);
-*/
+        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"uuid="+currentUuid+"&token="+formToken);
 
     }
 

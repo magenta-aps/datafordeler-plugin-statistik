@@ -134,7 +134,7 @@ public abstract class StatisticsService {
             String outputDescription = null;
             OutputStream outputStream = null;
             ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(serviceName.name());
+            report.setTemplateName(serviceName.getIdentifier());
             ReportSync repSync = new ReportSync(reportProgressSession);
             String reportuUuid = repSync.setReportProgressObject(report);
             if(reportuUuid==null) {
@@ -147,7 +147,7 @@ public abstract class StatisticsService {
 
             if (this.getWriteToLocalFile()) {
 
-                response.getWriter().print(serviceName.name()+"_"+reportuUuid);
+                response.getWriter().print(serviceName.getIdentifier()+"_"+reportuUuid);
 
                 if (PATH_FILE != null) {
                     File file = new File(PATH_FILE, repSync.getReportfilename() + ".csv");
@@ -193,14 +193,14 @@ public abstract class StatisticsService {
 
 
     public enum ServiceName {
-        BIRTH("birth"),
-        DEATH("death"),
-        CIVILSTATUS("civilstatus"),
-        MOVEMENT("movement"),
-        STATUS("status"),
-        ADDRESS("address"),
-        ROAD("road"),
-        LOCALITY("locality"),
+        BIRTH("birth_data"),
+        DEATH("death_data"),
+        CIVILSTATUS("civilstate_data"),
+        MOVEMENT("movement_data"),
+        STATUS("status_data"),
+        ADDRESS("address_data"),
+        ROAD("road_data"),
+        LOCALITY("locality_data"),
         ALL("all");
 
         private final String identifier;

@@ -47,7 +47,7 @@ public class ReportSync {
 
         session.beginTransaction();
         session.save(reportAssignments);
-        String uuid = reportAssignments.getUuid().toString();
+        String uuid = reportAssignments.getReportUuid();
         session.getTransaction().commit();
         return uuid;
     }
@@ -77,7 +77,7 @@ public class ReportSync {
 
         session.beginTransaction();
         session.save(reportAssignments);
-        String uuid = reportAssignments.getUuid().toString();
+        String uuid = reportAssignments.getReportUuid().toString();
         session.getTransaction().commit();
         return uuid;
     }
@@ -95,7 +95,7 @@ public class ReportSync {
         session.beginTransaction();
         reportAssignments.setReportStatus(reportStatus);
         session.update(reportAssignments);
-        String uuid = reportAssignments.getUuid().toString();
+        String uuid = reportAssignments.getReportUuid().toString();
         session.getTransaction().commit();
 
     }
