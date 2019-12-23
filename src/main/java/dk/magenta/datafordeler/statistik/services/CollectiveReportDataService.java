@@ -114,6 +114,11 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(registrationAfter!=null) {
                     paramAppender+="registrationAfter="+registrationAfter+"&";
                 }
+                String uuid = request.getParameter("uuid");
+                if(uuid!=null) {
+                    paramAppender+="uuid="+uuid+"&";
+                }
+
                 paramAppender+="token="+formToken;
 
                 response.sendRedirect("/statistik/"+query.getResultList().get(0).getTemplateName()+"/?"+paramAppender);
