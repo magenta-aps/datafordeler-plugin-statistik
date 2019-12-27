@@ -161,8 +161,9 @@ public abstract class StatisticsService {
             if (this.getWriteToLocalFile()) {
 
                 response.getWriter().print(serviceName.getIdentifier()+"_"+collectionUuid);
-                if(collectionUuid!=null) {
-                    String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+                String token = request.getParameter("token");
+                if(collectionUuid!=null && token!= null) {
+                    String formToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
                     response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+collectionUuid+"&token="+formToken);
                 }
 
