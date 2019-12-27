@@ -137,9 +137,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/done/")
     public void getDone(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
-
-        response.getOutputStream().write((ServiceName.COLLECTIVE.getIdentifier()+"_"+request.getParameter("collectionUuid")).getBytes());
-
+        response.getOutputStream().write(("collectionUuid: "+request.getParameter("collectionUuid")).getBytes());
     }
 
 

@@ -14,6 +14,7 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -136,16 +137,15 @@ public abstract class StatisticsService {
             OutputStream outputStream = null;
 
             String reportUuid = request.getParameter("reportUuid");
+            String collectionUuid = request.getParameter("collectionUuid");
             if(reportUuid==null) {
+                ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
                 ReportAssignment report = new ReportAssignment();
                 report.setTemplateName(serviceName.getIdentifier());
-                ReportSync repSync = new ReportSync(reportProgressSession);
-                reportUuid = repSync.setReportProgressObject(report);
+                rps.createReportStatusObject(report);
+                reportUuid = report.getReportUuid();
+                collectionUuid = report.getCollectionUuid();
             }
-
-
-
-
 
             System.out.println("reportUuid");
             System.out.println(reportUuid);
@@ -160,8 +160,7 @@ public abstract class StatisticsService {
 
             if (this.getWriteToLocalFile()) {
 
-                response.getWriter().print(serviceName.getIdentifier()+"_"+reportUuid);
-                String collectionUuid = request.getParameter("collectionUuid");
+                response.getWriter().print(serviceName.getIdentifier()+"_"+collectionUuid);
                 if(collectionUuid!=null) {
                     String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
                     response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+collectionUuid+"&token="+formToken);

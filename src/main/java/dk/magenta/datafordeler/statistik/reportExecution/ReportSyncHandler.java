@@ -26,6 +26,13 @@ public class ReportSyncHandler {
     }
 
 
+    public void createReportStatusObject(ReportAssignment reportStatusObject) {
+        session.beginTransaction();
+        session.save(reportStatusObject);
+        session.getTransaction().commit();
+    }
+
+
 
     public void setReportStatus(String reportUuid, ReportProgressStatus status) {
 
@@ -70,7 +77,4 @@ public class ReportSyncHandler {
         }
         return reports;
     }
-
-
-
 }

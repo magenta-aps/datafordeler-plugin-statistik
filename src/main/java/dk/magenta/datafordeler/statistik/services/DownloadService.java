@@ -98,8 +98,6 @@ public class DownloadService extends StatisticsService {
             try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
                 ReportSyncHandler repSync = new ReportSyncHandler(reportProgressSession);
-                System.out.println("reportId");
-                System.out.println(reportId);
                 List<String> reportList = repSync.getReportList(reportId);
                 if (reportList.size()==0) {
                     outStream.write("Report does not exist".getBytes(StandardCharsets.UTF_8));
