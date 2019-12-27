@@ -21,6 +21,7 @@ import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import net.lingala.zip4j.exception.ZipException;
@@ -50,7 +51,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
+    public int run(Filter filter, OutputStream outputStream, String reportUuid) {
 
 
         try(final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
@@ -79,10 +80,20 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
         } catch (Exception e) {
             log.error("Failed generating report", e);
-            repSync.setReportStatus(ReportProgressStatus.failed);
+
+
+
+            //repSync.setReportStatus(ReportProgressStatus.failed);//TODO fix this
         } finally {
             log.info("Done writing report");
-            repSync.setReportStatus(ReportProgressStatus.done);
+
+            try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
+                ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
+                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
+
+            }
+
+            //repSync.setReportStatus(ReportProgressStatus.done);
         }
         return 0;
     }

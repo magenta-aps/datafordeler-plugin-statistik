@@ -137,7 +137,7 @@ public class DownloadService extends StatisticsService {
     }
 
     @Override
-    public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
+    public int run(Filter filter, OutputStream outputStream, String reportUuid) {
         return 0;
     }
 

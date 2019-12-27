@@ -83,7 +83,7 @@ public abstract class StatisticsService {
     }
 
 
-    public abstract int run(Filter filter, OutputStream outputStream, ReportSync repSync);
+    public abstract int run(Filter filter, OutputStream outputStream, String reportUuid);
 
 
     /**
@@ -133,24 +133,36 @@ public abstract class StatisticsService {
             Filter filter = this.getFilter(request);
             String outputDescription = null;
             OutputStream outputStream = null;
-            ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(serviceName.getIdentifier());
-            ReportSync repSync = new ReportSync(reportProgressSession);
-            String reportuUuid = repSync.setReportProgressObject(report);
-            if(reportuUuid==null) {
+
+            String reportUuid = request.getParameter("reportUuid");
+            if(reportUuid==null) {
+                ReportAssignment report = new ReportAssignment();
+                report.setTemplateName(serviceName.getIdentifier());
+                ReportSync repSync = new ReportSync(reportProgressSession);
+                reportUuid = repSync.setReportProgressObject(report);
+            }
+
+
+
+
+
+            System.out.println("reportUuid");
+            System.out.println(reportUuid);
+
+            /*if(reportuUuid==null) {//TODO: FIX THIS
                 response.setStatus(HttpServletResponse.SC_CONFLICT);
                 response.getWriter().print("Execution of this report is rejected, another report is currently getting generated");
                 return;
             }
 
-            repSync.setReportStatus(ReportProgressStatus.started);
+            repSync.setReportStatus(ReportProgressStatus.started);*/
 
             if (this.getWriteToLocalFile()) {
 
-                response.getWriter().print(serviceName.getIdentifier()+"_"+reportuUuid);
+                response.getWriter().print(serviceName.getIdentifier()+"_"+reportUuid);
 
                 if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, repSync.getReportfilename() + ".csv");
+                    File file = new File(PATH_FILE, serviceName.getIdentifier()+"_"+reportUuid + ".csv");
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
@@ -164,7 +176,7 @@ public abstract class StatisticsService {
             }
 
             if (outputStream != null) {
-                int written = this.run(filter, outputStream, repSync);
+                int written = this.run(filter, outputStream, reportUuid);
                 this.getLogger().info(outputDescription);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());

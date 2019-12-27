@@ -111,7 +111,7 @@ public class RoadDataService extends StatisticsService {
         return this.log;
     }
 
-    public int run(Filter filter, OutputStream outputStream, ReportSync repSync) {
+    public int run(Filter filter, OutputStream outputStream, String reportUuid) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
         final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();

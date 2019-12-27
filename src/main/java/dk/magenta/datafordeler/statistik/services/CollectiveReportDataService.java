@@ -118,10 +118,15 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(collectionUuid!=null) {
                     paramAppender+="collectionUuid="+collectionUuid+"&";
                 }
+                ReportAssignment assignment = query.getResultList().get(0);
+                String reportUuid = assignment.getReportUuid();
+                if(reportUuid!=null) {
+                    paramAppender+="reportUuid="+reportUuid+"&";
+                }
 
                 paramAppender+="token="+formToken;
 
-                response.sendRedirect("/statistik/"+query.getResultList().get(0).getTemplateName()+"/?"+paramAppender);
+                response.sendRedirect("/statistik/"+assignment.getTemplateName()+"/?"+paramAppender);
             } else {
                 response.sendRedirect("/statistik/done/");
             }
