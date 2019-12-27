@@ -155,14 +155,7 @@ public abstract class StatisticsService {
 
 
             if (this.getWriteToLocalFile()) {
-
-                response.getWriter().print(serviceName.getIdentifier()+"_"+collectionUuid);
-                String token = request.getParameter("token");
-                if(collectionUuid!=null && token!= null) {
-                    String formToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
-                    response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+collectionUuid+"&token="+formToken);
-                }
-
+                response.getWriter().print("collectionUuid: "+collectionUuid);
 
                 if (PATH_FILE != null) {
                     File file = new File(PATH_FILE, serviceName.getIdentifier()+"_"+reportUuid + ".csv");
