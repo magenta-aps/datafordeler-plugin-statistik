@@ -9,6 +9,8 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReportSyncHandler {
 
@@ -41,17 +43,34 @@ public class ReportSyncHandler {
         TypedQuery<ReportAssignment> query = session.createQuery(criteria);
         query.setHint(QueryHints.HINT_CACHEABLE, true);
 
-        System.out.println(query.getResultList().size());
-
         if(query.getResultList().size() > 0) {
             query.getResultList().get(0).setReportStatus(status);
             session.save(query.getResultList().get(0));
         }
         session.getTransaction().commit();
-
-
-
     }
+
+
+    public List<String> getReportList(String collectionUuid) {
+
+        ArrayList<String> reports = new ArrayList<String>();
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+        Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+        criteria.select(page);
+        criteria.where(builder.and(
+                builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), collectionUuid),
+                builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.done)
+        ));
+
+        TypedQuery<ReportAssignment> query = session.createQuery(criteria);
+
+        for(ReportAssignment report : query.getResultList()) {
+            reports.add(report.getTemplateName()+"_"+report.getReportUuid());
+        }
+        return reports;
+    }
+
 
 
 }

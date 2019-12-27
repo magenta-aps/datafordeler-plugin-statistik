@@ -11,12 +11,14 @@ import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -47,14 +49,11 @@ public class DownloadService extends StatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     protected void doGet(HttpServletRequest request,
                           HttpServletResponse response) throws IOException {
-        String showfrontpage = request.getParameter("showfrontpage");
-        if (Boolean.parseBoolean(showfrontpage)) {
-            IOUtils.copy(
-                    StatisticsService.class.getResourceAsStream("/downloadServiceForm.html"),
-                    response.getWriter(), StandardCharsets.UTF_8
-            );
-            return;
-        }
+        IOUtils.copy(
+                StatisticsService.class.getResourceAsStream("/downloadServiceForm.html"),
+                response.getWriter(), StandardCharsets.UTF_8
+        );
+        return;
     }
 
 
@@ -100,10 +99,32 @@ public class DownloadService extends StatisticsService {
 
         //Add files to be archived into zip file
         ArrayList<File> filesToAdd = new ArrayList<File>();
-        filesToAdd.add(new File(PATH_FILE,reportId + ".csv"));
 
         try {
-            ReportValidationAndConversion.convertFileToEncryptedZip(new File(PATH_FILE,reportId+".zip"), filesToAdd, password);
+            try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+
+                ReportSyncHandler repSync = new ReportSyncHandler(reportProgressSession);
+                System.out.println("reportId");
+                System.out.println(reportId);
+                List<String> reportList = repSync.getReportList(reportId);
+                if (reportList.size()==0) {
+                    outStream.write("Report does not exist".getBytes(StandardCharsets.UTF_8));
+                    outStream.close();
+                    return;
+                }
+                for(String report : reportList) {
+
+                    System.out.println(report);
+                    if (!ReportValidationAndConversion.validateReportName(report)) {
+                        outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
+                        outStream.close();
+                        return;
+                    }
+                    filesToAdd.add(new File(PATH_FILE,report + ".csv"));
+                }
+                ReportValidationAndConversion.convertFileToEncryptedZip(new File(PATH_FILE,reportId+".zip"), filesToAdd, password);
+            }
+
         } catch (ZipException e) {
             log.error("Unable to encrypt reportfile", e);
         }

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -160,6 +161,12 @@ public abstract class StatisticsService {
             if (this.getWriteToLocalFile()) {
 
                 response.getWriter().print(serviceName.getIdentifier()+"_"+reportUuid);
+                String collectionUuid = request.getParameter("collectionUuid");
+                if(collectionUuid!=null) {
+                    String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+                    response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+collectionUuid+"&token="+formToken);
+                }
+
 
                 if (PATH_FILE != null) {
                     File file = new File(PATH_FILE, serviceName.getIdentifier()+"_"+reportUuid + ".csv");
@@ -213,7 +220,7 @@ public abstract class StatisticsService {
         ADDRESS("address_data"),
         ROAD("road_data"),
         LOCALITY("locality_data"),
-        ALL("all");
+        COLLECTIVE("collective_data");
 
         private final String identifier;
 

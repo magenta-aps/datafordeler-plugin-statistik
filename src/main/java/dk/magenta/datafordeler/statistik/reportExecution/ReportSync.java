@@ -82,10 +82,6 @@ public class ReportSync {
         return uuid;
     }
 
-    public String getReportfilename() {
-        return reportAssignments.getFilename();
-    }
-
     /**
      * Create subscriptions by adding them to the table of subscriptions
      * @param reportStatus

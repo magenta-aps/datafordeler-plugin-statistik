@@ -128,7 +128,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
                 response.sendRedirect("/statistik/"+assignment.getTemplateName()+"/?"+paramAppender);
             } else {
-                response.sendRedirect("/statistik/done/");
+                response.sendRedirect("/statistik/collective_report/done/?collectionUuid="+request.getParameter("collectionUuid"));
             }
         }
     }
@@ -138,7 +138,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     public void getDone(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
 
-        response.getOutputStream().write("DONEIT".getBytes());
+        response.getOutputStream().write((ServiceName.COLLECTIVE.getIdentifier()+"_"+request.getParameter("collectionUuid")).getBytes());
 
     }
 
