@@ -91,12 +91,6 @@ public class DownloadService extends StatisticsService {
             return;
         }
 
-        if (!ReportValidationAndConversion.validateReportName(reportId)) {
-            outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
-            outStream.close();
-            return;
-        }
-
         //Add files to be archived into zip file
         ArrayList<File> filesToAdd = new ArrayList<File>();
 
