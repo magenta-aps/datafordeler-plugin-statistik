@@ -106,7 +106,7 @@ public class StatusDataServiceTest extends TestBase {
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertTrue(ReportValidationAndConversion.validateReportName(response.getBody()));
 
-        String[] statusFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("STATUS"));
+        String[] statusFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.STATUS.getIdentifier()));
         Assert.assertEquals(1, statusFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + statusFiles[0]);

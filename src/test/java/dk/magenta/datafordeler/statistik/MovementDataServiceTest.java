@@ -177,7 +177,7 @@ public class MovementDataServiceTest extends TestBase {
 
         Assert.assertEquals(200, response.getStatusCodeValue());
 
-        String[] movementFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("MOVEMENT"));
+        String[] movementFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.MOVEMENT.getIdentifier()));
         Assert.assertEquals(1, movementFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + movementFiles[0]);

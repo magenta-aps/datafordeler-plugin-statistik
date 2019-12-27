@@ -108,7 +108,7 @@ public class BirthDataServiceTest extends TestBase {
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertTrue(ReportValidationAndConversion.validateReportName(response.getBody()));
 
-        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("BIRTH"));
+        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.BIRTH.getIdentifier()));
         Assert.assertEquals(1, birthFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + birthFiles[0]);

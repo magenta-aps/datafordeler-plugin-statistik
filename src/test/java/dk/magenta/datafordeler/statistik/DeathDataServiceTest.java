@@ -110,7 +110,7 @@ public class DeathDataServiceTest extends TestBase {
         Assert.assertEquals(200, response.getStatusCodeValue());
         Assert.assertTrue(ReportValidationAndConversion.validateReportName(response.getBody()));
 
-        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("DEATH"));
+        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.DEATH.getIdentifier()));
         Assert.assertEquals(1, deathFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + deathFiles[0]);

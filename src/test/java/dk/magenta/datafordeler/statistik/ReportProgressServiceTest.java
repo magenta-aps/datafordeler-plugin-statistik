@@ -11,6 +11,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.services.BirthDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
@@ -18,6 +19,7 @@ import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
+import org.hibernate.jpa.QueryHints;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,8 +34,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -60,13 +69,38 @@ public class ReportProgressServiceTest extends TestBase {
     @Test
     public void testQueueReport() throws IOException {
 
+        String uuid = null;
 
         try(Session sessionSync = sessionManager.getSessionFactory().openSession()) {
             ReportSync repSync = new ReportSync(sessionSync);
             ReportAssignment report = new ReportAssignment();
+            uuid = report.getReportUuid();
             report.setTemplateName("REPORT1");
             Assert.assertNotNull(repSync.setReportProgressObject(report));
         }
+
+        try(Session sessionSync = sessionManager.getSessionFactory().openSession()) {
+
+            CriteriaBuilder builder = sessionSync.getCriteriaBuilder();
+            CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+            Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+            criteria.select(page);
+            criteria.where(builder.and(
+                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORTUUID), uuid),
+                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
+            ));
+
+            TypedQuery<ReportAssignment> query = sessionSync.createQuery(criteria);
+            query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+            System.out.println(query.getResultList().size());
+
+            if (query.getResultList().size() > 0) {
+
+            }
+        }
+
+
 
         try(Session session = sessionManager.getSessionFactory().openSession()) {
             List<ReportAssignment> existingSubscriptions = QueryManager.getAllItems(session, ReportAssignment.class);
@@ -112,7 +146,7 @@ public class ReportProgressServiceTest extends TestBase {
         try(Session sessionSync = sessionManager.getSessionFactory().openSession()) {
             ReportSync repSync = new ReportSync(sessionSync);
             ReportAssignment report = new ReportAssignment();
-            report.setTemplateName("BIRTH");
+            report.setTemplateName(StatisticsService.ServiceName.BIRTH.getIdentifier());
             Assert.assertNotNull(repSync.setReportProgressObject(report));
         }
 
@@ -133,7 +167,7 @@ public class ReportProgressServiceTest extends TestBase {
         try(Session sessionSync = sessionManager.getSessionFactory().openSession()) {
             ReportSync repSync = new ReportSync(sessionSync);
             ReportAssignment report = new ReportAssignment();
-            report.setTemplateName("BIRTH");
+            report.setTemplateName(StatisticsService.ServiceName.BIRTH.getIdentifier());
             Assert.assertNotNull(repSync.setReportProgressObject(report));
         }
 
@@ -143,6 +177,21 @@ public class ReportProgressServiceTest extends TestBase {
         testsUtils.applyAccess(testUserDetails);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity<>("", new HttpHeaders()), String.class);
-        Assert.assertEquals(409, response.getStatusCodeValue());
+
+
+    }
+
+
+    //@Test
+    public void testReportExecute() throws IOException {
+
+        birthDataService.setWriteToLocalFile(true);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/collective_report/startreportsequence/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+
+
+        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("BIRTH"));
+        Assert.assertEquals(1, birthFiles.length);
+
     }
 }
