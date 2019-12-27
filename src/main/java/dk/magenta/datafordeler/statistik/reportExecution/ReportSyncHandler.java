@@ -26,10 +26,24 @@ public class ReportSyncHandler {
     }
 
 
-    public void createReportStatusObject(ReportAssignment reportStatusObject) {
+    public boolean createReportStatusObject(ReportAssignment reportStatusObject) throws Exception {
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+        Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+        criteria.select(page);
+        criteria.where(builder.notEqual(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.done));
+
+        TypedQuery<ReportAssignment> query = session.createQuery(criteria);
+        query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+        if (query.getResultList().size() > 0) {
+            return false;
+        }
+
         session.beginTransaction();
         session.save(reportStatusObject);
         session.getTransaction().commit();
+        return true;
     }
 
 
@@ -58,7 +72,7 @@ public class ReportSyncHandler {
     }
 
 
-    public List<String> getReportList(String collectionUuid) {
+    public List<String> getReportList(String collectionUuid, ReportProgressStatus reportProgressStatus) {
 
         ArrayList<String> reports = new ArrayList<String>();
         CriteriaBuilder builder = session.getCriteriaBuilder();
@@ -67,7 +81,7 @@ public class ReportSyncHandler {
         criteria.select(page);
         criteria.where(builder.and(
                 builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), collectionUuid),
-                builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.done)
+                builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), reportProgressStatus)
         ));
 
         TypedQuery<ReportAssignment> query = session.createQuery(criteria);

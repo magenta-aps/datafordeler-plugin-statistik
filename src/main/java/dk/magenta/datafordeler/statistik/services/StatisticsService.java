@@ -140,21 +140,15 @@ public abstract class StatisticsService {
                 ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
                 ReportAssignment report = new ReportAssignment();
                 report.setTemplateName(serviceName.getIdentifier());
-                rps.createReportStatusObject(report);
+                if(!rps.createReportStatusObject(report)) {
+                    response.setStatus(HttpServletResponse.SC_CONFLICT);
+                    response.getWriter().print("Execution of this report is rejected, another report is currently getting generated");
+                    return;
+                }
                 reportUuid = report.getReportUuid();
                 collectionUuid = report.getCollectionUuid();
             }
 
-            System.out.println("reportUuid");
-            System.out.println(reportUuid);
-
-            /*if(reportuUuid==null) {//TODO: FIX THIS
-                response.setStatus(HttpServletResponse.SC_CONFLICT);
-                response.getWriter().print("Execution of this report is rejected, another report is currently getting generated");
-                return;
-            }
-
-            repSync.setReportStatus(ReportProgressStatus.started);*/
 
             if (this.getWriteToLocalFile()) {
 

@@ -10,6 +10,7 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
@@ -97,7 +98,7 @@ public class DownloadService extends StatisticsService {
             try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
                 ReportSyncHandler repSync = new ReportSyncHandler(reportProgressSession);
-                List<String> reportList = repSync.getReportList(reportId);
+                List<String> reportList = repSync.getReportList(reportId, ReportProgressStatus.done);
                 if (reportList.size()==0) {
                     outStream.write("Report does not exist".getBytes(StandardCharsets.UTF_8));
                     outStream.close();
