@@ -200,8 +200,8 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
         }
 
-        String formToken = URLEncoder.encode(request.getParameter("Authorization"), StandardCharsets.UTF_8);
-        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+currentcollectionUuid+"&Authorization="+formToken);
+        String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
 
     }
 
