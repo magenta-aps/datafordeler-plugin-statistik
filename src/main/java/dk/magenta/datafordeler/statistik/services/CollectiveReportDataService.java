@@ -77,7 +77,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
-        super.handleRequest(request, response, ServiceName.BIRTH);
+        super.handleRequest(request, response, ServiceName.COLLECTIVE);
     }
 
 
@@ -163,14 +163,12 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             String registrationAfter = request.getParameter("registrationAfter");
             String registrationBefore = request.getParameter("registrationBefore");
 
-            ReportAssignment report = new ReportAssignment();
-            report.setTemplateName(ServiceName.BIRTH.getIdentifier());
-            report.setRegistrationBefore(registrationBefore);
-            report.setRegistrationAfter(registrationAfter);
-            report.setReportStatus(ReportProgressStatus.started);
-
-            reportProgressSession.save(report);
-            String collectionUuid = report.getCollectionUuid();
+            ReportAssignment report1 = new ReportAssignment();
+            report1.setTemplateName(ServiceName.BIRTH.getIdentifier());
+            report1.setRegistrationBefore(registrationBefore);
+            report1.setRegistrationAfter(registrationAfter);
+            report1.setReportStatus(ReportProgressStatus.started);
+            String collectionUuid = report1.getCollectionUuid();
 
             ReportAssignment report2 = new ReportAssignment(collectionUuid);
             report2.setTemplateName(ServiceName.DEATH.getIdentifier());
@@ -178,16 +176,22 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             report2.setRegistrationAfter(registrationAfter);
             report2.setReportStatus(ReportProgressStatus.started);
 
-
             ReportAssignment report3 = new ReportAssignment(collectionUuid);
             report3.setTemplateName(ServiceName.MOVEMENT.getIdentifier());
             report3.setRegistrationBefore(registrationBefore);
             report3.setRegistrationAfter(registrationAfter);
             report3.setReportStatus(ReportProgressStatus.started);
 
-            reportProgressSession.save(report);
+            ReportAssignment report4 = new ReportAssignment(collectionUuid);
+            report4.setTemplateName(ServiceName.CIVILSTATUS.getIdentifier());
+            report4.setRegistrationBefore(registrationBefore);
+            report4.setRegistrationAfter(registrationAfter);
+            report4.setReportStatus(ReportProgressStatus.started);
+
+            reportProgressSession.save(report1);
             reportProgressSession.save(report2);
             reportProgressSession.save(report3);
+            reportProgressSession.save(report4);
             reportProgressSession.getTransaction().commit();
             currentcollectionUuid = collectionUuid;
 

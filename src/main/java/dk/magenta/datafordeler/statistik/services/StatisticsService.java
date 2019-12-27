@@ -139,6 +139,10 @@ public abstract class StatisticsService {
             if(reportUuid==null) {
                 ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
                 ReportAssignment report = new ReportAssignment();
+                String registrationAfter = request.getParameter("registrationAfter");
+                String registrationBefore = request.getParameter("registrationBefore");
+                report.setRegistrationAfter(registrationAfter);
+                report.setRegistrationBefore(registrationBefore);
                 report.setTemplateName(serviceName.getIdentifier());
                 if(!rps.createReportStatusObject(report)) {
                     response.setStatus(HttpServletResponse.SC_CONFLICT);

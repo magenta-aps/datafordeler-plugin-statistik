@@ -76,20 +76,13 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
         } catch (Exception e) {
             log.error("Failed generating report", e);
-
-
-
-            //repSync.setReportStatus(ReportProgressStatus.failed);//TODO fix this
         } finally {
             log.info("Done writing report");
 
             try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
                 ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
                 repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
-
             }
-
-            //repSync.setReportStatus(ReportProgressStatus.done);
         }
         return 0;
     }
