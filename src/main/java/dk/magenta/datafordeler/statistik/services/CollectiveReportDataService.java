@@ -82,9 +82,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
-    public void getOther(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
-        //super.handleRequest(request, response, ServiceName.BIRTH);
+    public void getOther(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -135,8 +133,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/done/")
-    public void getDone(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+    public void getDone(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.getOutputStream().write(("collectionUuid: "+request.getParameter("collectionUuid")).getBytes());
     }
 
@@ -155,11 +152,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
      * @throws InvalidCertificateException
      */
     @RequestMapping(method = RequestMethod.POST, path = "/")
-    public void handlePost(HttpServletRequest request, HttpServletResponse response)
-            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
+    public void handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String currentcollectionUuid = "";
-
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -168,8 +163,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             String registrationAfter = request.getParameter("registrationAfter");
             String registrationBefore = request.getParameter("registrationBefore");
 
-            String outputDescription = null;
-            OutputStream outputStream = null;
             ReportAssignment report = new ReportAssignment();
             report.setTemplateName(ServiceName.BIRTH.getIdentifier());
             report.setRegistrationBefore(registrationBefore);

@@ -80,7 +80,7 @@ public class DownloadService extends StatisticsService {
         // Check that the user has access to CPR data
         this.checkAndLogAccess(loggerHelper);
 
-        String reportId = request.getParameter("reportId");
+        String reportId = request.getParameter("collectionUuid");
 
         // obtains response's output stream
         OutputStream outStream = response.getOutputStream();
@@ -105,8 +105,6 @@ public class DownloadService extends StatisticsService {
                     return;
                 }
                 for(String report : reportList) {
-
-                    System.out.println(report);
                     if (!ReportValidationAndConversion.validateReportName(report)) {
                         outStream.write("Illegal reportname".getBytes(StandardCharsets.UTF_8));
                         outStream.close();
