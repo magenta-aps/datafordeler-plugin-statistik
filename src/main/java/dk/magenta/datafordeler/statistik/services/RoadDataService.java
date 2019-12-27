@@ -16,8 +16,6 @@ import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressEntity;
 import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressRoadRecord;
 import dk.magenta.datafordeler.geo.data.locality.GeoLocalityEntity;
 import dk.magenta.datafordeler.geo.data.road.GeoRoadEntity;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

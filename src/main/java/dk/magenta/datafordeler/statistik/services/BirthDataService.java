@@ -15,8 +15,6 @@ import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonBirthQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;

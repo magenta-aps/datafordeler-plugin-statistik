@@ -12,8 +12,6 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
-import dk.magenta.datafordeler.statistik.reportExecution.ReportSync;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.io.IOUtils;
