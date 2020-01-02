@@ -82,7 +82,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
-    public void getOther(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void geReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -99,16 +99,17 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             query.setHint(QueryHints.HINT_CACHEABLE, true);
 
             if(query.getResultList().size() > 0) {
+                ReportAssignment assignment = query.getResultList().get(0);
 
                 String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
 
                 String paramAppender = "";
 
-                String registrationBefore = query.getResultList().get(0).getRegistrationBefore();
+                String registrationBefore = assignment.getRegistrationBefore();
                 if(registrationBefore!=null) {
                     paramAppender+="registrationBefore="+registrationBefore+"&";
                 }
-                String registrationAfter = query.getResultList().get(0).getRegistrationAfter();
+                String registrationAfter = assignment.getRegistrationAfter();
                 if(registrationAfter!=null) {
                     paramAppender+="registrationAfter="+registrationAfter+"&";
                 }
@@ -116,7 +117,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(collectionUuid!=null) {
                     paramAppender+="collectionUuid="+collectionUuid+"&";
                 }
-                ReportAssignment assignment = query.getResultList().get(0);
                 String reportUuid = assignment.getReportUuid();
                 if(reportUuid!=null) {
                     paramAppender+="reportUuid="+reportUuid+"&";
@@ -125,8 +125,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 paramAppender+="token="+formToken;
 
                 response.sendRedirect("/statistik/"+assignment.getTemplateName()+"/?"+paramAppender);
-            } else {
-                response.sendRedirect("/statistik/collective_report/done/?collectionUuid="+request.getParameter("collectionUuid"));
             }
         }
     }
@@ -158,40 +156,53 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
+            CriteriaBuilder builder = reportProgressSession.getCriteriaBuilder();
+            CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+            Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+            criteria.select(page);
+            criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started));
+            TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
+            query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+            if(query.getResultList().size() > 0) {
+                response.getOutputStream().write(("Reject starting any reports until current reports is done").getBytes());
+                return;
+            }
+
             reportProgressSession.beginTransaction();
 
             String registrationAfter = request.getParameter("registrationAfter");
             String registrationBefore = request.getParameter("registrationBefore");
 
-            ReportAssignment report1 = new ReportAssignment();
-            report1.setTemplateName(ServiceName.BIRTH.getIdentifier());
-            report1.setRegistrationBefore(registrationBefore);
-            report1.setRegistrationAfter(registrationAfter);
-            report1.setReportStatus(ReportProgressStatus.started);
-            String collectionUuid = report1.getCollectionUuid();
+            ReportAssignment birthReport = new ReportAssignment();
+            birthReport.setTemplateName(ServiceName.BIRTH.getIdentifier());
+            birthReport.setRegistrationBefore(registrationBefore);
+            birthReport.setRegistrationAfter(registrationAfter);
+            birthReport.setReportStatus(ReportProgressStatus.started);
+            String collectionUuid = birthReport.getCollectionUuid();
 
-            ReportAssignment report2 = new ReportAssignment(collectionUuid);
-            report2.setTemplateName(ServiceName.DEATH.getIdentifier());
-            report2.setRegistrationBefore(registrationBefore);
-            report2.setRegistrationAfter(registrationAfter);
-            report2.setReportStatus(ReportProgressStatus.started);
+            ReportAssignment deathReport = new ReportAssignment(collectionUuid);
+            deathReport.setTemplateName(ServiceName.DEATH.getIdentifier());
+            deathReport.setRegistrationBefore(registrationBefore);
+            deathReport.setRegistrationAfter(registrationAfter);
+            deathReport.setReportStatus(ReportProgressStatus.started);
 
-            ReportAssignment report3 = new ReportAssignment(collectionUuid);
-            report3.setTemplateName(ServiceName.MOVEMENT.getIdentifier());
-            report3.setRegistrationBefore(registrationBefore);
-            report3.setRegistrationAfter(registrationAfter);
-            report3.setReportStatus(ReportProgressStatus.started);
+            ReportAssignment movementReport = new ReportAssignment(collectionUuid);
+            movementReport.setTemplateName(ServiceName.MOVEMENT.getIdentifier());
+            movementReport.setRegistrationBefore(registrationBefore);
+            movementReport.setRegistrationAfter(registrationAfter);
+            movementReport.setReportStatus(ReportProgressStatus.started);
 
-            ReportAssignment report4 = new ReportAssignment(collectionUuid);
-            report4.setTemplateName(ServiceName.CIVILSTATUS.getIdentifier());
-            report4.setRegistrationBefore(registrationBefore);
-            report4.setRegistrationAfter(registrationAfter);
-            report4.setReportStatus(ReportProgressStatus.started);
+            ReportAssignment civilStatusReport = new ReportAssignment(collectionUuid);
+            civilStatusReport.setTemplateName(ServiceName.CIVILSTATUS.getIdentifier());
+            civilStatusReport.setRegistrationBefore(registrationBefore);
+            civilStatusReport.setRegistrationAfter(registrationAfter);
+            civilStatusReport.setReportStatus(ReportProgressStatus.started);
 
-            reportProgressSession.save(report1);
-            reportProgressSession.save(report2);
-            reportProgressSession.save(report3);
-            reportProgressSession.save(report4);
+            reportProgressSession.save(birthReport);
+            reportProgressSession.save(deathReport);
+            reportProgressSession.save(movementReport);
+            reportProgressSession.save(civilStatusReport);
             reportProgressSession.getTransaction().commit();
             currentcollectionUuid = collectionUuid;
 

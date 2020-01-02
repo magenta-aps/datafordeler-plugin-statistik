@@ -51,7 +51,11 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
 
         try(final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
-            final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();) {
+            final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
+            final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
+
+            ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
+            repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.running);
 
             primarySession.setDefaultReadOnly(true);
             secondarySession.setDefaultReadOnly(true);
@@ -70,19 +74,19 @@ public abstract class PersonStatisticsService extends StatisticsService {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
                         log.info("Done writing persons");
+                        repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
                     });
                 }
             }
 
         } catch (Exception e) {
             log.error("Failed generating report", e);
-        } finally {
-            log.info("Done writing report");
-
             try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
                 ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
-                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
+                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.failed);
             }
+        } finally {
+            log.info("Done writing report");
         }
         return 0;
     }
