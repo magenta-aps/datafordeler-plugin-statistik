@@ -166,8 +166,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(registrationAfter!=null) {
                     paramAppender+="registrationAfter="+registrationAfter+"&";
                 }
-                if(collectionUuid!=null) {
-                    paramAppender+="collectionUuid="+collectionUuid+"&";
+                String assignmentCollectionUuid = assignment.getCollectionUuid();
+                if(assignmentCollectionUuid!=null) {
+                    paramAppender+="collectionUuid="+assignmentCollectionUuid+"&";
                 }
                 String reportUuid = assignment.getReportUuid();
                 if(reportUuid!=null) {
