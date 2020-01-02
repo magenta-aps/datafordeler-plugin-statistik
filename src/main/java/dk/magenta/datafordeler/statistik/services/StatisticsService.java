@@ -109,7 +109,7 @@ public abstract class StatisticsService {
                 user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
             }
         } else {
-            //If the showfrontpage flag is set, only show that
+            //If the showfrontpage flag is set, only show that, login is not nessesary for that
             String showfrontpage= request.getParameter("showfrontpage");
             if(Boolean.parseBoolean(showfrontpage)) {
                 IOUtils.copy(
