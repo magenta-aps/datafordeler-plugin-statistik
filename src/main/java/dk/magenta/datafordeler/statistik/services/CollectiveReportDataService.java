@@ -11,6 +11,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.reportExecution.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -29,13 +30,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-
 
 @RestController
 @RequestMapping("/statistik/collective_report")
@@ -61,6 +59,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
     private Logger log = LogManager.getLogger(CollectiveReportDataService.class);
 
+    private static String reportTemplateLink = "<a>%s</a><br>";
+
+
     /**
      * Calls handleRequest in super with the ID of the report as a parameter
      * @param request
@@ -80,9 +81,8 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         super.handleRequest(request, response, ServiceName.COLLECTIVE);
     }
 
-
-    @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
-    public void geReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @RequestMapping(method = RequestMethod.GET, path = "/reportlist/")
+    public void getReportList(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -90,10 +90,63 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
             Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
             criteria.select(page);
-            criteria.where(builder.and(
-                    builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), request.getParameter("collectionUuid")),
-                    builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
-            ));
+            criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started));
+
+            TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
+            query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+            String reportListResponse = "Started: \n";
+
+            for(ReportAssignment assignment : query.getResultList()) {
+                String element = String.format(reportTemplateLink, assignment.getTemplateName());
+                reportListResponse += element;
+            }
+
+            reportListResponse += "\n\nRunning: \n";
+            criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.running));
+            query = reportProgressSession.createQuery(criteria);
+            query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+            for(ReportAssignment assignment : query.getResultList()) {
+                StringJoiner itemJoiner = new StringJoiner(" ");
+                itemJoiner.add(assignment.getTemplateName())
+                        .add(assignment.getCollectionUuid());
+                reportListResponse += itemJoiner.toString() + "\n";
+            }
+            //TODO: this could probably be done better
+            String listpage = IOUtils.resourceToString("/listServiceForm.html", StandardCharsets.UTF_8);
+
+            String collectionUuid = request.getParameter("collectionUuid");
+            String token = request.getParameter("token");
+            if(token!=null) {
+                String formToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+                collectionUuid += "&token="+formToken;
+            }
+            response.getOutputStream().write((String.format(listpage, reportListResponse, collectionUuid)).getBytes());
+        }
+    }
+
+
+    @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
+    public void getReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+
+            CriteriaBuilder builder = reportProgressSession.getCriteriaBuilder();
+            CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+            Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+            criteria.select(page);
+            String collectionUuid = request.getParameter("collectionUuid");
+            if(collectionUuid!=null) {
+                criteria.where(builder.and(
+                        builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), collectionUuid),
+                        builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
+                ));
+            } else {
+                criteria.where(builder.and(
+                        builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.started)
+                ));
+            }
 
             TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
             query.setHint(QueryHints.HINT_CACHEABLE, true);
@@ -113,7 +166,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(registrationAfter!=null) {
                     paramAppender+="registrationAfter="+registrationAfter+"&";
                 }
-                String collectionUuid = request.getParameter("collectionUuid");
                 if(collectionUuid!=null) {
                     paramAppender+="collectionUuid="+collectionUuid+"&";
                 }
@@ -165,7 +217,8 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             query.setHint(QueryHints.HINT_CACHEABLE, true);
 
             if(query.getResultList().size() > 0) {
-                response.getOutputStream().write(("Reject starting any reports until current reports is done").getBytes());
+                String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+                response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
                 return;
             }
 
@@ -209,7 +262,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         }
 
         String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
-        response.sendRedirect("/statistik/collective_report/reportexecuter/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
+        response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
 
     }
 
