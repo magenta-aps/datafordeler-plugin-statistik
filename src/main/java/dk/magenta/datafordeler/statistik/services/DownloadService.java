@@ -64,9 +64,6 @@ public class DownloadService extends StatisticsService {
                     response.getWriter(), StandardCharsets.UTF_8
             );
         }
-
-
-
         return;
     }
 
