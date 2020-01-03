@@ -5,7 +5,9 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
+import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
+import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
@@ -17,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.jpa.QueryHints;
+import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -88,7 +91,18 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     }
 
     @RequestMapping(method = RequestMethod.GET, path = "/reportlist/")
-    public void getReportList(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void getReportList(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
+
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        String formToken = request.getParameter("token");
+        if (formToken != null) {
+            user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+        }
+        // Check that the user has access to CPR data
+        //DafoUserDetails user = this.getUser(request);
+        LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
+        this.checkAndLogAccess(loggerHelper);
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -147,9 +161,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             String urlAttributesDownload = Optional.ofNullable(Optional.ofNullable(collectionUuidLastRunning).orElse(collectionUuidRunning)).orElse(collectionUuidStarted);
 
             if(token!=null) {
-                String formToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
-                urlAttributesExecute += "&token="+formToken;
-                urlAttributesDownload += "&token="+formToken;
+                String formTokenEncoded = URLEncoder.encode(token, StandardCharsets.UTF_8);
+                urlAttributesExecute += "&token="+formTokenEncoded;
+                urlAttributesDownload += "&token="+formTokenEncoded;
             }
             response.getOutputStream().write((String.format(listpage, reportListResponse, urlAttributesExecute, urlAttributesDownload)).getBytes());
         }
@@ -157,7 +171,18 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
     @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
-    public void getReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void getReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
+
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        String formToken = request.getParameter("token");
+        if (formToken != null) {
+            user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+        }
+        // Check that the user has access to CPR data
+        //DafoUserDetails user = this.getUser(request);
+        LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
+        this.checkAndLogAccess(loggerHelper);
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -189,7 +214,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                     return;
                 }
 
-                String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
+                String formTokenEncoded = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
 
                 String paramAppender = "";
 
@@ -210,7 +235,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                     paramAppender+="reportUuid="+reportUuid+"&";
                 }
 
-                paramAppender+="token="+formToken;
+                paramAppender+="token="+formTokenEncoded;
 
                 response.sendRedirect("/statistik/"+assignment.getTemplateName()+"/?"+paramAppender);
             } else {
@@ -240,7 +265,18 @@ public class CollectiveReportDataService extends PersonStatisticsService {
      * @throws InvalidCertificateException
      */
     @RequestMapping(method = RequestMethod.POST, path = "/")
-    public void handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void handlePost(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
+
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        String formToken = request.getParameter("token");
+        if (formToken != null) {
+            user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+        }
+        // Check that the user has access to CPR data
+        //DafoUserDetails user = this.getUser(request);
+        LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
+        this.checkAndLogAccess(loggerHelper);
 
         String currentcollectionUuid = "";
 
@@ -254,9 +290,19 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
             query.setHint(QueryHints.HINT_CACHEABLE, true);
 
+            String cleanhistory = request.getParameter("cleanhistory");
+            if(Boolean.parseBoolean(cleanhistory)) {
+                String hql = String.format("delete from %s","report_assignment_list");
+                Query deleteQuery = reportProgressSession.createQuery(hql);
+                deleteQuery.executeUpdate();
+                response.getOutputStream().write(("Reports are cleaned").getBytes());
+                return;
+            }
+
+
             if(query.getResultList().size() > 0) {
-                String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
-                response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
+                String formTokenEncoded = URLEncoder.encode(formToken, StandardCharsets.UTF_8);
+                response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formTokenEncoded);
                 return;
             }
 
@@ -319,8 +365,8 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
         }
 
-        String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
-        response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formToken);
+        String formTokenEncoded = URLEncoder.encode(formToken, StandardCharsets.UTF_8);
+        response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formTokenEncoded);
 
     }
 
