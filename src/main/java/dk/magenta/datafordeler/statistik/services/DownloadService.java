@@ -49,10 +49,24 @@ public class DownloadService extends StatisticsService {
     @RequestMapping(method = RequestMethod.GET, path = "/")
     protected void doGet(HttpServletRequest request,
                           HttpServletResponse response) throws IOException {
-        IOUtils.copy(
-                StatisticsService.class.getResourceAsStream("/downloadServiceForm.html"),
-                response.getWriter(), StandardCharsets.UTF_8
-        );
+
+        String formToken = request.getParameter("token");
+        String collectionUuid = request.getParameter("collectionUuid");
+
+        if(formToken!=null && collectionUuid!=null) {
+            IOUtils.copy(
+                    StatisticsService.class.getResourceAsStream("/downloadSimpleServiceForm.html"),
+                    response.getWriter(), StandardCharsets.UTF_8
+            );
+        } else {
+            IOUtils.copy(
+                    StatisticsService.class.getResourceAsStream("/downloadServiceForm.html"),
+                    response.getWriter(), StandardCharsets.UTF_8
+            );
+        }
+
+
+
         return;
     }
 

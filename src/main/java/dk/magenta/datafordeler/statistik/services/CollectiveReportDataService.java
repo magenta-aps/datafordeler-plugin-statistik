@@ -33,6 +33,7 @@ import java.io.IOException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -118,11 +119,12 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             String listpage = IOUtils.resourceToString("/listServiceForm.html", StandardCharsets.UTF_8);
 
             String token = request.getParameter("token");
+            String urlAttributes = collectionUuid;
             if(token!=null) {
                 String formToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
-                collectionUuid += "&token="+formToken;
+                urlAttributes += "&token="+formToken;
             }
-            response.getOutputStream().write((String.format(listpage, reportListResponse, collectionUuid)).getBytes());
+            response.getOutputStream().write((String.format(listpage, reportListResponse, urlAttributes, urlAttributes)).getBytes());
         }
     }
 
@@ -153,6 +155,12 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
             if(query.getResultList().size() > 0) {
                 ReportAssignment assignment = query.getResultList().get(0);
+
+                ReportSyncHandler syncHandler = new ReportSyncHandler(reportProgressSession);
+                if(syncHandler.hasReportsOfStatus(ReportProgressStatus.running)) {
+                    response.getOutputStream().write(("There are allready running reports").getBytes());
+                    return;
+                }
 
                 String formToken = URLEncoder.encode(request.getParameter("token"), StandardCharsets.UTF_8);
 
@@ -229,6 +237,21 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
             String registrationAfter = request.getParameter("registrationAfter");
             String registrationBefore = request.getParameter("registrationBefore");
+            if(registrationAfter==null) {
+                response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                return;
+            }
+            if(registrationBefore==null) {
+                if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.now())) {
+                    response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                    return;
+                }
+            } else {
+                if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.parse(registrationBefore))) {
+                    response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                    return;
+                }
+            }
 
             ReportAssignment birthReport = new ReportAssignment();
             birthReport.setTemplateName(ServiceName.BIRTH.getIdentifier());

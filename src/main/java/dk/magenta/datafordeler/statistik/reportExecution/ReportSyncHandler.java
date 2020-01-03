@@ -67,6 +67,19 @@ public class ReportSyncHandler {
         return query.getResultList().size()>0;
     }
 
+    public boolean hasReportsOfStatus(ReportProgressStatus status) {
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+        Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+        criteria.select(page);
+        criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), status));
+
+        TypedQuery<ReportAssignment> query = session.createQuery(criteria);
+        query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+        return query.getResultList().size()>0;
+    }
+
 
     /**
      * Set a new status to a report, it is invalid to change status on a failed report
