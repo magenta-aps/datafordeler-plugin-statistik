@@ -15,6 +15,7 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.reportExecution.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,10 +35,13 @@ import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -298,6 +302,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 for(ReportAssignment report : existingSubscriptions) {
                     reportProgressSession.delete(report);
                 }
+
+                Files.walk(Paths.get(StatisticsService.PATH_FILE)).forEach(c -> c.toFile().delete());
+
                 reportProgressSession.getTransaction().commit();
                 response.getOutputStream().write(("Reports are cleaned").getBytes());
                 return;
