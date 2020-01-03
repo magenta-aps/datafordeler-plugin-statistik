@@ -3,6 +3,7 @@ package dk.magenta.datafordeler.statistik.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.DatabaseEntry;
+import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
@@ -292,9 +293,12 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
             String cleanhistory = request.getParameter("cleanhistory");
             if(Boolean.parseBoolean(cleanhistory)) {
-                String hql = String.format("delete from %s","report_assignment_list");
-                Query deleteQuery = reportProgressSession.createQuery(hql);
-                deleteQuery.executeUpdate();
+                reportProgressSession.beginTransaction();
+                List<ReportAssignment> existingSubscriptions = QueryManager.getAllItems(reportProgressSession, ReportAssignment.class);
+                for(ReportAssignment report : existingSubscriptions) {
+                    reportProgressSession.delete(report);
+                }
+                reportProgressSession.getTransaction().commit();
                 response.getOutputStream().write(("Reports are cleaned").getBytes());
                 return;
             }
@@ -306,7 +310,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 return;
             }
 
-            reportProgressSession.beginTransaction();
+
 
             String registrationAfter = request.getParameter("registrationAfter");
             String registrationBefore = request.getParameter("registrationBefore");
@@ -327,6 +331,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             }
             String createnew = request.getParameter("createnew");
             if(Boolean.parseBoolean(createnew)) {
+                reportProgressSession.beginTransaction();
 
                 ReportAssignment birthReport = new ReportAssignment();
                 birthReport.setTemplateName(ServiceName.BIRTH.getIdentifier());
