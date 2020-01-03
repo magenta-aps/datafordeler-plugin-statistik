@@ -73,20 +73,21 @@ public abstract class PersonStatisticsService extends StatisticsService {
                 if (outputStream != null) {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
-                        log.info("Done writing persons");
-                        repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
+                        log.info("Done writing personsline");
+
                     });
                 }
             }
 
         } catch (Exception e) {
             log.error("Failed generating report", e);
-            try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
-                ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
-                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.failed);
-            }
+
         } finally {
             log.info("Done writing report");
+            try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
+                ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
+                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
+            }
         }
         return 0;
     }
