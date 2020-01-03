@@ -12,6 +12,7 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.commons.io.IOUtils;
@@ -136,8 +137,8 @@ public abstract class StatisticsService {
 
             String reportUuid = request.getParameter("reportUuid");
             String collectionUuid = request.getParameter("collectionUuid");
+            ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
             if(reportUuid==null) {
-                ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
                 ReportAssignment report = new ReportAssignment();
                 String registrationAfter = request.getParameter("registrationAfter");
                 String registrationBefore = request.getParameter("registrationBefore");
@@ -162,6 +163,7 @@ public abstract class StatisticsService {
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
+                    rps.setReportStatus(reportUuid, ReportProgressStatus.done);
                 }
 
             } else {
