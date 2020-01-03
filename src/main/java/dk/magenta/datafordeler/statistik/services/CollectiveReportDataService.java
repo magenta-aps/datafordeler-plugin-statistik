@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
@@ -33,7 +34,11 @@ import java.io.IOException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -114,7 +119,22 @@ public class CollectiveReportDataService extends PersonStatisticsService {
             for(ReportAssignment assignment : query.getResultList()) {
                 String element = String.format(reportTemplateLink, assignment.getTemplateName(), assignment.getCollectionUuid());
                 reportListResponse += element;
+                collectionUuid = assignment.getCollectionUuid();
             }
+
+            if(collectionUuid==null || collectionUuid.isEmpty()) {
+                reportListResponse += "<br><br>Last done report: <br>";
+                criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_REPORT_STATUS), ReportProgressStatus.done));
+
+                query = reportProgressSession.createQuery(criteria);
+                query.setHint(QueryHints.HINT_CACHEABLE, true);
+                for(ReportAssignment assignment : query.getResultList()) {
+                    String element = String.format(reportTemplateLink, assignment.getTemplateName(), assignment.getCollectionUuid());
+                    reportListResponse += element;
+                    collectionUuid = assignment.getCollectionUuid();
+                }
+            }
+
             //TODO: this could be done much better
             String listpage = IOUtils.resourceToString("/listServiceForm.html", StandardCharsets.UTF_8);
 
