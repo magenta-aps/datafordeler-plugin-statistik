@@ -300,7 +300,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 reportProgressSession.beginTransaction();
                 List<ReportAssignment> existingSubscriptions = QueryManager.getAllItems(reportProgressSession, ReportAssignment.class);
                 for(ReportAssignment report : existingSubscriptions) {
-                    reportProgressSession.delete(report);
+                    report.setReportStatus(ReportProgressStatus.deleted);
                 }
 
                 Files.walk(Paths.get(StatisticsService.PATH_FILE)).forEach(c -> c.toFile().delete());
@@ -319,25 +319,28 @@ public class CollectiveReportDataService extends PersonStatisticsService {
 
 
 
-            String registrationAfter = request.getParameter("registrationAfter");
-            String registrationBefore = request.getParameter("registrationBefore");
-            if(registrationAfter==null) {
-                response.getOutputStream().write(("Reject the interval in reports").getBytes());
-                return;
-            }
-            if(registrationBefore==null) {
-                if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.now())) {
-                    response.getOutputStream().write(("Reject the interval in reports").getBytes());
-                    return;
-                }
-            } else {
-                if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.parse(registrationBefore))) {
-                    response.getOutputStream().write(("Reject the interval in reports").getBytes());
-                    return;
-                }
-            }
+
             String createnew = request.getParameter("createnew");
             if(Boolean.parseBoolean(createnew)) {
+
+                String registrationAfter = request.getParameter("registrationAfter");
+                String registrationBefore = request.getParameter("registrationBefore");
+                if(registrationAfter==null) {
+                    response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                    return;
+                }
+                if(registrationBefore==null) {
+                    if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.now())) {
+                        response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                        return;
+                    }
+                } else {
+                    if(LocalDate.parse(registrationAfter).plusDays(120).isBefore(LocalDate.parse(registrationBefore))) {
+                        response.getOutputStream().write(("Reject the interval in reports").getBytes());
+                        return;
+                    }
+                }
+
                 reportProgressSession.beginTransaction();
 
                 ReportAssignment birthReport = new ReportAssignment();
