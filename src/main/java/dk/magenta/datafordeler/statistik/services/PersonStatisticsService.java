@@ -178,6 +178,39 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
 
+    /**
+     * Find a record which is uncloced in effect, and has a registrationFrom equal to changedToOrIsTime.
+     * If none is found find the record with the newest registrationFrom.
+     * Otherwise return null
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findRegistrationAtMatchingChangedtimePost(Collection<R> records, OffsetDateTime changedToOrIsTime) {
+        R filtered = records.stream().filter(r -> r.getEffectTo()==null && r.getRegistrationFrom().equals(changedToOrIsTime)).findFirst().orElse(null);
+        if(filtered==null) {
+            Comparator regTimeComparator = Comparator.comparing(R::getRegistrationFrom);
+            filtered = (R)records.stream().max(regTimeComparator).orElse(null);
+        }
+        return filtered;
+    }
+
+    /**
+     * Find a record which is uncloced in effect, and has a registrationto equal to changedToOrIsTime.
+     * If none is found find the record with the newest registrationFrom.
+     * Otherwise return null
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findRegistrationAtMatchingChangedtimePre(Collection<R> records, OffsetDateTime changedToOrIsTime) {
+        R filtered = records.stream().filter(r -> r.getEffectTo()==null && (r.getRegistrationTo()==null || r.getRegistrationTo().equals(changedToOrIsTime))).findFirst().orElse(null);
+        if(filtered==null) {
+            Comparator regTimeComparator = Comparator.comparing(R::getRegistrationFrom);
+            filtered = (R)records.stream().max(regTimeComparator).orElse(null);
+        }
+        return filtered;
+    }
 
 
     /**

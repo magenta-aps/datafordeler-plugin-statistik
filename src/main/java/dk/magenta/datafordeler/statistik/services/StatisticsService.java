@@ -211,6 +211,7 @@ public abstract class StatisticsService {
         ADDRESS("address_data"),
         ROAD("road_data"),
         LOCALITY("locality_data"),
+        ADOPTION("adoption_data"),
         COLLECTIVE("collective_data");
 
         private final String identifier;
