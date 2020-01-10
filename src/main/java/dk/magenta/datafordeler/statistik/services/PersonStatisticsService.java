@@ -24,6 +24,7 @@ import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.formula.functions.T;
 import org.hibernate.Session;
 
 import java.io.IOException;
@@ -31,6 +32,8 @@ import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Comparator.naturalOrder;
@@ -204,12 +207,15 @@ public abstract class PersonStatisticsService extends StatisticsService {
      * @return
      */
     public static <R extends CprBitemporalRecord> R findRegistrationAtMatchingChangedtimePre(Collection<R> records, OffsetDateTime changedToOrIsTime) {
-        R filtered = records.stream().filter(r -> r.getEffectTo()==null && (r.getRegistrationTo()==null || r.getRegistrationTo().equals(changedToOrIsTime))).findFirst().orElse(null);
-        if(filtered==null) {
+        R result = null;
+        List<R> filtered = records.stream().filter(r -> r.getEffectTo()==null && r.getRegistrationTo()!=null && r.getRegistrationTo().equals(changedToOrIsTime)).collect(Collectors.toList());
+        if(filtered.size()==0) {
             Comparator regTimeComparator = Comparator.comparing(R::getRegistrationFrom);
-            filtered = (R)records.stream().max(regTimeComparator).orElse(null);
+            result = (R)records.stream().max(regTimeComparator).orElse(null);
+        } else {
+            result = filtered.get(0);
         }
-        return filtered;
+        return result;
     }
 
 
