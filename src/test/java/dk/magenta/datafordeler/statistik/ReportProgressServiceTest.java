@@ -126,13 +126,13 @@ public class ReportProgressServiceTest extends TestBase {
     }
 
 
-    @Test
+    /*@Test
     public void testReportnameValidation() throws IOException {
         Assert.assertTrue(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
         Assert.assertTrue(ReportValidationAndConversion.validateReportName("T_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821c"));
         Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAMEf7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
         Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b32-4590-4e24-9cb1-b01f5bf1821"));
-    }
+    }*/
 
 
 

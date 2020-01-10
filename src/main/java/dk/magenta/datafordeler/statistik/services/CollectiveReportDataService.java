@@ -239,6 +239,10 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 if(reportUuid!=null) {
                     paramAppender+="reportUuid="+reportUuid+"&";
                 }
+                String dafobackendserver = request.getParameter("dafobackendserver");
+                if(dafobackendserver!=null) {
+                    paramAppender+="dafobackendserver="+dafobackendserver+"&";
+                }
 
                 paramAppender+="token="+formTokenEncoded;
 
@@ -284,6 +288,7 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         this.checkAndLogAccess(loggerHelper);
 
         String currentcollectionUuid = "";
+        String dafobackendserver = request.getParameter("dafobackendserver");
 
         try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
 
@@ -310,10 +315,18 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 return;
             }
 
+            String paramAppender = "";
 
             if(query.getResultList().size() > 0) {
                 String formTokenEncoded = URLEncoder.encode(formToken, StandardCharsets.UTF_8);
-                response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formTokenEncoded);
+
+                if(currentcollectionUuid!=null) {
+                    paramAppender+="collectionUuid="+currentcollectionUuid+"&";
+                }
+                if(dafobackendserver!=null) {
+                    paramAppender+="dafobackendserver="+dafobackendserver+"&";
+                }
+                response.sendRedirect("/statistik/collective_report/reportlist/?"+paramAppender+"&token="+formTokenEncoded);
                 return;
             }
 
@@ -381,6 +394,14 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         }
 
         String formTokenEncoded = URLEncoder.encode(formToken, StandardCharsets.UTF_8);
+
+        String paramAppender = "";
+        if(currentcollectionUuid!=null) {
+            paramAppender+="collectionUuid="+currentcollectionUuid+"&";
+        }
+        if(dafobackendserver!=null) {
+            paramAppender+="dafobackendserver="+dafobackendserver+"&";
+        }
         response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formTokenEncoded);
 
     }
