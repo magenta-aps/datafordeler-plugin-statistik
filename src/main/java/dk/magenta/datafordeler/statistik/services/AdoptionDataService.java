@@ -26,6 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,7 +104,7 @@ public class AdoptionDataService extends PersonStatisticsService {
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{"CODE",
                 PNR, BIRTHDAY_YEAR, MOTHER_PREFIX + PNR, FATHER_PREFIX + PNR, "AM_Foer_Pnr", "AF_Foer_Pnr",
-        BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE, FILE_DATE, "AdoptionDto", MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_ABBREVIATION,
+                BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE, FILE_DATE, ADOPTIONDTO, MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_ABBREVIATION,
                 LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, FLOOR_NUMBER, BNR
         });
     }
@@ -145,6 +146,14 @@ public class AdoptionDataService extends PersonStatisticsService {
         return new PersonAdoptionQuery(filter);
     }
 
+    /**
+     * Create formatted adoptioninfo for one adopted child
+     * @param person
+     * @param session
+     * @param lookupService
+     * @param filter
+     * @return
+     */
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
 
@@ -167,7 +176,15 @@ public class AdoptionDataService extends PersonStatisticsService {
         return fullAdoptionResult;
     }
 
-
+    /**
+     * Create one formatted row of data for one adopted child
+     * @param before
+     * @param person
+     * @param session
+     * @param lookupService
+     * @param filter
+     * @return
+     */
     protected Map<String, String> formatPersonByRecord(boolean before, PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
 
         // Map of effectTime to addresses (when address was moved into)
@@ -189,42 +206,50 @@ public class AdoptionDataService extends PersonStatisticsService {
         OffsetDateTime eventtimestamp = eventListAdoption.get(0).getTimestamp();
 
         if(before) {
-            item.put("CODE", "PRE");
+            item.put("CODE", PRE);
             ParentDataRecord prefather = findRegistrationAtMatchingChangedtimePre(fatherList, eventtimestamp);
             ParentDataRecord premother = findRegistrationAtMatchingChangedtimePre(motherList, eventtimestamp);
             if(prefather!=null) {
                 item.put(FATHER_PREFIX + PNR, prefather.getCprNumber());
-                item.put(FILE_DATE, formatTime(prefather.getOriginDate()));
+                item.put("AF_Foer_Pnr", ""+prefather.getAuthority());
             }
             if(premother!=null) {
                 item.put(MOTHER_PREFIX + PNR, premother.getCprNumber());
-                item.put(FILE_DATE, formatTime(premother.getOriginDate()));
+                item.put("AM_Foer_Pnr", ""+premother.getAuthority());
             }
-            item.put("KomKod", ""+findRegistrationAtMatchingChangedtimePre(person.getAddress(), eventtimestamp).getMunicipalityCode());
-
-
-            //item.put("AM_Foer_Pnr", prefather.getCprNumber());
-
-
         } else {
-            item.put("CODE", "POST");
+            item.put("CODE", POST);
             ParentDataRecord postfather = findRegistrationAtMatchingChangedtimePost(fatherList, eventtimestamp);
             ParentDataRecord postmother = findRegistrationAtMatchingChangedtimePost(motherList, eventtimestamp);
             if(postfather!=null) {
                 item.put(FATHER_PREFIX + PNR, postfather.getCprNumber());
-                item.put(FILE_DATE, formatTime(postfather.getOriginDate()));
+                item.put("AF_Foer_Pnr", ""+postfather.getAuthority());
             }
             if(postmother!=null) {
                 item.put(MOTHER_PREFIX + PNR, postmother.getCprNumber());
-                item.put(FILE_DATE, formatTime(postmother.getOriginDate()));
+                item.put("AM_Foer_Pnr", ""+postmother.getAuthority());
             }
-            item.put("KomKod", ""+findRegistrationAtMatchingChangedtimePre(person.getAddress(), eventtimestamp).getMunicipalityCode());
+            item.put(FILE_DATE, postfather!=null ? formatTime(postfather.getOriginDate()) : formatTime(postmother.getOriginDate()));
         }
 
-        item.put(BIRTHDAY_YEAR, Integer.toString(findNewestUnclosed(person.getBirthTime()).getBirthDatetime().getYear()));
-        item.put(BIRTHDAY_YEAR, Integer.toString(findNewestUnclosed(person.getBirthTime()).getBirthDatetime().getYear()));
+
+        LocalDateTime birthDateTime = findNewestUnclosed(person.getBirthTime()).getBirthDatetime();
+        item.put(BIRTHDAY_YEAR, Integer.toString(birthDateTime.getYear()));
         item.put(PROD_DATE, formatTime(eventtimestamp));
-        item.put("AdoptionDto", formatTime(eventtimestamp));
+        item.put(ADOPTIONDTO, formatTime(eventtimestamp));
+
+        CitizenshipDataRecord citizenshipDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getCitizenship(), eventtimestamp);
+        if (citizenshipDataRecord != null) {
+            item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+        }
+
+        //Getinformation about the adopted persons birth
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestUnclosedWithSpecifiedEffect(person.getBirthPlace(), eventtimestamp);
+        if (birthPlaceDataRecord != null) {
+            item.put(BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            item.put(BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
+            item.put(BIRTH_AUTHORITY_CODE_TEXT, Integer.toString(birthPlaceDataRecord.getBirthPlaceCode()));
+        }
 
 
         AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), eventtimestamp);
@@ -260,8 +285,4 @@ public class AdoptionDataService extends PersonStatisticsService {
         return item;
     }
 
-
-    private static <R extends CprBitemporalRecord> R filter(Collection<R> records, Filter filter) {
-        return findMostImportant(filterRecordsByEffect(filterUndoneRecords(records), filter.effectAt));
-    }
 }

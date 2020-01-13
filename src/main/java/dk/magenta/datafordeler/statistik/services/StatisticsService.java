@@ -326,6 +326,8 @@ public abstract class StatisticsService {
     public static final String DESTINATION_BNR = "TilBnr";
     public static final String DESTINATION_COUNTRY_CODE = "TilLand";
 
+    public static final String ADOPTIONDTO = "AdoptionDto";
+
 
     //Column names for parent mother person
     public static final String MOTHER_PREFIX = "M_";
