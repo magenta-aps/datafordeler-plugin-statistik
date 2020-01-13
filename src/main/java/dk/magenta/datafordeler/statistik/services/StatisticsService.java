@@ -327,6 +327,8 @@ public abstract class StatisticsService {
     public static final String DESTINATION_COUNTRY_CODE = "TilLand";
 
     public static final String ADOPTIONDTO = "AdoptionDto";
+    public static final String AM_mynkod = "AM_mynkod";
+    public static final String AF_mynkod = "AF_mynkod";
 
 
     //Column names for parent mother person

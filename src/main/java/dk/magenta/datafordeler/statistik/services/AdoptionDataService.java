@@ -103,7 +103,7 @@ public class AdoptionDataService extends PersonStatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{"CODE",
-                PNR, BIRTHDAY_YEAR, MOTHER_PREFIX + PNR, FATHER_PREFIX + PNR, "AM_Foer_Pnr", "AF_Foer_Pnr",
+                PNR, BIRTHDAY_YEAR, MOTHER_PREFIX + PNR, FATHER_PREFIX + PNR, AM_mynkod, AF_mynkod,
                 BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE, FILE_DATE, ADOPTIONDTO, MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_ABBREVIATION,
                 LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, FLOOR_NUMBER, BNR
         });
@@ -211,11 +211,11 @@ public class AdoptionDataService extends PersonStatisticsService {
             ParentDataRecord premother = findRegistrationAtMatchingChangedtimePre(motherList, eventtimestamp);
             if(prefather!=null) {
                 item.put(FATHER_PREFIX + PNR, prefather.getCprNumber());
-                item.put("AF_Foer_Pnr", ""+prefather.getAuthority());
+                item.put(AF_mynkod, Integer.toString(prefather.getAuthority()));
             }
             if(premother!=null) {
                 item.put(MOTHER_PREFIX + PNR, premother.getCprNumber());
-                item.put("AM_Foer_Pnr", ""+premother.getAuthority());
+                item.put(AM_mynkod, Integer.toString(premother.getAuthority()));
             }
         } else {
             item.put("CODE", POST);
@@ -223,13 +223,15 @@ public class AdoptionDataService extends PersonStatisticsService {
             ParentDataRecord postmother = findRegistrationAtMatchingChangedtimePost(motherList, eventtimestamp);
             if(postfather!=null) {
                 item.put(FATHER_PREFIX + PNR, postfather.getCprNumber());
-                item.put("AF_Foer_Pnr", ""+postfather.getAuthority());
+                item.put(AF_mynkod, Integer.toString(postfather.getAuthority()));
+                item.put(FILE_DATE, formatTime(postfather.getOriginDate()));//This is the same for mother and father record
             }
             if(postmother!=null) {
                 item.put(MOTHER_PREFIX + PNR, postmother.getCprNumber());
-                item.put("AM_Foer_Pnr", ""+postmother.getAuthority());
+                item.put(AM_mynkod, Integer.toString(postmother.getAuthority()));
+                item.put(FILE_DATE, formatTime(postmother.getOriginDate()));//This is the same for mother and father record
             }
-            item.put(FILE_DATE, postfather!=null ? formatTime(postfather.getOriginDate()) : formatTime(postmother.getOriginDate()));
+
         }
 
 
