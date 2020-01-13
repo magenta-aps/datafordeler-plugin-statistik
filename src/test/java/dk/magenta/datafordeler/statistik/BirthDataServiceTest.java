@@ -7,7 +7,6 @@ import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.BirthDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
-import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,9 +23,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.*;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -106,7 +102,6 @@ public class BirthDataServiceTest extends TestBase {
 
         response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
-        //Assert.assertTrue(ReportValidationAndConversion.validateReportName(response.getBody()));
 
         String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.BIRTH.getIdentifier()));
         Assert.assertEquals(1, birthFiles.length);

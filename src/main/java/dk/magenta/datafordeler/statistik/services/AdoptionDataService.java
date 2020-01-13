@@ -148,23 +148,23 @@ public class AdoptionDataService extends PersonStatisticsService {
     @Override
     protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
 
-        List<Map<String, String>> ll = new ArrayList<Map<String, String>>();
+        List<Map<String, String>> fullAdoptionResult = new ArrayList<Map<String, String>>();
 
-        HashMap<String, String> itema = new HashMap<>(this.formatPersonByRecord(false, person, session, lookupService, filter));
-        if (itema.isEmpty()) {
+        HashMap<String, String> preAdoptionLine = new HashMap<>(this.formatPersonByRecord(false, person, session, lookupService, filter));
+        if (preAdoptionLine.isEmpty()) {
             return Collections.emptyList();
         }
-        itema.put(PRE + PNR, person.getPersonnummer());
-        ll.add(itema);
+        preAdoptionLine.put(PRE + PNR, person.getPersonnummer());
+        fullAdoptionResult.add(preAdoptionLine);
 
-        HashMap<String, String> itemb = new HashMap<>(this.formatPersonByRecord(true, person, session, lookupService, filter));
-        if (itemb.isEmpty()) {
+        HashMap<String, String> postAdoptionLine = new HashMap<>(this.formatPersonByRecord(true, person, session, lookupService, filter));
+        if (postAdoptionLine.isEmpty()) {
             return Collections.emptyList();
         }
-        itemb.put(POST + PNR, person.getPersonnummer());
-        ll.add(itemb);
+        postAdoptionLine.put(POST + PNR, person.getPersonnummer());
+        fullAdoptionResult.add(postAdoptionLine);
 
-        return ll;
+        return fullAdoptionResult;
     }
 
 
@@ -172,7 +172,6 @@ public class AdoptionDataService extends PersonStatisticsService {
 
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, CprBitemporalRecord> addresses = new HashMap<>();
-        // Map of effectTime to registrationTime (when this move was first registered)
 
         //Make a list of all adoption-events
         List<PersonEventDataRecord> eventListAdoption = person.getEvent().stream().filter(event -> "A35".equals(event.getEventId())).collect(Collectors.toList());
@@ -187,11 +186,7 @@ public class AdoptionDataService extends PersonStatisticsService {
         }
 
         item.put(PNR, person.getPersonnummer());
-
-        System.out.println(person.getPersonnummer());
-
         OffsetDateTime eventtimestamp = eventListAdoption.get(0).getTimestamp();
-        System.out.println(eventtimestamp);
 
         if(before) {
             item.put("CODE", "PRE");
@@ -261,8 +256,7 @@ public class AdoptionDataService extends PersonStatisticsService {
             }
         }
 
-
-        //replaceMapValues(item, null, "");
+        replaceMapValues(item, null, "");
         return item;
     }
 

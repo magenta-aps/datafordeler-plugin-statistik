@@ -20,6 +20,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,13 +29,11 @@ import org.springframework.util.MultiValueMap;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.zip.ZipFile;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class AddressDataServiceTest extends TestBase {
 
     @Autowired
@@ -69,7 +68,7 @@ public class AddressDataServiceTest extends TestBase {
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/address_data/?showfrontpage=true&registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity("", new HttpHeaders()), String.class);
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/address_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity("", new HttpHeaders()), String.class);
         Assert.assertEquals(InputStreamReader.readInputStream(AddressDataService.class.getResourceAsStream("/addressServiceForm.html")), response.getBody());
 
         MultiValueMap<String,Object> form = new LinkedMultiValueMap<String,Object>();
@@ -84,36 +83,4 @@ public class AddressDataServiceTest extends TestBase {
         );
 
     }
-
-    @Test
-    public void testZip()  {
-
-        try{
-            KeyGenerator keygenerator = KeyGenerator.getInstance("DES");
-            SecretKey myDesKey = keygenerator.generateKey();
-
-            Cipher desCipher;
-            desCipher = Cipher.getInstance("DES");
-
-            byte[] text = "No body can see me.".getBytes("UTF8");
-
-            desCipher.init(Cipher.ENCRYPT_MODE, myDesKey);
-            byte[] textEncrypted = desCipher.doFinal(text);
-
-            String s = new String(textEncrypted);
-            System.out.println(s);
-
-            desCipher.init(Cipher.DECRYPT_MODE, myDesKey);
-            byte[] textDecrypted = desCipher.doFinal(textEncrypted);
-
-            s = new String(textDecrypted);
-            System.out.println(s);
-        }catch(Exception e)
-        {
-            System.out.println("Exception");
-        }
-
-    }
-
-
 }
