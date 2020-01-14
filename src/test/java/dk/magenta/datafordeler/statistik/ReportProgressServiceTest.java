@@ -1,6 +1,5 @@
 package dk.magenta.datafordeler.statistik;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
@@ -10,7 +9,6 @@ import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.services.BirthDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
-import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import org.hibernate.Session;
 import org.hibernate.jpa.QueryHints;
 import org.junit.Assert;
@@ -31,8 +29,6 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -126,16 +122,6 @@ public class ReportProgressServiceTest extends TestBase {
     }
 
 
-    /*@Test
-    public void testReportnameValidation() throws IOException {
-        Assert.assertTrue(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
-        Assert.assertTrue(ReportValidationAndConversion.validateReportName("T_f7dcb5b3-4590-4e24-9cb1-b01f5bf1821c"));
-        Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAMEf7dcb5b3-4590-4e24-9cb1-b01f5bf1821b"));
-        Assert.assertFalse(ReportValidationAndConversion.validateReportName("REPORTNAME_f7dcb5b32-4590-4e24-9cb1-b01f5bf1821"));
-    }*/
-
-
-
     @Test
     public void testRejectSimultaniousGet() throws Exception {
         birthDataService.setWriteToLocalFile(false);
@@ -175,21 +161,9 @@ public class ReportProgressServiceTest extends TestBase {
         testsUtils.applyAccess(testUserDetails);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.POST, new HttpEntity<>("", new HttpHeaders()), String.class);
-
-
-    }
-
-
-    //@Test
-    public void testReportExecute() throws IOException {
-
-        birthDataService.setWriteToLocalFile(true);
-
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/collective_report/startreportsequence/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
-
-
-        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("BIRTH"));
-        Assert.assertEquals(1, birthFiles.length);
+        Assert.assertEquals(409, response.getStatusCodeValue());
 
     }
+
+
 }
