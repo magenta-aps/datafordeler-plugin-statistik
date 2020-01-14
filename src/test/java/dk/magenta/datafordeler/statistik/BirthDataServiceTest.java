@@ -24,9 +24,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.*;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -54,6 +51,7 @@ public class BirthDataServiceTest extends TestBase {
         testsUtils.setPath();
         testsUtils.loadPersonData("bornperson.txt");
         this.loadAllGeoAdress(sessionManager);
+        birthDataService.setUseTimeintervallimit(false);
     }
 
     @After
@@ -104,9 +102,8 @@ public class BirthDataServiceTest extends TestBase {
 
         response = restTemplate.exchange("/statistik/birth_data/?registrationAfter=2000-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
         Assert.assertEquals(200, response.getStatusCodeValue());
-        Assert.assertNull(response.getBody());
 
-        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("birth"));
+        String[] birthFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.BIRTH.getIdentifier()));
         Assert.assertEquals(1, birthFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + birthFiles[0]);
@@ -123,5 +120,6 @@ public class BirthDataServiceTest extends TestBase {
         );
 
     }
+
 
 }

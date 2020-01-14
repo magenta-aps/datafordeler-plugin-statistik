@@ -11,7 +11,6 @@ import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
-import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.BitemporalityComparator;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
@@ -20,6 +19,7 @@ import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.geo.data.locality.GeoLocalityEntity;
+import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,24 +65,6 @@ public class LocalityDataService extends StatisticsService {
 
     private Logger log = LogManager.getLogger(GeoLookupService.class);
 
-    @Override
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        String formToken = request.getParameter("token");
-        if (formToken != null) {
-            return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
-        }
-        return super.getUser(request);
-    }
-
-    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-        try {
-            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-        } catch (AccessDeniedException e) {
-            loggerHelper.info("Access denied: " + e.getMessage());
-            throw (e);
-        }
-    }
-
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
@@ -124,7 +106,7 @@ public class LocalityDataService extends StatisticsService {
         return this.log;
     }
 
-    public int run(Filter filter, OutputStream outputStream) {
+    public int run(Filter filter, OutputStream outputStream, String reportUuid) {
 
         final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
         final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();

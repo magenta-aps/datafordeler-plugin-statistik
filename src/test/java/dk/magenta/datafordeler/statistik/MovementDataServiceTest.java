@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.util.InputStreamReader;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.MovementDataService;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
+import dk.magenta.datafordeler.statistik.utils.ReportValidationAndConversion;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -173,11 +174,10 @@ public class MovementDataServiceTest extends TestBase {
         Assert.assertEquals(400, response.getStatusCodeValue());
 
         response = restTemplate.exchange("/statistik/movement_data/?pnr=0101001234&registrationAfter=2016-01-01", HttpMethod.GET, httpEntity, String.class);
-        Assert.assertNull(response.getBody());
 
         Assert.assertEquals(200, response.getStatusCodeValue());
 
-        String[] movementFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("movement"));
+        String[] movementFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.MOVEMENT.getIdentifier()));
         Assert.assertEquals(1, movementFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + movementFiles[0]);

@@ -19,17 +19,21 @@ import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.formula.functions.T;
 import org.hibernate.Session;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Comparator.naturalOrder;
@@ -46,19 +50,18 @@ public abstract class PersonStatisticsService extends StatisticsService {
 
     protected abstract CprPlugin getCprPlugin();
 
-    protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        return this.getDafoUserManager().getUserFromRequest(request);
-    }
+    public int run(Filter filter, OutputStream outputStream, String reportUuid) {
 
-    public int run(Filter filter, OutputStream outputStream) {
 
-        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
+        try(final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
+            final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
+            final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
 
-        primarySession.setDefaultReadOnly(true);
-        secondarySession.setDefaultReadOnly(true);
+            ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
+            repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.running);
 
-        try {
+            primarySession.setDefaultReadOnly(true);
+            secondarySession.setDefaultReadOnly(true);
             List<PersonRecordQuery> queries = this.getQueryList(filter);
             Stream<Map<String, String>> concatenation = null;
 
@@ -73,16 +76,21 @@ public abstract class PersonStatisticsService extends StatisticsService {
                 if (outputStream != null) {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
+                        log.info("Done writing personsline");
+
                     });
                 }
             }
-            log.info("Done writing persons");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed generating report", e);
+
         } finally {
-            primarySession.close();
-            secondarySession.close();
+            log.info("Done writing report");
+            try(final Session repSyncSession = this.getSessionManager().getSessionFactory().openSession();) {
+                ReportSyncHandler repSyncHandler = new ReportSyncHandler(repSyncSession);
+                repSyncHandler.setReportStatus(reportUuid, ReportProgressStatus.done);
+            }
         }
         return 0;
     }
@@ -112,17 +120,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
                     return output.stream();
                 }
         );
-    }
-
-    @Override
-    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-        try {
-            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-            loggerHelper.getUser().checkHasSystemRole(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
-        } catch (AccessDeniedException e) {
-            loggerHelper.info("Access denied: " + e.getMessage());
-            throw (e);
-        }
     }
 
     protected void applyAreaRestrictionsToQuery(PersonRecordQuery query, DafoUserDetails user) throws InvalidClientInputException {
@@ -173,6 +170,42 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
 
+    /**
+     * Find a record which is uncloced in effect, and has a registrationFrom equal to changedToOrIsTime.
+     * If none is found find the record with the newest registrationFrom.
+     * Otherwise return null
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findRegistrationAtMatchingChangedtimePost(Collection<R> records, OffsetDateTime changedToOrIsTime) {
+        R filtered = records.stream().filter(r -> r.getEffectTo()==null && r.getRegistrationFrom().equals(changedToOrIsTime)).findFirst().orElse(null);
+        if(filtered==null) {
+            Comparator regTimeComparator = Comparator.comparing(R::getRegistrationFrom);
+            filtered = (R)records.stream().max(regTimeComparator).orElse(null);
+        }
+        return filtered;
+    }
+
+    /**
+     * Find a record which is uncloced in effect, and has a registrationto equal to changedToOrIsTime.
+     * If none is found find the record with the newest registrationFrom.
+     * Otherwise return null
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findRegistrationAtMatchingChangedtimePre(Collection<R> records, OffsetDateTime changedToOrIsTime) {
+        R result = null;
+        List<R> filtered = records.stream().filter(r -> r.getEffectTo()==null && r.getRegistrationTo()!=null && r.getRegistrationTo().equals(changedToOrIsTime)).collect(Collectors.toList());
+        if(filtered.size()==0) {
+            Comparator regTimeComparator = Comparator.comparing(R::getRegistrationFrom);
+            result = (R)records.stream().max(regTimeComparator).orElse(null);
+        } else {
+            result = filtered.get(0);
+        }
+        return result;
+    }
 
 
     /**

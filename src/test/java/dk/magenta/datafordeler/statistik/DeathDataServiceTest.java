@@ -60,6 +60,7 @@ public class DeathDataServiceTest extends TestBase {
         testsUtils.setPath();
         testsUtils.loadPersonData("deadperson.txt");
         this.loadAllGeoAdress(sessionManager);
+        deathDataService.setUseTimeintervallimit(false);
     }
 
     @After
@@ -106,9 +107,8 @@ public class DeathDataServiceTest extends TestBase {
         response = restTemplate.exchange("/statistik/death_data/?registrationAfter=2017-01-01", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
 
         Assert.assertEquals(200, response.getStatusCodeValue());
-        Assert.assertNull(response.getBody());
 
-        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith("death"));
+        String[] deathFiles = new File(StatisticsService.PATH_FILE).list((dir, name) -> name.startsWith(StatisticsService.ServiceName.DEATH.getIdentifier()));
         Assert.assertEquals(1, deathFiles.length);
 
         FileInputStream fileInputStream = new FileInputStream(StatisticsService.PATH_FILE + File.separator + deathFiles[0]);
