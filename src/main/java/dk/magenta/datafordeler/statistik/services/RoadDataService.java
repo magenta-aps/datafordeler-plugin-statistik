@@ -16,6 +16,7 @@ import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressEntity;
 import dk.magenta.datafordeler.geo.data.accessaddress.AccessAddressRoadRecord;
 import dk.magenta.datafordeler.geo.data.locality.GeoLocalityEntity;
 import dk.magenta.datafordeler.geo.data.road.GeoRoadEntity;
+import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,15 +58,6 @@ public class RoadDataService extends StatisticsService {
 
 
     private Logger log = LogManager.getLogger(RoadDataService.class);
-
-    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
-        try {
-            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
-        } catch (AccessDeniedException e) {
-            loggerHelper.info("Access denied: " + e.getMessage());
-            throw (e);
-        }
-    }
 
     @RequestMapping(method = RequestMethod.POST, path = "/")
     public void handlePost(HttpServletRequest request, HttpServletResponse response)

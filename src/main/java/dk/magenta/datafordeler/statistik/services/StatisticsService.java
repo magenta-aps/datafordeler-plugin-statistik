@@ -11,6 +11,8 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
 import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
@@ -21,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +46,9 @@ public abstract class StatisticsService {
     public static final ZoneId cprDataOffset = ZoneId.of("Europe/Copenhagen");
 
     public static String PATH_FILE = null;
+
+    @Value("${dafo.statistics.enabled}")
+    protected boolean statisticsEnabled = false;
 
     @Autowired
     SessionManager sessionManager;
@@ -452,7 +458,18 @@ public abstract class StatisticsService {
         return Integer.toString(value);
     }
 
-    protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
+    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
+        if(!statisticsEnabled) {
+            throw new AccessDeniedException("Statistics is disabled on the server");
+        }
+        try {
+            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
+            loggerHelper.getUser().checkHasSystemRole(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        } catch (AccessDeniedException e) {
+            loggerHelper.info("Access denied: " + e.getMessage());
+            throw (e);
+        }
+    }
 
     private static ZoneId timezone = ZoneId.systemDefault();
 

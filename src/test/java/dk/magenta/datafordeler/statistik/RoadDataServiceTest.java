@@ -61,6 +61,7 @@ public class RoadDataServiceTest {
 
         testUserDetails = new TestUserDetails();
         testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
         testsUtils.applyAccess(testUserDetails);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/road_data/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
