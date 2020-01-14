@@ -181,6 +181,7 @@ public abstract class StatisticsService {
     public static final String STATUS_CODE = "Status";
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
+    public static final String EVENT_NAME = "Event";
     public static final String CIVIL_STATUS_DATE = "CivDto";
     public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
