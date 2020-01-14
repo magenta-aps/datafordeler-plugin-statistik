@@ -8,11 +8,11 @@ import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonCivilStatusQuery;
 import dk.magenta.datafordeler.statistik.utils.CivilStatusFilter;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.Lookup;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -26,10 +26,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 
-
+/**
+ * Make a report of changes in civil-state of persons in Greenland
+ */
 @RestController
 @RequestMapping("/statistik/civilstate_data")
 public class CivilStatusDataService extends PersonStatisticsService {
@@ -62,7 +65,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     @Override
     protected List<String> getColumnNames() {
         return Arrays.asList(new String[]{
-                CIVIL_STATUS, CIVIL_STATUS_DATE, CITIZENSHIP_CODE, PROD_DATE, PNR, SPOUSE_PNR, "authority", MUNICIPALITY_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, BIRTH_AUTHORITY_CODE_TEXT,
+                CIVIL_STATUS, CIVIL_STATUS_DATE, CITIZENSHIP_CODE, PROD_DATE, PNR, SPOUSE_PNR, AUTHORITY_CODE_TEXT, MUNICIPALITY_CODE, BIRTH_AUTHORITY, BIRTH_AUTHORITY_TEXT, BIRTH_AUTHORITY_CODE_TEXT,
                 LOCALITY_NAME, LOCALITY_ABBREVIATION, LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, DOOR_NUMBER, BNR
 
         });
@@ -109,7 +112,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         List<Map<String, String>> itemMap = this.formatPersonByRecord(person, session, lookupService, (CivilStatusFilter) filter);
         if (itemMap == null || itemMap.isEmpty()) {
             return Collections.emptyList();
@@ -117,7 +120,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
         return itemMap;
     }
 
-    protected List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, CivilStatusFilter filter) {
+    protected List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, CivilStatusFilter filter) {
 
         List<Map<String, String>> itemMap = new ArrayList<Map<String, String>>();
 
@@ -128,22 +131,41 @@ public class CivilStatusDataService extends PersonStatisticsService {
         String birthAuthorityText;
         String birthAuthorityCode;
 
+        //Just get the first registration
         BirthPlaceDataRecord birthPlaceDataRecord = person.getBirthPlace().iterator().next();
         birthAuthorityId = Integer.toString(birthPlaceDataRecord.getAuthority());
         birthAuthorityText = birthPlaceDataRecord.getBirthPlaceName();
         birthAuthorityCode = Integer.toString(birthPlaceDataRecord.getBirthPlaceCode());
 
-        Set<CivilStatusDataRecord> civilStatusses = null;
+        Set<CivilStatusDataRecord> civilStatusCollection = null;
         if (filter.getCivilStatus() != null || searchTime != null) {
-            civilStatusses = person.getCivilstatus().stream().filter(r -> (filter.getCivilStatus()== null || filter.getCivilStatus().equals(r.getCivilStatus())) &&
-                    r.getBitemporality().effectFrom!=null && r.getBitemporality().effectFrom.isAfter(searchTime)
+            civilStatusCollection = person.getCivilstatus().stream().filter(r -> (filter.getCivilStatus()== null || filter.getCivilStatus().equals(r.getCivilStatus())) &&
+                    !r.isHistoric() && r.getBitemporality().registrationFrom!=null && r.getBitemporality().registrationFrom.isAfter(searchTime)
             ).collect(toSet());
         } else {
-            civilStatusses = person.getCivilstatus();
+            civilStatusCollection = person.getCivilstatus();
         }
 
-        for (CivilStatusDataRecord civilStatusDataRecord : civilStatusses) {
+        //Make a list of all civil-state-changes
+        List<PersonEventDataRecord> eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
+                "A20".equals(event.getEventId()) ||  "A20".equals(event.getEventId()) ||
+                "A21".equals(event.getEventId()) ||  "A23".equals(event.getEventId())).collect(Collectors.toList());
+
+
+        // A19 - vielse
+        // A20 - skilsmisse
+        // A21 doed
+        // A23 reg part
+        //Filter based on events
+        List<CivilStatusDataRecord> filteredList = civilStatusCollection.stream().filter(empl -> eventListCivilState.stream().anyMatch(dept -> empl.getRegistrationFrom().equals(dept.getTimestamp()))).collect(Collectors.toList());
+
+        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filteredList)) {
             mariageEffectTime = civilStatusDataRecord.getEffectFrom();
+
+            //If this addressregistration has a sameas, it mean that is is just a close and reopen based on new timeintervals
+            if (civilStatusDataRecord.getSameAs() != null) {
+                continue;
+            }
 
             HashMap<String, String> item = new HashMap<>();
             item.put(PNR, person.getPersonnummer());
@@ -152,7 +174,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
 
             item.put(SPOUSE_PNR, civilStatusDataRecord.getSpouseCpr());
-            item.put("authority", Integer.toString(civilStatusDataRecord.getAuthority()));
+            item.put(AUTHORITY_CODE_TEXT, Integer.toString(civilStatusDataRecord.getAuthority()));
 
             item.put(BIRTH_AUTHORITY, birthAuthorityId);
             item.put(BIRTH_AUTHORITY_TEXT, birthAuthorityText);
@@ -178,20 +200,20 @@ public class CivilStatusDataService extends PersonStatisticsService {
                 item.put(FLOOR_NUMBER, addressDataRecord.getFloor());
                 item.put(DOOR_NUMBER, addressDataRecord.getDoor());
                 item.put(BNR, formatBnr(addressDataRecord.getBuildingNumber()));
-                Lookup lookup = lookupService.doLookup(
+                GeoLookupDTO lookup = lookupService.doLookup(
                         addressDataRecord.getMunicipalityCode(),
                         addressDataRecord.getRoadCode(),
                         addressDataRecord.getHouseNumber()
                 );
                 if (lookup != null) {
-                    if (lookup.localityName != null) {
-                        item.put(LOCALITY_NAME, lookup.localityName);
+                    if (lookup.getLocalityName() != null) {
+                        item.put(LOCALITY_NAME, lookup.getLocalityName());
                     }
-                    if (lookup.localityAbbrev != null) {
-                        item.put(LOCALITY_ABBREVIATION, lookup.localityAbbrev);
+                    if (lookup.getLocalityAbbrev() != null) {
+                        item.put(LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
                     }
-                    if (lookup.localityCode != 0) {
-                        item.put(LOCALITY_CODE, formatLocalityCode(lookup.localityCode));
+                    if (lookup.getLocalityCode() != null) {
+                        item.put(LOCALITY_CODE, lookup.getLocalityCode());
                     }
                 }
             }

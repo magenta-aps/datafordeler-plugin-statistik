@@ -1,0 +1,35 @@
+{
+  "displayFieldName": "",
+  "fieldAliases": {
+    "OBJECTID": "OBJECTID",
+    "Postdistri": "Postdistri",
+    "Postnummer": "Postnummer"
+  },
+  "fields": [
+    {
+      "name": "OBJECTID",
+      "type": "esriFieldTypeOID",
+      "alias": "OBJECTID"
+    },
+    {
+      "name": "Postdistri",
+      "type": "esriFieldTypeString",
+      "alias": "Postdistri",
+      "length": 50
+    },
+    {
+      "name": "Postnummer",
+      "type": "esriFieldTypeInteger",
+      "alias": "Postnummer"
+    }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 2,
+        "Postdistri": "Nuuk",
+        "Postnummer": 3900
+      }
+    }
+  ]
+}

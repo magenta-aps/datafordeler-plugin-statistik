@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.RoadDataService;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = Application.class)
@@ -41,12 +44,12 @@ public class RoadDataServiceTest {
     TestUserDetails testUserDetails;
 
     //WE have no testdata and this is not considered ar real unittest
-    //@Before
+    @Before
     public void initialize() throws Exception {
         testsUtils.setPath();
         testsUtils.loadGeoLocalityData("Lokalitet_test.json");
         testsUtils.loadGeoRoadData("Vejmidte_test.json");
-        testsUtils.loadAccessLocalityData("Adgangsadresse_test.json");
+        testsUtils.loadAccessLocalityData("Adgangsadresse_test.json");//HER
         testsUtils.loadPostalLocalityData("Postnummer_test.json");
 
     }
@@ -67,7 +70,18 @@ public class RoadDataServiceTest {
         MultiValueMap<String,Object> form = new LinkedMultiValueMap<String,Object>();
         form.add("file", new InputStreamResource(RoadDataServiceTest.class.getResourceAsStream("/addressInput.csv")));
 
-        ResponseEntity<String> response = restTemplate.exchange("/statistik/road_data/", HttpMethod.POST, new HttpEntity(form, new HttpHeaders()), String.class);
+
+        ResponseEntity<String> response = restTemplate.exchange("/statistik/road_data/", HttpMethod.GET, new HttpEntity(form, new HttpHeaders()), String.class);
+        Assert.assertEquals(200, response.getStatusCodeValue());
+        assertNotNull("Response contains a body", response);
+        String expected = "\"KomKod\";\"LokKode\";\"VejKod\";\"VejNavn\";\"Bygde\";\"Postnr\";\"Void\"\n" +
+                "\"960\";\"1700\";\"257\";\"Qaanaaq\";\"Qaanaaq\";\"3971\";" +
+                "\"956\";\"0600\";\"254\";\"Qarsaalik\";\"Nuuk\";\"3900\";";;
+
+        Assert.assertEquals(
+                testUtil.csvToJsonString(expected),
+                testUtil.csvToJsonString(response.getBody().trim())
+        );
 
         System.out.println(response.toString());
 

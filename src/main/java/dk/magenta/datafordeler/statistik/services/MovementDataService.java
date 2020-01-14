@@ -5,17 +5,16 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
-import dk.magenta.datafordeler.core.util.Bitemporality;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
 import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
+import dk.magenta.datafordeler.geo.GeoLookupDTO;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.queries.PersonMoveQuery;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.Lookup;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -29,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*Created by Efrin 06-04-2018*/
 
@@ -108,14 +108,18 @@ public class MovementDataService extends PersonStatisticsService {
 
 
     @Override
-    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    protected List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         return this.formatPersonByRecord(person, session, lookupService, filter);
     }
 
-    public List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, LookupService lookupService, Filter filter) {
+    public List<Map<String, String>> formatPersonByRecord(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter) {
         // Map of effectTime to addresses (when address was moved into)
         HashMap<OffsetDateTime, CprBitemporalRecord> addresses = new HashMap<>();
         // Map of effectTime to registrationTime (when this move was first registered)
+
+        //Make a list of all moving-events
+        List<PersonEventDataRecord> eventListMove = person.getEvent().stream().filter(event -> "A01".equals(event.getEventId()) ||
+                "A05".equals(event.getEventId()) || "A06".equals(event.getEventId())).collect(Collectors.toList());
 
         for (AddressDataRecord addressDataRecord : sortRecords(person.getAddress())) {
             OffsetDateTime effectDate = addressDataRecord.getEffectFrom();
@@ -128,6 +132,11 @@ public class MovementDataService extends PersonStatisticsService {
             }
             // Corrected records will be represented by their correctors
             if (addressDataRecord.getCorrectors().size() > 0) {
+                continue;
+            }
+
+            //If this addressregistration has a sameas, it mean that is is just a close and reopen based on new timeintervals
+            if (addressDataRecord.getSameAs() != null) {
                 continue;
             }
 
@@ -173,31 +182,15 @@ public class MovementDataService extends PersonStatisticsService {
             CprBitemporalRecord c = (CprBitemporalRecord) currentAddress.getCorrectionof();
             if (c != null) {
                 regFrom = c.getRegistrationFrom();
-            }/* else if (!currentAddress.getCorrectors().isEmpty()) {
-                continue;
-            }*/
-            boolean filtered = (current != null && currentAddress.getRegistrationFrom() != null) &&
-                    (filter.after == null || !current.isBefore(filter.after)) &&
-                    (filter.before == null || !current.isAfter(filter.before)) &&
-                    (filter.registrationAfter == null || !regFrom.isBefore(filter.registrationAfter)) &&
-                    (filter.registrationBefore == null || !regFrom.isAfter(filter.registrationBefore)) &&
-                    (filter.originAfter == null || !currentAddress.getOriginDate().isBefore(filter.originAfter)) &&
-                    (filter.originBefore == null || !currentAddress.getOriginDate().isAfter(filter.originBefore));
-
-            Bitemporality bitemporality = new Bitemporality(
-                    regFrom,
-                    currentAddress.getBitemporality().registrationTo,
-                    currentAddress.getBitemporality().effectFrom,
-                    currentAddress.getBitemporality().effectTo
-            );
-
+            }
+            final OffsetDateTime firstRegFrom = regFrom;
 
             if (
                     (current != null && currentAddress.getRegistrationFrom() != null) &&
                             (filter.after == null || !current.isBefore(filter.after)) &&
                             (filter.before == null || !current.isAfter(filter.before)) &&
-                            (filter.registrationAfter == null || !regFrom.isBefore(filter.registrationAfter)) &&
-                            (filter.registrationBefore == null || !regFrom.isAfter(filter.registrationBefore)) &&
+                            (filter.registrationAfter == null || !firstRegFrom.isBefore(filter.registrationAfter)) &&
+                            (filter.registrationBefore == null || !firstRegFrom.isAfter(filter.registrationBefore)) &&
                             (filter.originAfter == null || !currentAddress.getOriginDate().isBefore(filter.originAfter)) &&
                             (filter.originBefore == null || !currentAddress.getOriginDate().isAfter(filter.originBefore))
                     ) {
@@ -218,8 +211,8 @@ public class MovementDataService extends PersonStatisticsService {
                         item.put(ORIGIN_FLOOR, formatFloor(previousDomesticAddress.getFloor()));
                         item.put(ORIGIN_DOOR_NUMBER, formatDoor(previousDomesticAddress.getDoor()));
                         item.put(ORIGIN_BNR, formatBnr(previousDomesticAddress.getBuildingNumber()));
-                        Lookup lookup = lookupService.doLookup(previousDomesticAddress.getMunicipalityCode(), previousDomesticAddress.getRoadCode());
-                        item.put(ORIGIN_LOCALITY_NAME, lookup.localityAbbrev);
+                        GeoLookupDTO lookup = lookupService.doLookup(previousDomesticAddress.getMunicipalityCode(), previousDomesticAddress.getRoadCode());
+                        item.put(ORIGIN_LOCALITY_NAME, lookup.getLocalityAbbrev());
                     }
                     if (previousAddress instanceof ForeignAddressEmigrationDataRecord) {
                         ForeignAddressEmigrationDataRecord previousMigration = (ForeignAddressEmigrationDataRecord) previousAddress;
@@ -236,11 +229,11 @@ public class MovementDataService extends PersonStatisticsService {
                         item.put(DESTINATION_DOOR_NUMBER, formatDoor(currentDomesticAddress.getDoor()));
                         item.put(DESTINATION_BNR, formatBnr(currentDomesticAddress.getBuildingNumber()));
                         item.put(MOVE_DATE, formatTime(current));
-                        item.put(PROD_DATE, formatTime(regFrom));
+                        item.put(PROD_DATE, formatTime(firstRegFrom));
                         item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
 
-                        Lookup lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
-                        item.put(DESTINATION_LOCALITY_NAME, lookup.localityAbbrev);
+                        GeoLookupDTO lookup = lookupService.doLookup(currentDomesticAddress.getMunicipalityCode(), currentDomesticAddress.getRoadCode());
+                        item.put(DESTINATION_LOCALITY_NAME, lookup.getLocalityAbbrev());
                     }
                     if (currentAddress instanceof ForeignAddressEmigrationDataRecord) {
                         ForeignAddressEmigrationDataRecord currentMigration = (ForeignAddressEmigrationDataRecord) currentAddress;
@@ -250,7 +243,11 @@ public class MovementDataService extends PersonStatisticsService {
                         item.put(FILE_DATE, formatTime(currentAddress.getOriginDate()));
                     }
                 }
-                moves.put(current, item);
+
+                //Make sure to only add the moving to the report if there is recieved a moving event at the same time
+                if(eventListMove.stream().anyMatch(event -> event.getTimestamp().equals(firstRegFrom))) {
+                    moves.put(current, item);
+                }
             }
         }
 

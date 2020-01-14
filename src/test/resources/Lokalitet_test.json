@@ -1,0 +1,107 @@
+{
+  "type" : "FeatureCollection",
+  "crs" : {
+    "type" : "name",
+    "properties" : {
+      "name" : "EPSG:4326"
+    }
+  },
+  "features" : [
+    {
+      "type" : "Feature",
+      "id" : 2,
+      "geometry" : {
+        "type" : "Polygon",
+        "coordinates" : [
+          [
+            [
+              -69.441359711999951,
+              77.456893151000031
+            ],
+            [
+              -69.144372488999977,
+              77.457215064000081
+            ],
+            [
+              -69.144830534999983,
+              77.49753886700006
+            ],
+            [
+              -69.442759948999935,
+              77.49721588400007
+            ],
+            [
+              -69.441359711999951,
+              77.456893151000031
+            ]
+          ]
+        ]
+      },
+      "properties" : {
+        "OBJECTID" : 2,
+        "Lokalitetsnavn" : "Qaanaaq",
+        "Creator" : "GREENADMIN",
+        "CreationDate" : 1533816004000,
+        "Editor" : "COREDATA",
+        "EditDate" : 1539673013000,
+        "Lokalitetskode" : "1700",
+        "Kommunekode" : 960,
+        "Lokalitetsnavn_forkortelse" : "QNQ",
+        "Location_type" : 1,
+        "GlobalID" : "{A5877CD5-5BFA-4171-8581-2A1FD0311F85}",
+        "LokalitetSumiffik" : "{62F2DC21-82B1-4633-92FE-64C9C759C7A5}",
+        "Lokalitetvejkode" : 257,
+        "SHAPE.STArea()" : 0.011994791095276014,
+        "SHAPE.STLength()" : 0.67559042878278652
+      }
+    },
+    {
+      "type" : "Feature",
+      "id" : 1,
+      "geometry" : {
+        "type" : "Polygon",
+        "coordinates" : [
+          [
+            [
+              -69.855847572999949,
+              76.747897717000058
+            ],
+            [
+              -69.824588017999986,
+              76.748000045000083
+            ],
+            [
+              -69.825135809999949,
+              76.756960489000051
+            ],
+            [
+              -69.856416124999953,
+              76.756858088000058
+            ],
+            [
+              -69.855847572999949,
+              76.747897717000058
+            ]
+          ]
+        ]
+      },
+      "properties" : {
+        "OBJECTID" : 1,
+        "Lokalitetsnavn" : "Moriusaq",
+        "Creator" : "GREENADMIN",
+        "CreationDate" : 1533816004000,
+        "Editor" : "COREDATA",
+        "EditDate" : 1539673013000,
+        "Lokalitetskode" : "1706",
+        "Kommunekode" : 960,
+        "Lokalitetsnavn_forkortelse" : "MOR",
+        "Location_type" : 4,
+        "GlobalID" : "{99247EAB-56BE-40A7-A320-59B78C4BC2CC}",
+        "LokalitetSumiffik" : "{8B2DDC7D-396E-43FF-A5AD-CCDAA2489A6C}",
+        "Lokalitetvejkode" : 0,
+        "SHAPE.STArea()" : 0.00028024849825669662,
+        "SHAPE.STLength()" : 0.080495768682961849
+      }
+    }
+  ]
+}

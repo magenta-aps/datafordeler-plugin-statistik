@@ -17,9 +17,9 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.CprBitemporality;
 import dk.magenta.datafordeler.cpr.records.CprNontemporalRecord;
+import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -63,7 +63,6 @@ public abstract class PersonStatisticsService extends StatisticsService {
             Stream<Map<String, String>> concatenation = null;
 
             for (PersonRecordQuery query : queries) {
-                //this.applyAreaRestrictionsToQuery(query, user);
                 Stream<PersonEntity> personEntities = QueryManager.getAllEntitiesAsStream(primarySession, query, PersonEntity.class);
                 Stream<Map<String, String>> formatted = this.formatItems(primarySession, personEntities, secondarySession, filter);
                 concatenation = (concatenation == null) ? formatted : Stream.concat(concatenation, formatted);
@@ -71,16 +70,9 @@ public abstract class PersonStatisticsService extends StatisticsService {
             log.info("Start writing persons");
 
             if (concatenation != null) {
-                //final Counter counter = new Counter();
                 if (outputStream != null) {
                     log.info("Progress writing persons");
                     return this.writeItems(concatenation.iterator(), outputStream, item -> {
-                        /*counter.count++;
-                        if (counter.count > 100) {
-                            primarySession.clear();
-                            secondarySession.clear();
-                            counter.count = 0;
-                        }*/
                     });
                 }
             }
@@ -95,14 +87,10 @@ public abstract class PersonStatisticsService extends StatisticsService {
         return 0;
     }
 
-    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, LookupService lookupService, Filter filter);
+    protected abstract List<Map<String, String>> formatPerson(PersonEntity person, Session session, GeoLookupService lookupService, Filter filter);
 
     protected PersonRecordQuery getQuery(Filter filter) {
         PersonRecordQuery personQuery = new PersonRecordQuery();
-        /*if (filter.livingInGreenlandAtDate != null) {
-            personQuery.setEffectFrom(filter.livingInGreenlandAtDate);
-            personQuery.setEffectTo(filter.livingInGreenlandAtDate);
-        }*/
         if (filter.onlyPnr != null) {
             for (String pnr : filter.onlyPnr) {
                 personQuery.addPersonnummer(pnr);
@@ -116,7 +104,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     public Stream<Map<String, String>> formatItems(Session personSession, Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
-        LookupService lookupService = new LookupService(lookupSession);
+        GeoLookupService lookupService = new GeoLookupService(lookupSession);
         return personEntities.flatMap(
                 personEntity -> {
                     List<Map<String, String>> output = formatPerson(personEntity, lookupSession, lookupService, filter);
@@ -207,6 +195,18 @@ public abstract class PersonStatisticsService extends StatisticsService {
      */
     public static <R extends CprBitemporalRecord> R findNewestUnclosed(Collection<R> records) {
         return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null).max(bitemporalComparator).orElse(null);
+    }
+
+    /**
+     * Find the newest unclosed record from the list of records
+     * Records with a missing OriginDate is also removed since they are considered invalid
+     * @param records
+     * @param <R>
+     * @return
+     */
+    public static <R extends CprBitemporalRecord> R findNewestUnclosedOnRegistartionAndEffect(Collection<R> records) {
+        return (R) records.stream().filter(r -> r.getBitemporality().registrationTo == null &&
+                r.getBitemporality().effectTo == null).max(bitemporalComparator).orElse(null);
     }
 
     /**

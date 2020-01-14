@@ -12,7 +12,6 @@ import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import dk.magenta.datafordeler.statistik.utils.LookupService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
@@ -174,6 +173,7 @@ public abstract class StatisticsService {
     public static final String BIRTH_AUTHORITY = "FoedMynKod";
     public static final String BIRTH_AUTHORITY_CODE_TEXT = "FoedMynKodTxt";
     public static final String BIRTH_AUTHORITY_TEXT = "FoedMynTxt";
+    public static final String AUTHORITY_CODE_TEXT = "MynKodTxt";
     public static final String FIRST_NAME = "Fornavn";
     public static final String MIDDLE_NAME = "Mellemnavn";
     public static final String LAST_NAME = "Efternavn";
@@ -320,6 +320,10 @@ public abstract class StatisticsService {
 
     protected static String formatLocalityCode(int localityCode) {
         if (localityCode == 0) return "";
+        return String.format("%04d", localityCode);
+    }
+
+    protected static String formatLocalityCode(String localityCode) {
         return String.format("%04d", localityCode);
     }
 
