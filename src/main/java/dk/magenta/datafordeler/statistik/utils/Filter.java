@@ -3,6 +3,7 @@ package dk.magenta.datafordeler.statistik.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dk.magenta.datafordeler.core.exception.InvalidDataInputException;
 import dk.magenta.datafordeler.core.fapi.Query;
 import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.statistik.services.StatisticsService;
@@ -36,11 +37,13 @@ public class Filter {
 
     public List<String> onlyPnr;
 
+    private boolean timeintervallimit = true;
+
     public Filter() {
     }
 
 
-    public Filter(HttpServletRequest request) {
+    public Filter(HttpServletRequest request, boolean timeintervallimit) throws Exception {
         this.registrationAfter = Query.parseDateTime(request.getParameter(StatisticsService.REGISTRATION_AFTER));
         this.registrationBefore = Query.parseDateTime(request.getParameter(StatisticsService.REGISTRATION_BEFORE));
         this.registrationAt = Query.parseDateTime(request.getParameter(StatisticsService.REGISTRATION_AT));
@@ -49,9 +52,20 @@ public class Filter {
         this.after = Query.parseDateTime(request.getParameter(StatisticsService.AFTER_DATE_PARAMETER));
         this.originAfter = parseLocaldate(request.getParameter(StatisticsService.ORIGIN_AFTER));
         this.originBefore = parseLocaldate(request.getParameter(StatisticsService.ORIGIN_BEFORE));
+        this.timeintervallimit =timeintervallimit;
         String[] pnr = request.getParameterValues("pnr");
         if (pnr != null && pnr.length > 0) {
             this.onlyPnr = Arrays.asList(pnr);
+        }
+        OffsetDateTime beforeValidationDate = this.registrationBefore;
+        if(beforeValidationDate==null) {
+            beforeValidationDate = OffsetDateTime.now();
+        }
+
+        if((this.registrationAfter!=null &&this.registrationAfter.plusDays(120).isBefore(beforeValidationDate) &&
+                this.onlyPnr==null  && this.effectAt==null)
+                && this.timeintervallimit) {
+            throw new Exception("Invalid filters in request");
         }
     }
 

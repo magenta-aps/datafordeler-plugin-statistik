@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -51,11 +52,47 @@ public class DeathDataService extends PersonStatisticsService {
 
     private Logger log = LogManager.getLogger(DeathDataService.class.getCanonicalName());
 
+    @PostConstruct
+    public void setUseTimeintervallimit() {
+        super.setUseTimeintervallimit(false);
+    }
 
+
+    /**
+     * Calls handlerequest in super with the ID of the report as a parameter
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
-        log.info("Service called");
+        super.handleRequest(request, response, ServiceName.DEATH);
+    }
+
+    /**
+     * Post is used for starting the generation of a report
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/")
+    public void handlePost(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.DEATH);
     }
 
