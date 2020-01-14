@@ -2,6 +2,7 @@ package dk.magenta.datafordeler.statistik.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
@@ -35,6 +36,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/statistik/adoption_data")
 public class AdoptionDataService extends PersonStatisticsService {
+
+    private class Exclude extends Exception {
+    }
 
     private static final String PRE = "PRE";
     private static final String POST = "POST";
@@ -105,7 +109,15 @@ public class AdoptionDataService extends PersonStatisticsService {
         return Arrays.asList(new String[]{"CODE",
                 PNR, BIRTHDAY_YEAR, MOTHER_PREFIX + PNR, FATHER_PREFIX + PNR, AM_mynkod, AF_mynkod,
                 BIRTH_AUTHORITY, CITIZENSHIP_CODE, PROD_DATE, FILE_DATE, ADOPTIONDTO, MUNICIPALITY_CODE, LOCALITY_NAME, LOCALITY_ABBREVIATION,
-                LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, FLOOR_NUMBER, BNR
+                LOCALITY_CODE, ROAD_CODE, HOUSE_NUMBER, FLOOR_NUMBER, FLOOR_NUMBER, BNR,
+                MOTHER_PREFIX + MUNICIPALITY_CODE, MOTHER_PREFIX + ROAD_CODE, MOTHER_PREFIX + ROAD_CODE, MOTHER_PREFIX + HOUSE_NUMBER,
+                MOTHER_PREFIX + FLOOR_NUMBER, MOTHER_PREFIX + DOOR_NUMBER, MOTHER_PREFIX + BNR, MOTHER_PREFIX + LOCALITY_NAME,
+                MOTHER_PREFIX + LOCALITY_ABBREVIATION, MOTHER_PREFIX + LOCALITY_CODE, MOTHER_PREFIX + CITIZENSHIP_CODE,
+                MOTHER_PREFIX + BIRTH_AUTHORITY, MOTHER_PREFIX + BIRTH_AUTHORITY_TEXT,
+                FATHER_PREFIX + MUNICIPALITY_CODE, FATHER_PREFIX + ROAD_CODE, FATHER_PREFIX + ROAD_CODE, FATHER_PREFIX + HOUSE_NUMBER,
+                FATHER_PREFIX + FLOOR_NUMBER, FATHER_PREFIX + DOOR_NUMBER, FATHER_PREFIX + BNR, FATHER_PREFIX + LOCALITY_NAME,
+                FATHER_PREFIX + LOCALITY_ABBREVIATION, FATHER_PREFIX + LOCALITY_CODE, FATHER_PREFIX + CITIZENSHIP_CODE,
+                FATHER_PREFIX + BIRTH_AUTHORITY, FATHER_PREFIX + BIRTH_AUTHORITY_TEXT
         });
     }
 
@@ -212,10 +224,18 @@ public class AdoptionDataService extends PersonStatisticsService {
             if(prefather!=null) {
                 item.put(FATHER_PREFIX + PNR, prefather.getCprNumber());
                 item.put(AF_mynkod, Integer.toString(prefather.getAuthority()));
+                PersonEntity parent = QueryManager.getEntity(session, PersonEntity.generateUUID(prefather.getCprNumber()), PersonEntity.class);
+                if (parent != null) {
+                    item.putAll(this.formatParentPersonByRecord(parent, FATHER_PREFIX, lookupService, eventtimestamp, true));
+                }
             }
             if(premother!=null) {
                 item.put(MOTHER_PREFIX + PNR, premother.getCprNumber());
                 item.put(AM_mynkod, Integer.toString(premother.getAuthority()));
+                PersonEntity parent = QueryManager.getEntity(session, PersonEntity.generateUUID(premother.getCprNumber()), PersonEntity.class);
+                if (parent != null) {
+                    item.putAll(this.formatParentPersonByRecord(parent, MOTHER_PREFIX, lookupService, eventtimestamp, true));
+                }
             }
         } else {
             item.put("CODE", POST);
@@ -225,11 +245,19 @@ public class AdoptionDataService extends PersonStatisticsService {
                 item.put(FATHER_PREFIX + PNR, postfather.getCprNumber());
                 item.put(AF_mynkod, Integer.toString(postfather.getAuthority()));
                 item.put(FILE_DATE, formatTime(postfather.getOriginDate()));//This is the same for mother and father record
+                PersonEntity parent = QueryManager.getEntity(session, PersonEntity.generateUUID(postfather.getCprNumber()), PersonEntity.class);
+                if (parent != null) {
+                    item.putAll(this.formatParentPersonByRecord(parent, FATHER_PREFIX, lookupService, eventtimestamp, true));
+                }
             }
             if(postmother!=null) {
                 item.put(MOTHER_PREFIX + PNR, postmother.getCprNumber());
                 item.put(AM_mynkod, Integer.toString(postmother.getAuthority()));
                 item.put(FILE_DATE, formatTime(postmother.getOriginDate()));//This is the same for mother and father record
+                PersonEntity parent = QueryManager.getEntity(session, PersonEntity.generateUUID(postmother.getCprNumber()), PersonEntity.class);
+                if (parent != null) {
+                    item.putAll(this.formatParentPersonByRecord(parent, MOTHER_PREFIX, lookupService, eventtimestamp, true));
+                }
             }
 
         }
@@ -285,6 +313,64 @@ public class AdoptionDataService extends PersonStatisticsService {
 
         replaceMapValues(item, null, "");
         return item;
+    }
+
+
+    private Map<String, String> formatParentPersonByRecord(PersonEntity person, String prefix, GeoLookupService lookupService, OffsetDateTime birthEffectTime, boolean excludeIfNonGreenlandic) {
+        HashMap<String, String> item = new HashMap<>();
+
+        Filter filterf = new Filter();
+        filterf.effectAt = birthEffectTime;
+        filterf.registrationAt = birthEffectTime;
+        AddressDataRecord addressDataRecord = filter(person.getAddress(), filterf);
+
+        if (excludeIfNonGreenlandic && addressDataRecord == null) {
+            log.warn("addressDataRecord==null");
+            return item;
+        }
+
+        item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+        if (excludeIfNonGreenlandic && addressDataRecord.getMunicipalityCode() < 955) {
+            log.warn("NOT GL ADD " + addressDataRecord.getId());
+            return item;
+        }
+        GeoLookupDTO lookup = lookupService.doLookup(
+                addressDataRecord.getMunicipalityCode(),
+                addressDataRecord.getRoadCode(),
+                addressDataRecord.getHouseNumber()
+        );
+        item.put(prefix + MUNICIPALITY_CODE, Integer.toString(addressDataRecord.getMunicipalityCode()));
+        item.put(prefix + ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
+        item.put(prefix + HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
+        item.put(prefix + FLOOR_NUMBER, addressDataRecord.getFloor());
+        item.put(prefix + DOOR_NUMBER, addressDataRecord.getDoor());
+        item.put(prefix + BNR, formatBnr(addressDataRecord.getBuildingNumber()));
+
+        if (lookup.getLocalityName() != null) {
+            item.put(prefix + LOCALITY_NAME, lookup.getLocalityName());
+        }
+        if (lookup.getLocalityAbbrev() != null) {
+            item.put(prefix + LOCALITY_ABBREVIATION, lookup.getLocalityAbbrev());
+        }
+        if (lookup.getLocalityCode() != null) {
+            item.put(prefix + LOCALITY_CODE, lookup.getLocalityCode());
+        }
+
+        CitizenshipDataRecord citizenshipDataRecord = findNewestAfterFilterOnEffect(person.getCitizenship(), birthEffectTime);
+        if (citizenshipDataRecord != null) {
+            item.put(prefix + CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
+        }
+
+        BirthPlaceDataRecord birthPlaceDataRecord = findNewestAfterFilterOnEffect(person.getBirthPlace(), birthEffectTime);
+        if (birthPlaceDataRecord != null) {
+            item.put(prefix + BIRTH_AUTHORITY, Integer.toString(birthPlaceDataRecord.getAuthority()));
+            item.put(prefix + BIRTH_AUTHORITY_TEXT, birthPlaceDataRecord.getBirthPlaceName());
+        }
+        return item;
+    }
+
+    private static <R extends CprBitemporalRecord> R filter(Collection<R> records, Filter filter) {
+        return findMostImportant(filterRecordsByEffect(filterUndoneRecords(records), filter.effectAt));
     }
 
 }
