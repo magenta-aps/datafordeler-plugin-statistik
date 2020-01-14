@@ -146,10 +146,17 @@ public class CivilStatusDataService extends PersonStatisticsService {
             civilStatusCollection = person.getCivilstatus();
         }
 
-        //Make a list of all civil-state-changes
-        List<PersonEventDataRecord> eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
-                "A20".equals(event.getEventId()) ||  "A20".equals(event.getEventId()) ||
-                "A21".equals(event.getEventId()) ||  "A23".equals(event.getEventId())).collect(Collectors.toList());
+        List<PersonEventDataRecord> eventListCivilState;
+        if(filter.getEventName()==null) {
+            //Make a list of all civil-state-changes
+            eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
+                    "A20".equals(event.getEventId()) || "A21".equals(event.getEventId()) ||
+                    "A23".equals(event.getEventId())).collect(Collectors.toList());
+        } else {
+            eventListCivilState = person.getEvent().stream().filter(event -> filter.getEventName().equals(event.getEventId())).collect(Collectors.toList());
+        }
+
+
 
 
         // A19 - vielse
@@ -192,8 +199,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
 
             AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), mariageEffectTime);
+            int municipalityCode = 0;
             if (addressDataRecord != null) {
-                int municipalityCode = addressDataRecord.getMunicipalityCode();
+                municipalityCode = addressDataRecord.getMunicipalityCode();
+
                 item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
                 item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
                 item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
@@ -222,10 +231,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             if (citizenshipDataRecord != null) {
                 item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
             }
-
-            replaceMapValues(item, null, "");
-            itemMap.add(item);
-
+            if(municipalityCode > 950) {
+                replaceMapValues(item, null, "");
+                itemMap.add(item);
+            }
         }
         return itemMap;
     }

@@ -6,16 +6,22 @@ import javax.servlet.http.HttpServletRequest;
 public class CivilStatusFilter extends Filter {
 
     private String civilStatus;
+    private String eventName;
 
 
     public CivilStatusFilter(HttpServletRequest request) {
         super(request);
         this.civilStatus = request.getParameter(StatisticsService.CIVIL_STATUS);
+        this.eventName = request.getParameter(StatisticsService.EVENT_NAME);
     }
 
 
     public String getCivilStatus() {
         return civilStatus;
+    }
+
+    public String getEventName() {
+        return eventName;
     }
 
     public void setCivilStatus(String civilStatus) {
