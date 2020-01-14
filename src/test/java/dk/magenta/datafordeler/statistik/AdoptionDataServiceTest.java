@@ -5,11 +5,14 @@ import dk.magenta.datafordeler.core.Application;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.cpr.CprRolesDefinition;
 import dk.magenta.datafordeler.statistik.services.AdoptionDataService;
+import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -59,7 +62,7 @@ public class AdoptionDataServiceTest extends TestBase {
     }
 
     @Test
-    public void testService() throws JsonProcessingException {
+    public void testService() throws JsonProcessingException, JSONException {
         adoptionDataService.setWriteToLocalFile(false);
 
         ResponseEntity<String> response = restTemplate.exchange("/statistik/adoption_data/", HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
@@ -80,9 +83,10 @@ public class AdoptionDataServiceTest extends TestBase {
                 "\"POST\";\"1111111111\";\"2004\";\"2222222226\";\"2222222227\";\"1350\";\"1350\";\"9507\";\"5100\";\"04-12-2019\";;\"04-12-2019\";\"956\";\"Nuuk\";\"NUK\";\"0600\";\"0254\";\"0018\";\"1\";\"1234\"\n" +
                 "\"PRE\";\"1111111111\";\"2004\";\"2222222228\";\"2222222229\";\"99\";\"1202\";\"9507\";\"5100\";\"04-12-2019\";;\"04-12-2019\";\"956\";\"Nuuk\";\"NUK\";\"0600\";\"0254\";\"0018\";\"1\";\"1234\"";
 
-        Assert.assertEquals(
+        JSONAssert.assertEquals(
                 testUtil.csvToJsonString(expected),
-                testUtil.csvToJsonString(response.getBody().trim())
+                testUtil.csvToJsonString(response.getBody().trim()),
+                        JSONCompareMode.LENIENT
         );
     }
 

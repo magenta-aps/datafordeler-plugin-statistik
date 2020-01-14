@@ -165,5 +165,26 @@ public class ReportProgressServiceTest extends TestBase {
 
     }
 
+    @Test
+    public void testReportProgressService() throws Exception {
+        birthDataService.setWriteToLocalFile(true);
+        birthDataService.setUseTimeintervallimit(false);
+
+        testUserDetails = new TestUserDetails();
+        testUserDetails.giveAccess(CprRolesDefinition.READ_CPR_ROLE);
+        testUserDetails.giveAccess(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        testsUtils.applyAccess(testUserDetails);
+
+        try(Session sessionSync = sessionManager.getSessionFactory().openSession()) {
+            ReportSyncHandler repSync = new ReportSyncHandler(sessionSync);
+            ReportAssignment report = new ReportAssignment();
+            report.setTemplateName(StatisticsService.ServiceName.BIRTH.getIdentifier());
+            Assert.assertTrue(repSync.createReportStatusObject(report));
+
+            ResponseEntity<String> response = restTemplate.exchange("/statistik/collective_report/reportstatus/?collectionUuid="+report.getCollectionUuid(), HttpMethod.GET, new HttpEntity<>("", new HttpHeaders()), String.class);
+            Assert.assertEquals("started,\n", response.getBody());
+        }
+    }
+
 
 }

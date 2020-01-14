@@ -171,19 +171,19 @@ public class AdoptionDataService extends PersonStatisticsService {
 
         List<Map<String, String>> fullAdoptionResult = new ArrayList<Map<String, String>>();
 
-        HashMap<String, String> preAdoptionLine = new HashMap<>(this.formatPersonByRecord(false, person, session, lookupService, filter));
-        if (preAdoptionLine.isEmpty()) {
-            return Collections.emptyList();
-        }
-        preAdoptionLine.put(PRE + PNR, person.getPersonnummer());
-        fullAdoptionResult.add(preAdoptionLine);
-
         HashMap<String, String> postAdoptionLine = new HashMap<>(this.formatPersonByRecord(true, person, session, lookupService, filter));
         if (postAdoptionLine.isEmpty()) {
             return Collections.emptyList();
         }
         postAdoptionLine.put(POST + PNR, person.getPersonnummer());
         fullAdoptionResult.add(postAdoptionLine);
+
+        HashMap<String, String> preAdoptionLine = new HashMap<>(this.formatPersonByRecord(false, person, session, lookupService, filter));
+        if (preAdoptionLine.isEmpty()) {
+            return Collections.emptyList();
+        }
+        preAdoptionLine.put(PRE + PNR, person.getPersonnummer());
+        fullAdoptionResult.add(preAdoptionLine);
 
         return fullAdoptionResult;
     }

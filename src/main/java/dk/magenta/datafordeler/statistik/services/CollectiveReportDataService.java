@@ -2,7 +2,6 @@ package dk.magenta.datafordeler.statistik.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import dk.magenta.datafordeler.core.database.DatabaseEntry;
 import dk.magenta.datafordeler.core.database.QueryManager;
 import dk.magenta.datafordeler.core.database.SessionManager;
 import dk.magenta.datafordeler.core.exception.*;
@@ -15,15 +14,12 @@ import dk.magenta.datafordeler.cpr.data.person.PersonRecordQuery;
 import dk.magenta.datafordeler.geo.GeoLookupService;
 import dk.magenta.datafordeler.statistik.reportExecution.*;
 import dk.magenta.datafordeler.statistik.utils.Filter;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.jpa.QueryHints;
-import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,18 +31,13 @@ import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.File;
 import java.io.IOException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -95,6 +86,17 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         super.handleRequest(request, response, ServiceName.COLLECTIVE);
     }
 
+    /**
+     * Return a list of reports which is either started, running or done
+     * Done reports is only returned if there is no started or running reports found
+     * @param request
+     * @param response
+     * @throws IOException
+     * @throws AccessDeniedException
+     * @throws InvalidTokenException
+     * @throws InvalidCertificateException
+     * @throws AccessRequiredException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/reportlist/")
     public void getReportList(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
 
@@ -174,7 +176,16 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         }
     }
 
-
+    /**
+     * Find one report from the list of started reports and run it
+     * @param request
+     * @param response
+     * @throws IOException
+     * @throws AccessDeniedException
+     * @throws InvalidTokenException
+     * @throws InvalidCertificateException
+     * @throws AccessRequiredException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/reportexecuter/")
     public void getReportExecute(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
 
@@ -249,6 +260,48 @@ public class CollectiveReportDataService extends PersonStatisticsService {
                 response.sendRedirect("/statistik/"+assignment.getTemplateName()+"/?"+paramAppender);
             } else {
                 response.getOutputStream().write(("No reports are waiting").getBytes());
+            }
+        }
+    }
+
+    /**
+     * Get the status of reports from the reportlist
+     * @param request
+     * @param response
+     * @throws IOException
+     * @throws AccessDeniedException
+     * @throws InvalidTokenException
+     * @throws InvalidCertificateException
+     * @throws AccessRequiredException
+     */
+    @RequestMapping(method = RequestMethod.GET, path = "/reportstatus/")
+    public void getReportStatus(HttpServletRequest request, HttpServletResponse response) throws IOException, AccessDeniedException, InvalidTokenException, InvalidCertificateException, AccessRequiredException {
+
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        String formToken = request.getParameter("token");
+        if (formToken != null) {
+            user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+        }
+        // Check that the user has access to CPR data
+        LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
+        loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
+        this.checkAndLogAccess(loggerHelper);
+
+        try (Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+            CriteriaBuilder builder = reportProgressSession.getCriteriaBuilder();
+            CriteriaQuery<ReportAssignment> criteria = builder.createQuery(ReportAssignment.class);
+            Root<ReportAssignment> page = criteria.from(ReportAssignment.class);
+            criteria.select(page);
+            String collectionUuid = request.getParameter("collectionUuid");
+            if(collectionUuid!=null) {
+                criteria.where(builder.equal(page.get(ReportAssignment.DB_FIELD_COLLECTIONUUID), collectionUuid));
+                TypedQuery<ReportAssignment> query = reportProgressSession.createQuery(criteria);
+                query.setHint(QueryHints.HINT_CACHEABLE, true);
+
+                for(ReportAssignment assignment : query.getResultList()) {
+                    response.getOutputStream().write((assignment.getReportStatus()+",\n").getBytes());
+                }
+                response.getOutputStream().flush();
             }
         }
     }
@@ -402,11 +455,9 @@ public class CollectiveReportDataService extends PersonStatisticsService {
         if(dafobackendserver!=null) {
             paramAppender+="dafobackendserver="+dafobackendserver+"&";
         }
-        response.sendRedirect("/statistik/collective_report/reportlist/?"+"collectionUuid="+currentcollectionUuid+"&token="+formTokenEncoded);
+        response.sendRedirect("/statistik/collective_report/reportlist/?"+paramAppender+"token="+formTokenEncoded);
 
     }
-
-    private static final String OWN_PREFIX = "B_";
 
     @Override
     protected List<String> getColumnNames() {
@@ -451,10 +502,6 @@ public class CollectiveReportDataService extends PersonStatisticsService {
     @Override
     protected PersonRecordQuery getQuery(Filter filter) {
         return null;
-    }
-
-    public class ReportExecutor extends SimpleAsyncTaskExecutor {
-
     }
 
 }
