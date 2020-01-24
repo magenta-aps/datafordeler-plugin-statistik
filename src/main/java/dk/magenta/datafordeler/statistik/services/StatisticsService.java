@@ -11,10 +11,19 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserDetails;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.core.util.LoggerHelper;
+import dk.magenta.datafordeler.cpr.CprRolesDefinition;
+import dk.magenta.datafordeler.statistik.StatistikRolesDefinition;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportAssignment;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportProgressStatus;
+import dk.magenta.datafordeler.statistik.reportExecution.ReportSyncHandler;
 import dk.magenta.datafordeler.statistik.utils.Filter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,6 +32,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -36,8 +47,15 @@ public abstract class StatisticsService {
 
     public static String PATH_FILE = null;
 
+    @Value("${dafo.statistics.enabled}")
+    protected boolean statisticsEnabled = false;
+
+    @Autowired
+    SessionManager sessionManager;
+
+    private Logger log = LogManager.getLogger(StatisticsService.class);
+
     static {
-        //StatisticsService.PATH_FILE = System.getProperty("user.home") + File.separator + "statistik";
         StatisticsService.PATH_FILE = "statistik";
         File folder = new File(StatisticsService.PATH_FILE);
         if (!folder.exists()) {
@@ -49,57 +67,120 @@ public abstract class StatisticsService {
         return new String[]{};
     }
 
+    /**
+     * If the request is a get-request we look for the Header "Authorization" to fund the user-rights
+     * If the request is a Post-request we look for the parameter "token" to fund the user-rights
+     * @param request
+     * @return
+     * @throws InvalidTokenException
+     * @throws AccessDeniedException
+     * @throws InvalidCertificateException
+     */
     protected DafoUserDetails getUser(HttpServletRequest request) throws InvalidTokenException, AccessDeniedException, InvalidCertificateException {
-        return this.getDafoUserManager().getUserFromRequest(request);
+        boolean isPost = "POST".equals(request.getMethod());
+        if(isPost) {
+            String formToken = request.getParameter("token");
+            if (formToken != null) {
+                return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+            }
+        } else {
+            return this.getDafoUserManager().getUserFromRequest(request);
+        }
+        return null;
     }
 
 
-    public abstract int run(Filter filter, OutputStream outputStream);
-    
+    public abstract int run(Filter filter, OutputStream outputStream, String reportUuid);
+
+
+    /**
+     * Get is used for either returning a frontpage, og starting the generation of a report
+     *
+     * @param request
+     * @param response
+     * @param serviceName
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     protected void handleRequest(HttpServletRequest request, HttpServletResponse response, ServiceName serviceName) throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
+        DafoUserDetails user = this.getDafoUserManager().getUserFromRequest(request);
+        if(user.isAnonymous() && request.getParameter("token")!=null) {
+            String formToken = request.getParameter("token");
+            if (formToken != null) {
+                user = this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
+            }
+        } else {
+            //If the showfrontpage flag is set, only show that, login is not nessesary for that
+            String showfrontpage= request.getParameter("showfrontpage");
+            if(Boolean.parseBoolean(showfrontpage)) {
+                IOUtils.copy(
+                        StatisticsService.class.getResourceAsStream("/generalServiceForm.html"),
+                        response.getWriter(), StandardCharsets.UTF_8
+                );
+                return;
+            }
+        }
+
         // Check that the user has access to CPR data
-        DafoUserDetails user = this.getUser(request);
+        //DafoUserDetails user = this.getUser(request);
         LoggerHelper loggerHelper = new LoggerHelper(this.getLogger(), request, user);
         loggerHelper.info("Incoming request for " + this.getClass().getSimpleName() + " with parameters " + request.getParameterMap());
         this.checkAndLogAccess(loggerHelper);
         for (String required : this.requiredParameters()) {
             this.requireParameter(required, request.getParameter(required));
         }
-        Filter filter = this.getFilter(request);
 
-        final Session primarySession = this.getSessionManager().getSessionFactory().openSession();
-        final Session secondarySession = this.getSessionManager().getSessionFactory().openSession();
-
-        primarySession.setDefaultReadOnly(true);
-        secondarySession.setDefaultReadOnly(true);
-
-        try {
-            response.setContentType("text/csv");
+        try(Session reportProgressSession = sessionManager.getSessionFactory().openSession()) {
+            Filter filter = this.getFilter(request);
             String outputDescription = null;
             OutputStream outputStream = null;
 
-            if (this.getWriteToLocalFile()) {
-                //Get current date time
+            String reportUuid = request.getParameter("reportUuid");
+            String collectionUuid = request.getParameter("collectionUuid");
+            ReportSyncHandler rps = new ReportSyncHandler(reportProgressSession);
+            if(reportUuid==null) {
+                ReportAssignment report = new ReportAssignment();
+                String registrationAfter = request.getParameter("registrationAfter");
+                String registrationBefore = request.getParameter("registrationBefore");
+                report.setRegistrationAfter(registrationAfter);
+                report.setRegistrationBefore(registrationBefore);
+                report.setTemplateName(serviceName.getIdentifier());
+                if(!rps.createReportStatusObject(report)) {
+                    response.setStatus(HttpServletResponse.SC_CONFLICT);
+                    response.getWriter().print("Execution of this report is rejected, another report is currently getting generated");
+                    return;
+                }
+                reportUuid = report.getReportUuid();
+                collectionUuid = report.getCollectionUuid();
+            }
 
-                LocalDateTime now = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-                String formatDateTime = now.format(formatter);
+
+            if (this.getWriteToLocalFile()) {
+                response.getWriter().print("collectionUuid: "+collectionUuid);
 
                 if (PATH_FILE != null) {
-                    File file = new File(PATH_FILE, serviceName.name().toLowerCase() + "_" + formatDateTime + ".csv");
+                    File file = new File(PATH_FILE, serviceName.getIdentifier()+"_"+reportUuid + ".csv");
                     file.createNewFile();
                     outputStream = new FileOutputStream(file);
                     outputDescription = "Written to file " + file.getCanonicalPath();
+                    rps.setReportStatus(reportUuid, ReportProgressStatus.done);
                 }
 
             } else {
+                response.setContentType("text/csv");
                 response.setHeader("Content-Disposition", "attachment; filename=\"response.csv\"");
                 outputStream = response.getOutputStream();
                 outputDescription = "Written to response";
             }
 
             if (outputStream != null) {
-                int written = this.run(filter, outputStream);
+                int written = this.run(filter, outputStream, reportUuid);
                 this.getLogger().info(outputDescription);
                 if (written == 0) {
                     response.sendError(HttpStatus.NO_CONTENT.value());
@@ -107,10 +188,7 @@ public abstract class StatisticsService {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            primarySession.close();
-            secondarySession.close();
+            loggerHelper.error("Failed creating report", e);
         }
 
     }
@@ -125,26 +203,50 @@ public abstract class StatisticsService {
 
     protected abstract Logger getLogger();
 
-    protected Filter getFilter(HttpServletRequest request) {
-        return new Filter(request);
+    protected Filter getFilter(HttpServletRequest request) throws Exception {
+        return new Filter(request, timeintervallimit);
     }
 
 
     public enum ServiceName {
-        BIRTH,
-        DEATH,
-        CIVILSTATUS,
-        MOVEMENT,
-        STATUS,
-        ADDRESS,
-        ROAD,
-        LOCALITY;
+        BIRTH("birth_data"),
+        DEATH("death_data"),
+        CIVILSTATUS("civilstate_data"),
+        MOVEMENT("movement_data"),
+        STATUS("status_data"),
+        ADDRESS("address_data"),
+        ROAD("road_data"),
+        LOCALITY("locality_data"),
+        ADOPTION("adoption_data"),
+        COLLECTIVE("collective_data");
+
+        private final String identifier;
+
+        ServiceName(String identifier) {
+            this.identifier = identifier;
+        }
+
+        public String getIdentifier() {
+            return this.identifier;
+        }
+
+        public static Optional<ServiceName> fromText(String text) {
+            return Arrays.stream(values())
+                    .filter(bl -> bl.identifier.equalsIgnoreCase(text))
+                    .findFirst();
+        }
     }
 
     private boolean writeToLocalFile = true;
 
     public void setWriteToLocalFile(boolean writeToLocalFile) {
         this.writeToLocalFile = writeToLocalFile;
+    }
+
+    protected boolean timeintervallimit = true;
+
+    public void setUseTimeintervallimit(boolean timeintervallimit) {
+        this.timeintervallimit = timeintervallimit;
     }
 
     public boolean getWriteToLocalFile() {
@@ -181,6 +283,7 @@ public abstract class StatisticsService {
     public static final String STATUS_CODE = "Status";
     public static final String CITIZENSHIP_CODE = "StatKod";
     public static final String CIVIL_STATUS = "CivSt";
+    public static final String EVENT_NAME = "Event";
     public static final String CIVIL_STATUS_DATE = "CivDto";
     public static final String CIVIL_STATUS_PROD_DATE = "CivProdDto";
     public static final String DEATH_DATE = "DoedDto";
@@ -228,6 +331,10 @@ public abstract class StatisticsService {
     public static final String DESTINATION_DOOR_NUMBER = "TilSideDoer";
     public static final String DESTINATION_BNR = "TilBnr";
     public static final String DESTINATION_COUNTRY_CODE = "TilLand";
+
+    public static final String ADOPTIONDTO = "AdoptionDto";
+    public static final String AM_mynkod = "AM_mynkod";
+    public static final String AF_mynkod = "AF_mynkod";
 
 
     //Column names for parent mother person
@@ -351,7 +458,18 @@ public abstract class StatisticsService {
         return Integer.toString(value);
     }
 
-    protected abstract void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException;
+    protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
+        if(!statisticsEnabled) {
+            throw new AccessDeniedException("Statistics is disabled on the server");
+        }
+        try {
+            loggerHelper.getUser().checkHasSystemRole(CprRolesDefinition.READ_CPR_ROLE);
+            loggerHelper.getUser().checkHasSystemRole(StatistikRolesDefinition.EXECUTE_STATISTIK_ROLE);
+        } catch (AccessDeniedException e) {
+            loggerHelper.info("Access denied: " + e.getMessage());
+            throw (e);
+        }
+    }
 
     private static ZoneId timezone = ZoneId.systemDefault();
 

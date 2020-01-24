@@ -55,10 +55,41 @@ public class CivilStatusDataService extends PersonStatisticsService {
 
     private Logger log = LogManager.getLogger(CivilStatusDataService.class.getCanonicalName());
 
-
+    /**
+     * Calls handlerequest in super with the ID of the report as a parameter
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
     @RequestMapping(method = RequestMethod.GET, path = "/")
     public void get(HttpServletRequest request, HttpServletResponse response)
             throws AccessDeniedException, AccessRequiredException, InvalidTokenException, InvalidClientInputException, IOException, HttpNotFoundException, MissingParameterException, InvalidCertificateException {
+        super.handleRequest(request, response, ServiceName.CIVILSTATUS);
+    }
+
+    /**
+     * Post is used for starting the generation of a report
+     * @param request
+     * @param response
+     * @throws AccessDeniedException
+     * @throws AccessRequiredException
+     * @throws InvalidTokenException
+     * @throws IOException
+     * @throws MissingParameterException
+     * @throws InvalidClientInputException
+     * @throws HttpNotFoundException
+     * @throws InvalidCertificateException
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/")
+    public void handlePost(HttpServletRequest request, HttpServletResponse response)
+            throws AccessDeniedException, AccessRequiredException, InvalidTokenException, IOException, MissingParameterException, InvalidClientInputException, HttpNotFoundException, InvalidCertificateException {
         super.handleRequest(request, response, ServiceName.CIVILSTATUS);
     }
 
@@ -72,8 +103,8 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     @Override
-    protected Filter getFilter(HttpServletRequest request) {
-        return new CivilStatusFilter(request);
+    protected Filter getFilter(HttpServletRequest request) throws Exception {
+        return new CivilStatusFilter(request, this.timeintervallimit);
     }
 
     @Override
@@ -97,7 +128,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
     }
 
     protected String[] requiredParameters() {
-        return new String[]{};
+        return new String[]{"registrationAfter"};
     }
 
     @Override
@@ -146,10 +177,17 @@ public class CivilStatusDataService extends PersonStatisticsService {
             civilStatusCollection = person.getCivilstatus();
         }
 
-        //Make a list of all civil-state-changes
-        List<PersonEventDataRecord> eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
-                "A20".equals(event.getEventId()) ||  "A20".equals(event.getEventId()) ||
-                "A21".equals(event.getEventId()) ||  "A23".equals(event.getEventId())).collect(Collectors.toList());
+        List<PersonEventDataRecord> eventListCivilState;
+        if(filter.getEventName()==null) {
+            //Make a list of all civil-state-changes
+            eventListCivilState = person.getEvent().stream().filter(event -> "A19".equals(event.getEventId()) ||
+                    "A20".equals(event.getEventId()) || "A21".equals(event.getEventId()) ||
+                    "A23".equals(event.getEventId())).collect(Collectors.toList());
+        } else {
+            eventListCivilState = person.getEvent().stream().filter(event -> filter.getEventName().equals(event.getEventId())).collect(Collectors.toList());
+        }
+
+
 
 
         // A19 - vielse
@@ -192,8 +230,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
 
             AddressDataRecord addressDataRecord = findNewestAfterFilterOnEffect(person.getAddress(), mariageEffectTime);
+            int municipalityCode = 0;
             if (addressDataRecord != null) {
-                int municipalityCode = addressDataRecord.getMunicipalityCode();
+                municipalityCode = addressDataRecord.getMunicipalityCode();
+
                 item.put(MUNICIPALITY_CODE, Integer.toString(municipalityCode));
                 item.put(ROAD_CODE, formatRoadCode(addressDataRecord.getRoadCode()));
                 item.put(HOUSE_NUMBER, formatHouseNnr(addressDataRecord.getHouseNumber()));
@@ -222,10 +262,10 @@ public class CivilStatusDataService extends PersonStatisticsService {
             if (citizenshipDataRecord != null) {
                 item.put(CITIZENSHIP_CODE, Integer.toString(citizenshipDataRecord.getCountryCode()));
             }
-
-            replaceMapValues(item, null, "");
-            itemMap.add(item);
-
+            if(municipalityCode > 950) {
+                replaceMapValues(item, null, "");
+                itemMap.add(item);
+            }
         }
         return itemMap;
     }

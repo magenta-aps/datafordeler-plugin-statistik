@@ -74,7 +74,7 @@ public class AddressDataService extends PersonStatisticsService {
         if (formToken != null) {
             return this.getDafoUserManager().getSamlUserDetailsFromToken(formToken);
         }
-        return super.getUser(request);
+        return this.getDafoUserManager().getUserFromRequest(request);
     }
 
     protected void checkAndLogAccess(LoggerHelper loggerHelper) throws AccessDeniedException, AccessRequiredException {
