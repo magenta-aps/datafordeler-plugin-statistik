@@ -7,6 +7,7 @@ import dk.magenta.datafordeler.core.exception.*;
 import dk.magenta.datafordeler.core.user.DafoUserManager;
 import dk.magenta.datafordeler.cpr.CprPlugin;
 import dk.magenta.datafordeler.cpr.data.person.PersonEntity;
+import dk.magenta.datafordeler.cpr.records.CprBitemporalRecord;
 import dk.magenta.datafordeler.cpr.records.person.data.*;
 import dk.magenta.datafordeler.geo.GeoLookupDTO;
 import dk.magenta.datafordeler.geo.GeoLookupService;
@@ -197,13 +198,34 @@ public class CivilStatusDataService extends PersonStatisticsService {
         //Filter based on events
         List<CivilStatusDataRecord> filteredList = civilStatusCollection.stream().filter(empl -> eventListCivilState.stream().anyMatch(dept -> empl.getRegistrationFrom().equals(dept.getTimestamp()))).collect(Collectors.toList());
 
-        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(filteredList)) {
+        for (CivilStatusDataRecord civilStatusDataRecord : sortRecords(FilterOnRegistrationFrom(filteredList,filter.registrationAfter,filter.registrationBefore))) {
             mariageEffectTime = civilStatusDataRecord.getEffectFrom();
+
+            // Undone entries don't count
+            if (civilStatusDataRecord.isUndone()) {
+                continue;
+            }
 
             //If this addressregistration has a sameas, it mean that is is just a close and reopen based on new timeintervals
             if (civilStatusDataRecord.getSameAs() != null) {
                 continue;
             }
+
+            //If this addressregistration has a sameas, it mean that is is just a close and reopen based on new timeintervals
+            if (civilStatusDataRecord.getCorrectionof() != null) {
+                continue;
+            }
+
+            if (mariageEffectTime != null && Objects.equals(mariageEffectTime, civilStatusDataRecord.getEffectTo())) {
+                continue;
+            }
+
+            OffsetDateTime regFrom = civilStatusDataRecord.getRegistrationFrom();
+            CprBitemporalRecord c = civilStatusDataRecord.getCorrectionof();
+            if (c != null) {
+                regFrom = c.getRegistrationFrom();
+            }
+            final OffsetDateTime firstRegFrom = regFrom;
 
             HashMap<String, String> item = new HashMap<>();
             item.put(PNR, person.getPersonnummer());
@@ -223,7 +245,7 @@ public class CivilStatusDataService extends PersonStatisticsService {
             }
 
             if (civilStatusDataRecord.getRegistrationFrom() != null) {
-                item.put(PROD_DATE, formatTime(civilStatusDataRecord.getRegistrationFrom().atZoneSameInstant(cprDataOffset)));
+                item.put(PROD_DATE, formatTime(firstRegFrom.atZoneSameInstant(cprDataOffset)));
             }
             if (civilStatusDataRecord.getOriginDate() != null) {
                 item.put(FILE_DATE, formatTime(civilStatusDataRecord.getOriginDate()));
