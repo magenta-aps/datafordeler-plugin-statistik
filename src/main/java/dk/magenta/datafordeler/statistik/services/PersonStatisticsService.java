@@ -112,7 +112,7 @@ public abstract class PersonStatisticsService extends StatisticsService {
     }
 
     public Stream<Map<String, String>> formatItems(Session personSession, Stream<PersonEntity> personEntities, Session lookupSession, Filter filter) {
-        GeoLookupService lookupService = new GeoLookupService(lookupSession);
+        GeoLookupService lookupService = new GeoLookupService(this.getSessionManager());
         return personEntities.flatMap(
                 personEntity -> {
                     List<Map<String, String>> output = formatPerson(personEntity, lookupSession, lookupService, filter);
