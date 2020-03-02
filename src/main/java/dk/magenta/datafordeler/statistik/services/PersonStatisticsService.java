@@ -270,4 +270,9 @@ public abstract class PersonStatisticsService extends StatisticsService {
         return record.getBitemporality();
     }
 
+
+    public static <R extends CprBitemporalRecord> List<R> FilterOnRegistrationFrom(Collection<R> records, OffsetDateTime registrationTimeStart, OffsetDateTime registrationTimeEnd) {
+        List<R> filtered = records.stream().filter(r -> r.getRegistrationFrom()!= null && (registrationTimeStart==null || r.getRegistrationFrom().isAfter(registrationTimeStart)) && (registrationTimeEnd==null || r.getRegistrationFrom().isBefore(registrationTimeEnd))).collect(Collectors.toList());
+        return filtered;
+    }
 }
